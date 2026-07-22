@@ -6,7 +6,9 @@
   <title>SoraSys · Articlespace</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
       background: #0b1114;
       color: #bcccd6;
@@ -15,6 +17,7 @@
       min-height: 100vh;
       cursor: none;
     }
+    
     #cursor {
       position: fixed;
       width: 8px;
@@ -28,9 +31,7 @@
       display: none;
       transition: transform 0.08s ease, background 0.2s ease;
     }
-    #cursor.active {
-      display: block;
-    }
+    #cursor.active { display: block; }
     #cursor.hover {
       transform: translate(-50%, -50%) scale(2.8);
       background: rgba(255, 59, 124, 0.25);
@@ -40,6 +41,7 @@
       #cursor { display: none !important; }
       body { cursor: auto; }
     }
+    
     .space-header {
       max-width: 900px;
       margin: 0 auto 32px;
@@ -69,27 +71,81 @@
       transition: color 0.3s ease;
     }
     .space-nav a:hover { color: #ff3b7c; }
+    
     .articles-container {
       max-width: 900px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 20px;
     }
+    
     .article-card {
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.08);
       border-radius: 3px;
       padding: 28px 32px;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      max-height: 200px;
     }
-    .article-card:hover { border-color: rgba(255,59,124,0.15); }
+    .article-card.expanded {
+      max-height: 2000px;
+      border-color: rgba(255, 59, 124, 0.3);
+      background: rgba(20, 30, 35, 0.9);
+      box-shadow: 0 0 40px rgba(255, 59, 124, 0.05);
+    }
+    .article-card .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
     .article-card .title {
       font-family: 'Cinzel', serif;
       font-size: 18px;
       letter-spacing: 2px;
       color: #6b8e9b;
-      margin-bottom: 6px;
+      transition: color 0.4s ease;
+      flex: 1;
+    }
+    .article-card.expanded .title {
+      color: #ff3b7c;
+      animation: pulseText 3s ease-in-out infinite;
+    }
+    @keyframes pulseText {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    .article-card .title-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .article-card .copy-btn {
+      background: none;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      color: #4a6673;
+      padding: 4px 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .article-card .copy-btn:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .article-card .copy-btn.copied {
+      border-color: #6b8e9b;
+      color: #6b8e9b;
     }
     .article-card .meta {
       font-family: 'Fira Code', monospace;
@@ -97,6 +153,11 @@
       letter-spacing: 1.5px;
       color: #4a6673;
       margin-bottom: 14px;
+      transition: color 0.4s ease;
+    }
+    .article-card.expanded .meta {
+      color: #ff3b7c;
+      animation: pulseText 3s ease-in-out infinite;
     }
     .article-card .content {
       font-family: 'Crimson Text', serif;
@@ -105,7 +166,67 @@
       color: #bcccd6;
       white-space: pre-wrap;
       word-wrap: break-word;
+      transition: all 0.4s ease;
+      position: relative;
     }
+    .article-card .content .truncated-text {
+      position: relative;
+    }
+    .article-card .content .truncated-text .fade-out {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, rgba(20, 30, 35, 0.95));
+      pointer-events: none;
+    }
+    .article-card .content .char-count {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: #4a6673;
+      margin-top: 8px;
+      display: block;
+      transition: color 0.4s ease;
+    }
+    .article-card.expanded .content .char-count {
+      color: #ff3b7c;
+      animation: pulseText 3s ease-in-out infinite;
+    }
+    .article-card .expand-hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 11px;
+      color: #4a6673;
+      margin-top: 10px;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .article-card .expand-hint .arrow {
+      display: inline-block;
+      transition: transform 0.4s ease;
+      font-size: 14px;
+    }
+    .article-card.expanded .expand-hint .arrow {
+      transform: rotate(180deg);
+    }
+    .article-card.expanded .expand-hint {
+      opacity: 0.3;
+    }
+    .article-card .full-content {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(107, 142, 155, 0.08);
+    }
+    .article-card.expanded .full-content {
+      display: block;
+    }
+    
     .empty-articles {
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
@@ -114,11 +235,15 @@
       color: #4a6673;
       padding: 60px 0;
     }
+    
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
-      .article-card { padding: 20px; }
+      .article-card { padding: 20px; max-height: 180px; }
       .article-card .title { font-size: 16px; }
+      .article-card .title-row { flex-direction: column; align-items: stretch; }
+      .article-card .title-actions { margin-top: 4px; }
+      .article-card .copy-btn { font-size: 6px; padding: 3px 8px; }
       body { padding: 16px; cursor: auto; }
     }
   </style>
@@ -138,66 +263,36 @@
 
 <script>
   (function() {
-    // Only enable custom cursor on desktop
+    // Custom cursor
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
       if (!cursor) return;
-      
-      // Show cursor
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
-      
-      let mx = -100, my = -100;
-      let cx = -100, cy = -100;
-      
-      // Animation loop with smooth following
-      function updateCursor() {
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
         cursor.style.left = cx + 'px';
         cursor.style.top = cy + 'px';
-        requestAnimationFrame(updateCursor);
-      }
-      
-      // Track mouse position
-      document.addEventListener('mousemove', (e) => {
-        mx = e.clientX;
-        my = e.clientY;
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('a, .article-card, .copy-btn').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
       });
-      
-      // Handle mouse leaving the window
-      document.addEventListener('mouseleave', () => {
-        cursor.classList.remove('active');
-      });
-      
-      document.addEventListener('mouseenter', () => {
-        cursor.classList.add('active');
-      });
-      
-      // Add hover effect to all interactive elements
-      const interactiveElements = document.querySelectorAll('a, .article-card, .space-nav a, .space-header');
-      interactiveElements.forEach(el => {
-        el.addEventListener('mouseenter', () => {
-          cursor.classList.add('hover');
-        });
-        el.addEventListener('mouseleave', () => {
-          cursor.classList.remove('hover');
-        });
-      });
-      
-      // Start the animation
-      updateCursor();
-    } else {
-      // On mobile, ensure default cursor
-      document.body.style.cursor = 'auto';
+      update();
     }
 
-    // Load articles
+    let allArticles = [];
+    let expandedId = null;
+
     async function loadArticles() {
       try {
         const res = await fetch('/api/articles');
-        if (!res.ok) throw new Error('Failed to fetch');
         const articles = await res.json();
+        allArticles = articles;
         const container = document.getElementById('articles-container');
         
         if (!articles || articles.length === 0) {
@@ -205,27 +300,174 @@
           return;
         }
         
-        container.innerHTML = articles.map(a => `
-          <div class="article-card">
-            <div class="title">${escapeHtml(a.title)}</div>
-            <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
-            <div class="content">${escapeHtml(a.content)}</div>
-          </div>
-        `).join('');
+        // Check URL hash for expanded article
+        const hash = window.location.hash.replace('#', '');
+        let expandedIndex = -1;
+        if (hash) {
+          const decoded = decodeURIComponent(hash);
+          expandedIndex = articles.findIndex(a => {
+            const slug = createSlug(a.title, a.id);
+            return slug === decoded;
+          });
+        }
+        
+        container.innerHTML = articles.map((a, index) => {
+          const isExpanded = (expandedIndex === index);
+          const slug = createSlug(a.title, a.id);
+          const url = `${window.location.origin}${window.location.pathname}#${slug}`;
+          const charLimit = 200;
+          const content = a.content || '';
+          const isTruncated = content.length > charLimit;
+          const truncated = isTruncated ? content.slice(0, charLimit) : content;
+          const remaining = isTruncated ? content.length - charLimit : 0;
+          
+          return `
+            <div class="article-card ${isExpanded ? 'expanded' : ''}" data-id="${a.id}" data-index="${index}">
+              <div class="title-row">
+                <div class="title">${escapeHtml(a.title)}</div>
+                <div class="title-actions">
+                  <button class="copy-btn" data-url="${url}">⧉ Copy Link</button>
+                </div>
+              </div>
+              <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
+              <div class="content">
+                ${isExpanded ? `
+                  <div>${escapeHtml(content)}</div>
+                  <span class="char-count">${content.length} characters</span>
+                ` : `
+                  <div class="truncated-text">
+                    ${isTruncated ? escapeHtml(truncated) + '...' : escapeHtml(content)}
+                    ${isTruncated ? '<div class="fade-out"></div>' : ''}
+                  </div>
+                  ${isTruncated ? `<span class="char-count">${remaining} characters remaining · click to read more</span>` : ''}
+                `}
+              </div>
+              <div class="expand-hint">
+                <span class="arrow">▾</span>
+                ${isExpanded ? 'collapse' : 'expand'}
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        // Copy button handler
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const url = btn.dataset.url;
+            try {
+              await navigator.clipboard.writeText(url);
+              btn.textContent = '✓ Copied!';
+              btn.classList.add('copied');
+              setTimeout(() => {
+                btn.textContent = '⧉ Copy Link';
+                btn.classList.remove('copied');
+              }, 2000);
+            } catch (err) {
+              // Fallback
+              const textarea = document.createElement('textarea');
+              textarea.value = url;
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textarea);
+              btn.textContent = '✓ Copied!';
+              btn.classList.add('copied');
+              setTimeout(() => {
+                btn.textContent = '⧉ Copy Link';
+                btn.classList.remove('copied');
+              }, 2000);
+            }
+          });
+        });
+        
+        // Card click handler - toggle expansion
+        document.querySelectorAll('.article-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const index = parseInt(card.dataset.index);
+            const isExpanded = card.classList.contains('expanded');
+            
+            // Close all
+            document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
+            
+            if (!isExpanded) {
+              card.classList.add('expanded');
+              expandedId = index;
+              const article = allArticles[index];
+              const slug = createSlug(article.title, article.id);
+              window.location.hash = slug;
+            } else {
+              expandedId = null;
+              window.location.hash = '';
+            }
+            
+            // Update expand hint text
+            document.querySelectorAll('.article-card .expand-hint').forEach(hint => {
+              const parent = hint.closest('.article-card');
+              const isExp = parent.classList.contains('expanded');
+              hint.innerHTML = `<span class="arrow">${isExp ? '▴' : '▾'}</span> ${isExp ? 'collapse' : 'expand'}`;
+            });
+          });
+        });
+        
+        // If an article was expanded from URL hash, scroll to it
+        if (expandedIndex !== -1) {
+          setTimeout(() => {
+            const expandedCard = document.querySelector('.article-card.expanded');
+            if (expandedCard) {
+              expandedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        }
+        
       } catch (err) {
         console.error('Error loading articles:', err);
         document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
       }
     }
-    
-    // Simple escape function to prevent XSS
+
+    function createSlug(title, id) {
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      return `${slug}-${id}`;
+    }
+
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
-    
+
+    // Handle hash changes (browser back/forward)
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (!hash) {
+        // Close all
+        document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
+        expandedId = null;
+        document.querySelectorAll('.article-card .expand-hint').forEach(hint => {
+          hint.innerHTML = `<span class="arrow">▾</span> expand`;
+        });
+        return;
+      }
+      
+      // Find and expand matching article
+      const decoded = decodeURIComponent(hash);
+      const cards = document.querySelectorAll('.article-card');
+      cards.forEach((card, index) => {
+        const article = allArticles[index];
+        if (!article) return;
+        const slug = createSlug(article.title, article.id);
+        if (slug === decoded) {
+          card.click();
+        }
+      });
+    });
+
+    // Initial load
     loadArticles();
   })();
 </script>
