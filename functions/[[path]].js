@@ -1,9 +1,18 @@
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
   
-  console.log('Request:', path, request.method);
+  // ============================================
+  // IMPORTANT: ONLY handle /api/* routes
+  // Everything else passes through to static files
+  // ============================================
+  if (!path.startsWith('/api/')) {
+    // Let Cloudflare Pages serve the static file
+    return next();
+  }
+  
+  console.log('API Request:', path, request.method);
   
   const headers = {
     'Content-Type': 'application/json',
@@ -23,8 +32,7 @@ export async function onRequest(context) {
   if (path === '/api/test') {
     return new Response(JSON.stringify({ 
       status: 'OK', 
-      message: 'API is working!',
-      path: path
+      message: 'API is working!'
     }), { headers });
   }
 
