@@ -1,0 +1,3 @@
+name = "soratest"
+main = "functions/ping.js"
+compatibility_date = "2026-07-22"
