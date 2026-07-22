@@ -80,13 +80,15 @@
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.08);
       border-radius: 3px;
-      padding: 28px 32px;
       transition: all 0.3s ease;
       cursor: pointer;
       height: auto;
       overflow: hidden;
     }
     .article-card:hover { border-color: rgba(255,59,124,0.15); }
+    .article-card .card-inner {
+      padding: 28px 32px;
+    }
     .article-card .title {
       font-family: 'Cinzel', serif;
       font-size: 18px;
@@ -157,7 +159,7 @@
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
-      .article-card { padding: 20px; }
+      .article-card .card-inner { padding: 20px; }
       .article-card .title { font-size: 16px; }
       body { padding: 16px; cursor: auto; }
     }
@@ -266,13 +268,15 @@
           
           return `
             <div class="article-card" data-article-index="${index}" data-share="${shareSlug}">
-              <div class="title">${escapeHtml(title)}</div>
-              <div class="meta">${date} · ${escapeHtml(author)}</div>
-              <div class="content preview" data-full="${escapeHtml(fullText)}" data-preview="${escapeHtml(previewText)}" data-remain="${charRemain}">
-                ${escapeHtml(previewText)}
-                ${charRemain > 0 ? `<span class="char-remain">${charRemain} characters remain</span>` : ''}
+              <div class="card-inner">
+                <div class="title">${escapeHtml(title)}</div>
+                <div class="meta">${date} · ${escapeHtml(author)}</div>
+                <div class="content preview" data-full="${escapeHtml(fullText)}" data-preview="${escapeHtml(previewText)}" data-remain="${charRemain}">
+                  ${escapeHtml(previewText)}
+                  ${charRemain > 0 ? `<span class="char-remain">${charRemain} characters remain</span>` : ''}
+                </div>
+                <div class="toggle-hint">▸ click to expand · share: ${shareSlug}</div>
               </div>
-              <div class="toggle-hint">▸ click to expand · share: ${shareSlug}</div>
             </div>
           `;
         }).join('');
