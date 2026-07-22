@@ -162,6 +162,15 @@
       color: #ff3b7c;
     }
     .article-item .actions button.delete:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .article-item .actions button.delete.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      border-color: rgba(107, 142, 155, 0.05);
+    }
+    .article-item .actions button.delete.disabled:hover {
+      border-color: rgba(107, 142, 155, 0.05);
+      color: #4a6673;
+    }
     .editor-area {
       display: flex;
       flex-direction: column;
@@ -388,6 +397,7 @@
       },
       articles: {
         list: () => fetch('/api/articles').then(r => r.json()),
+        get: (id) => fetch(`/api/articles/${id}`).then(r => r.json()),
         create: (data) => fetch('/api/articles', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
         update: (id, data) => fetch(`/api/articles/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
         delete: (id) => fetch(`/api/articles/${id}`, { method: 'DELETE' }).then(r => r.json())
@@ -408,7 +418,6 @@
         const data = await res.json();
         
         if (!data.authenticated) {
-          // User is not signed in - show access denied
           showAccessDenied('Please sign in to access this area.');
           return;
         }
@@ -416,12 +425,10 @@
         currentUser = data.user;
         
         if (data.user.role !== 'sysadmin') {
-          // User is signed in but not admin
           showAccessDenied(`Welcome, ${data.user.username}. This area requires sysadmin privileges.`);
           return;
         }
         
-        // User is admin - show the panel
         document.getElementById('panel-content').style.display = 'block';
         document.getElementById('access-denied').classList.add('hidden');
         loadArticles();
@@ -449,7 +456,13 @@
           container.innerHTML = '<div class="empty-state">no articles yet. create one.</div>';
           return;
         }
-        container.innerHTML = articles.map(a => `
+        
+        // Check if current user is admin (can delete everything)
+        const isAdminUser = currentUser && currentUser.username === 'admin';
+        
+        container.innerHTML = articles.map(a => {
+          const canDelete = isAdminUser || a.author === currentUser?.username;
+          return `
           <div class="article-item" data-id="${a.id}">
             <div>
               <div class="name">${escapeHtml(a.title)}</div>
@@ -457,33 +470,69 @@
             </div>
             <div class="actions">
               <button class="edit-btn">✎ Edit</button>
-              <button class="delete-btn">✕</button>
+              <button class="delete-btn ${!canDelete ? 'disabled' : ''}" ${!canDelete ? 'disabled' : ''} title="${!canDelete ? 'You can only delete your own articles' : ''}">✕</button>
             </div>
           </div>
-        `).join('');
+        `}).join('');
         
+        // Edit button handler
         container.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const item = btn.closest('.article-item');
             const id = parseInt(item.dataset.id);
-            fetch(`/api/articles/${id}`).then(r => r.json()).then(article => {
+            const msg = document.getElementById('editor-message');
+            
+            try {
+              msg.textContent = 'Loading article...';
+              msg.style.color = '#6b8e9b';
+              
+              const article = await API.articles.get(id);
               document.getElementById('article-title').value = article.title;
               document.getElementById('article-content').value = article.content;
               editingArticleId = id;
               document.getElementById('publish-btn').textContent = 'Update';
-              document.getElementById('editor-message').textContent = 'Editing: ' + article.title;
-              document.getElementById('editor-message').style.color = '#6b8e9b';
-            });
+              
+              msg.textContent = 'Editing: ' + article.title;
+              msg.style.color = '#6b8e9b';
+            } catch (err) {
+              console.error('Edit error:', err);
+              msg.textContent = 'Failed to load article for editing.';
+              msg.style.color = '#ff3b7c';
+            }
           });
         });
         
-        container.querySelectorAll('.delete-btn').forEach(btn => {
+        // Delete button handler - only if user owns the article or is admin
+        container.querySelectorAll('.delete-btn:not(.disabled)').forEach(btn => {
           btn.addEventListener('click', async () => {
             const item = btn.closest('.article-item');
             const id = parseInt(item.dataset.id);
+            const articleAuthor = item.querySelector('.meta').textContent.split('·')[1]?.trim() || '';
+            
+            // Double-check ownership
+            const isAdminUser = currentUser && currentUser.username === 'admin';
+            const isOwner = articleAuthor === currentUser?.username;
+            
+            if (!isAdminUser && !isOwner) {
+              alert('You can only delete your own articles.');
+              return;
+            }
+            
             if (confirm('Delete this article?')) {
-              await API.articles.delete(id);
-              loadArticles();
+              try {
+                await API.articles.delete(id);
+                loadArticles();
+                if (editingArticleId === id) {
+                  document.getElementById('article-title').value = '';
+                  document.getElementById('article-content').value = '';
+                  document.getElementById('publish-btn').textContent = 'Publish';
+                  editingArticleId = null;
+                  document.getElementById('editor-message').textContent = 'Article deleted.';
+                }
+              } catch (err) {
+                console.error('Delete error:', err);
+                alert('Failed to delete article: ' + err.message);
+              }
             }
           });
         });
@@ -532,7 +581,6 @@
       }
     }
 
-    // Escape HTML to prevent XSS
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -569,7 +617,7 @@
         loadArticles();
         setTimeout(() => { msg.textContent = ''; }, 3000);
       } catch (err) {
-        msg.textContent = 'Failed to save article.';
+        msg.textContent = 'Failed to save article: ' + err.message;
         msg.style.color = '#ff3b7c';
         console.error('Save article error:', err);
       }
