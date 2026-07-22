@@ -344,8 +344,12 @@
     }
 
     // ---------- LIST VIEW ----------
-    function renderList() {
-      listBasePath = window.location.pathname.replace(/\/+$/, '') || '';
+    // basePath: optional explicit base path for building article links.
+    // Needed because when we land on a permalink URL (/articlespace/some-slug),
+    // the list must still generate links relative to /articlespace, not
+    // relative to /articlespace/some-slug.
+    function renderList(basePath) {
+      listBasePath = (basePath !== undefined) ? basePath : (window.location.pathname.replace(/\/+$/, '') || '');
       const container = document.getElementById('articles-container');
 
       if (!currentArticles.length) {
@@ -496,85 +500,74 @@
       }
     }
 
-    // ---------- SINGLE ARTICLE VIEW (real permalink page) ----------
-    function renderSingle(article, slug) {
-      listBasePath = pathWithoutLastSegment();
-      const container = document.getElementById('articles-container');
+    // Expands the card matching `slug` (if present in the currently
+    // rendered list) and smoothly scrolls it into view, however far
+    // down the list it is. Returns false if the slug wasn't found.
+    function expandAndScrollToSlug(slug) {
+      const idx = currentSlugs.indexOf(slug);
+      if (idx === -1) return false;
+      const card = document.querySelector('.article-card[data-article-index="' + idx + '"]');
+      if (!card) return false;
 
-      const title = article.title || 'Untitled';
-      const author = article.author || 'Anonymous';
-      const date = new Date(article.created_at).toLocaleDateString();
-      const content = article.content || '';
-      const backHref = listBasePath === '' ? '/' : listBasePath;
-
-      container.innerHTML =
-        '<a class="back-to-all" href="' + backHref + '">← All Articles</a>' +
-        '<div class="article-card expanded" data-share="' + slug + '">' +
-          '<div class="card-inner">' +
-            '<div class="title-row">' +
-              '<div class="title">' + escapeHtml(title) + '</div>' +
-              '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
-            '</div>' +
-            '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
-            '<div class="content full">' + escapeHtml(content) + '</div>' +
-          '</div>' +
-        '</div>';
-
-      container.querySelector('.back-to-all').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (history.pushState) history.pushState({ view: 'list' }, '', backHref);
-        showListView();
-      });
-
-      bindCopyButtons();
+      expandCard(card);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // The card's final height (and thus its true centered position)
+      // isn't known until the expand transition finishes, so re-center
+      // once it settles.
+      setTimeout(function() {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 480);
+      return true;
     }
 
-    function renderNotFound() {
-      listBasePath = pathWithoutLastSegment();
-      const backHref = listBasePath === '' ? '/' : listBasePath;
+    // Shown when a permalink's slug doesn't match any current article
+    // (e.g. it was deleted) — the user still gets the live, real list
+    // instead of a dead end.
+    function showNotFoundBanner() {
       const container = document.getElementById('articles-container');
-
-      container.innerHTML =
-        '<a class="back-to-all" href="' + backHref + '">← All Articles</a>' +
-        '<div class="empty-articles">no article found at this link.</div>';
-
-      container.querySelector('.back-to-all').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (history.pushState) history.pushState({ view: 'list' }, '', backHref);
-        showListView();
-      });
+      const banner = document.createElement('div');
+      banner.className = 'empty-articles';
+      banner.style.padding = '16px 0';
+      banner.style.fontSize = '14px';
+      banner.textContent = 'That article link could not be found — showing all articles.';
+      container.prepend(banner);
     }
 
-    // ---------- ROUTER (used for back/forward navigation only —
-    // initial page render is decided by window.__ARTICLE__ below) ----------
+    // ---------- ROUTER (used for back/forward navigation) ----------
+    // A permalink URL always renders the full list (with the matching
+    // card expanded and scrolled into view) rather than an isolated
+    // single-article page, so visitors always land on the real, live site.
     async function route() {
-      const lastSegment = currentLastSegment();
       await ensureArticlesLoaded();
+      const lastSegment = currentLastSegment();
       const idx = currentSlugs.indexOf(lastSegment);
       if (idx !== -1) {
-        renderSingle(currentArticles[idx], currentSlugs[idx]);
+        renderList(pathWithoutLastSegment());
+        expandAndScrollToSlug(lastSegment);
       } else {
-        renderList();
+        renderList(window.location.pathname.replace(/\/+$/, '') || '');
       }
     }
 
     // ---------- BOOTSTRAP ----------
     // window.__ARTICLE__ is set by the server (in [[path]].js) only when
     // this page was requested as an /articlespace/:slug permalink. Its
-    // presence — not a client-side slug recomputation — is what decides
-    // whether we render a single article or the list. This is the fix:
-    // the server already resolved the slug against the database, so the
-    // client trusts that result instead of re-deriving it and risking a
-    // mismatch.
+    // presence tells us the server already resolved the slug against the
+    // database (and set the og:/twitter: meta tags for link-preview bots).
+    // For an actual visitor, we still render the normal, full list — just
+    // with that one card already expanded and scrolled into view — so a
+    // shared link lands on the real, live site rather than an isolated
+    // single-article stub.
     if (typeof window.__ARTICLE__ !== 'undefined') {
-      if (window.__ARTICLE__) {
-        renderSingle(window.__ARTICLE__, window.__ARTICLE__.slug);
-      } else {
-        renderNotFound();
-      }
-      // Load the full list in the background so the back-link and any
-      // later client-side navigation (popstate) work without a reload.
-      ensureArticlesLoaded();
+      const initialSlug = window.__ARTICLE__ ? window.__ARTICLE__.slug : null;
+      const container = document.getElementById('articles-container');
+      container.innerHTML = '<div class="empty-articles">loading articles...</div>';
+      ensureArticlesLoaded().then(function() {
+        renderList(pathWithoutLastSegment());
+        if (!initialSlug || !expandAndScrollToSlug(initialSlug)) {
+          showNotFoundBanner();
+        }
+      });
     } else {
       showListView();
     }
