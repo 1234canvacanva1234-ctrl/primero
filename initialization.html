@@ -2,21 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>SoraSys · Initialization</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>SoraSys · Control Panel</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
       background: #0b1114;
       color: #bcccd6;
       font-family: 'Crimson Text', serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 24px;
       min-height: 100vh;
-      padding: 20px;
       cursor: none;
     }
     #cursor {
@@ -44,179 +40,30 @@
       #cursor { display: none !important; }
       body { cursor: auto; }
     }
-    .init-container {
-      max-width: 440px;
-      width: 100%;
-      padding: 40px 32px 48px;
-      background: rgba(20, 30, 35, 0.7);
-      border: 1px solid rgba(107, 142, 155, 0.12);
-      border-radius: 3px;
-      backdrop-filter: blur(2px);
+    .panel-header {
+      max-width: 1100px;
+      margin: 0 auto 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      padding-bottom: 16px;
     }
-    .init-title {
+    .panel-title {
       font-family: 'Cinzel', serif;
       font-weight: 600;
-      font-size: 28px;
-      letter-spacing: 6px;
+      font-size: 20px;
+      letter-spacing: 4px;
       text-transform: uppercase;
       color: #6b8e9b;
-      text-align: center;
-      margin-bottom: 4px;
     }
-    .init-sub {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-weight: 300;
-      font-size: 13px;
-      color: #ff3b7c;
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 28px;
-      opacity: 0.8;
-    }
-    .init-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 28px;
-      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
-    }
-    .init-tab {
-      flex: 1;
-      padding: 10px 0;
-      text-align: center;
-      font-family: 'Cinzel', serif;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #4a6673;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-bottom: 2px solid transparent;
-      background: none;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-    }
-    .init-tab.active {
-      color: #ff3b7c;
-      border-bottom-color: #ff3b7c;
-    }
-    .init-tab:hover { color: #6b8e9b; }
-    .init-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .init-form.hidden { display: none; }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .form-group label {
-      font-family: 'Fira Code', monospace;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #4a6673;
-    }
-    .form-group input {
-      background: rgba(11, 17, 20, 0.6);
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      padding: 10px 12px;
-      color: #bcccd6;
-      font-family: 'Crimson Text', serif;
-      font-size: 15px;
-      border-radius: 2px;
-      transition: border-color 0.3s ease;
-      outline: none;
-      width: 100%;
-    }
-    .form-group input:focus {
-      border-color: #ff3b7c;
-    }
-    .form-group input::placeholder {
-      color: #4a6673;
-      font-style: italic;
-      font-size: 13px;
-    }
-    .init-btn {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #0b1114;
-      background: #ff3b7c;
-      padding: 12px 28px;
-      border: 1px solid rgba(255,59,124,0.3);
-      border-radius: 2px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 6px;
-      width: 100%;
-    }
-    .init-btn:hover {
-      background: #ff5c8f;
-      box-shadow: 0 0 28px rgba(255,59,124,0.25);
-      transform: translateY(-2px);
-    }
-    .init-btn:active { transform: scale(0.96); }
-    .init-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-    .message {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 13px;
-      color: #6b8e9b;
-      text-align: center;
-      margin-top: 12px;
-      min-height: 20px;
-    }
-    .message.error { color: #ff3b7c; }
-    .message.success { color: #6b8e9b; }
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      font-family: 'Fira Code', monospace;
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: #4a6673;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    .back-link:hover { color: #ff3b7c; }
-
-    /* Already signed in state */
-    .signed-in-state {
-      text-align: center;
-      padding: 20px 0;
-    }
-    .signed-in-state .greeting {
-      font-family: 'Cinzel', serif;
-      font-size: 18px;
-      letter-spacing: 2px;
-      color: #6b8e9b;
-      margin-bottom: 8px;
-    }
-    .signed-in-state .greeting span { color: #ff3b7c; }
-    .signed-in-state .sub {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 14px;
-      color: #4a6673;
-      margin-bottom: 16px;
-    }
-    .signed-in-state .actions {
+    .panel-title span { color: #ff3b7c; }
+    .panel-actions {
       display: flex;
       gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
+      align-items: center;
     }
-    .signed-in-state .actions .panel-btn {
+    .panel-btn {
       font-family: 'Cinzel', serif;
       font-size: 9px;
       letter-spacing: 2px;
@@ -229,379 +76,551 @@
       cursor: pointer;
       transition: all 0.3s ease;
       text-decoration: none;
-      display: inline-block;
     }
-    .signed-in-state .actions .panel-btn:hover {
+    .panel-btn:hover {
       border-color: #ff3b7c;
       color: #ff3b7c;
     }
-    .signed-in-state .actions .panel-btn.primary {
+    .panel-btn.primary {
       background: #ff3b7c;
       color: #0b1114;
       border-color: #ff3b7c;
     }
-    .signed-in-state .actions .panel-btn.primary:hover {
+    .panel-btn.primary:hover {
       background: #ff5c8f;
       box-shadow: 0 0 24px rgba(255,59,124,0.2);
     }
+    .panel-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .panel-section {
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.12);
+      border-radius: 3px;
+      padding: 24px;
+      backdrop-filter: blur(2px);
+    }
+    .panel-section.full { grid-column: 1 / -1; }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+      margin-bottom: 16px;
+    }
+    .section-title span { color: #ff3b7c; }
+    .article-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .article-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(11, 17, 20, 0.4);
+      border: 1px solid rgba(107, 142, 155, 0.06);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .article-item:hover { border-color: rgba(255,59,124,0.2); }
+    .article-item .name {
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      color: #bcccd6;
+    }
+    .article-item .meta {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: #4a6673;
+    }
+    .article-item .actions {
+      display: flex;
+      gap: 8px;
+    }
+    .article-item .actions button {
+      background: none;
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      color: #4a6673;
+      padding: 4px 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .article-item .actions button:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .article-item .actions button.delete:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-area {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .editor-area input {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      border-radius: 2px;
+      outline: none;
+    }
+    .editor-area input:focus { border-color: #ff3b7c; }
+    .editor-area textarea {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      border-radius: 2px;
+      outline: none;
+      min-height: 200px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .editor-area textarea:focus { border-color: #ff3b7c; }
+    .editor-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .editor-actions button {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      background: transparent;
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .editor-actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-actions button.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .editor-actions button.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+    .empty-state {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      color: #4a6673;
+      text-align: center;
+      padding: 24px 0;
+      font-size: 14px;
+    }
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(11, 17, 20, 0.3);
+      border: 1px solid rgba(107, 142, 155, 0.06);
+      border-radius: 2px;
+    }
+    .user-item .name {
+      font-family: 'Crimson Text', serif;
+      font-size: 13px;
+      color: #bcccd6;
+    }
+    .user-item .role {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: #4a6673;
+    }
+    .user-item .role.sysadmin { color: #ff3b7c; }
+    .user-item .actions button {
+      background: none;
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      color: #4a6673;
+      padding: 4px 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .user-item .actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .user-item .actions button.grant:hover { border-color: #6b8e9b; color: #6b8e9b; }
+    
+    .access-denied {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .access-denied .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .access-denied h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #6b8e9b;
+      margin-bottom: 8px;
+    }
+    .access-denied p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #4a6673;
+      margin-bottom: 20px;
+    }
+    .access-denied .panel-btn {
+      display: inline-block;
+    }
     .hidden { display: none; }
-
-    @media (max-width: 640px) {
-      .init-container { padding: 28px 20px 36px; }
-      .init-title { font-size: 24px; letter-spacing: 4px; }
-      body { padding: 12px; cursor: auto; }
-      .signed-in-state .actions { flex-direction: column; align-items: center; }
+    
+    @media (max-width: 768px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
+      .panel-actions { justify-content: center; flex-wrap: wrap; }
+      body { padding: 16px; cursor: auto; }
     }
   </style>
 </head>
 <body>
 <div id="cursor"></div>
-<div class="init-container">
-  <div class="init-title">Initialization</div>
-  <div class="init-sub">establish your presence</div>
-  
-  <!-- Already Signed In State -->
-  <div id="signed-in-state" class="signed-in-state hidden">
-    <div class="greeting">Welcome, <span id="signed-in-username">User</span>!</div>
-    <div class="sub">You are already signed in.</div>
-    <div class="actions">
-      <a href="/control-panel" class="panel-btn primary">⌘ Control Panel</a>
-      <a href="/articlespace" class="panel-btn">📄 Articles</a>
-      <button id="signout-from-init" class="panel-btn">↯ Sign Out</button>
+<div class="panel-header">
+  <div class="panel-title">⌘ <span>Control</span> Panel</div>
+  <div class="panel-actions">
+    <a href="/articlespace" class="panel-btn">View Articles</a>
+    <a href="/initialization" class="panel-btn">Account</a>
+    <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+  </div>
+</div>
+
+<!-- Access Denied Message (shown when not admin) -->
+<div id="access-denied" class="access-denied hidden">
+  <div class="icon">⛔</div>
+  <h2>Access Restricted</h2>
+  <p>This area requires sysadmin privileges. If you believe you should have access, please contact an administrator.</p>
+  <a href="/" class="panel-btn">↩ Return Home</a>
+</div>
+
+<!-- Main Panel Content -->
+<div id="panel-content">
+  <div class="panel-grid">
+    <!-- Editor Section -->
+    <div class="panel-section full">
+      <div class="section-title">✎ <span>Article</span> Editor</div>
+      <div class="editor-area">
+        <input type="text" id="article-title" placeholder="Article Title">
+        <textarea id="article-content" placeholder="Write your article here..."></textarea>
+        <div class="editor-actions">
+          <button id="publish-btn" class="primary">Publish</button>
+          <button id="cancel-edit-btn">Cancel</button>
+        </div>
+        <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:#6b8e9b;min-height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Articles List -->
+    <div class="panel-section">
+      <div class="section-title">📄 <span>Your</span> Articles</div>
+      <div id="articles-list" class="article-list">
+        <div class="empty-state">loading articles...</div>
+      </div>
+    </div>
+
+    <!-- User Management (sysadmin only) -->
+    <div class="panel-section" id="user-management">
+      <div class="section-title">👥 <span>User</span> Management</div>
+      <div id="users-list" class="user-list">
+        <div class="empty-state">loading users...</div>
+      </div>
     </div>
   </div>
-
-  <!-- Sign In / Sign Up Forms -->
-  <div id="auth-forms">
-    <div class="init-tabs">
-      <button class="init-tab active" data-tab="signin">Sign In</button>
-      <button class="init-tab" data-tab="signup">Sign Up</button>
-    </div>
-
-    <!-- Sign In Form -->
-    <form id="signin-form" class="init-form">
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="signin-username" placeholder="your username" required>
-      </div>
-      <div class="form-group">
-        <label>Security Token</label>
-        <input type="password" id="signin-password" placeholder="••••••••" required>
-      </div>
-      <button type="submit" class="init-btn">Access Network</button>
-      <div id="signin-message" class="message"></div>
-    </form>
-
-    <!-- Sign Up Form -->
-    <form id="signup-form" class="init-form hidden">
-      <div class="form-group">
-        <label>Choose Username</label>
-        <input type="text" id="signup-username" placeholder="unique identifier" required>
-      </div>
-      <div class="form-group">
-        <label>Security Token</label>
-        <input type="password" id="signup-password" placeholder="create a strong token" required>
-      </div>
-      <div class="form-group">
-        <label>Confirm Token</label>
-        <input type="password" id="signup-confirm" placeholder="confirm your token" required>
-      </div>
-      <button type="submit" class="init-btn">Establish Identity</button>
-      <div id="signup-message" class="message"></div>
-    </form>
-  </div>
-
-  <a href="/" class="back-link">↩ return to network</a>
 </div>
 
 <script>
   (function() {
-    // Custom cursor
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
-      if (!cursor) return;
-      
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
-      
-      let mx = -100, my = -100;
-      let cx = -100, cy = -100;
-      
-      function updateCursor() {
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
         cursor.style.left = cx + 'px';
         cursor.style.top = cy + 'px';
-        requestAnimationFrame(updateCursor);
-      }
-      
-      document.addEventListener('mousemove', (e) => {
-        mx = e.clientX;
-        my = e.clientY;
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('button, a, input, textarea').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
       });
-      
-      document.addEventListener('mouseleave', () => {
-        cursor.classList.remove('active');
-      });
-      
-      document.addEventListener('mouseenter', () => {
-        cursor.classList.add('active');
-      });
-      
-      const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link, .panel-btn');
-      interactiveElements.forEach(el => {
-        el.addEventListener('mouseenter', () => {
-          cursor.classList.add('hover');
-        });
-        el.addEventListener('mouseleave', () => {
-          cursor.classList.remove('hover');
-        });
-      });
-      
-      updateCursor();
-    } else {
-      document.body.style.cursor = 'auto';
+      update();
     }
 
-    // DOM elements
-    const signedInState = document.getElementById('signed-in-state');
-    const authForms = document.getElementById('auth-forms');
-    const signedInUsername = document.getElementById('signed-in-username');
-    const signoutBtn = document.getElementById('signout-from-init');
+    const API = {
+      auth: {
+        signout: () => fetch('/api/auth/signout', { method: 'POST' })
+      },
+      articles: {
+        list: () => fetch('/api/articles').then(r => r.json()),
+        get: (id) => fetch(`/api/articles/${id}`).then(r => r.json()),
+        create: (data) => fetch('/api/articles', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
+        update: (id, data) => fetch(`/api/articles/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
+        delete: (id) => fetch(`/api/articles/${id}`, { method: 'DELETE' }).then(r => r.json())
+      },
+      users: {
+        list: () => fetch('/api/users').then(r => r.json()),
+        grant: (username) => fetch(`/api/users/${username}/grant`, { method: 'POST' }).then(r => r.json())
+      }
+    };
 
-    const tabs = document.querySelectorAll('.init-tab');
-    const signinForm = document.getElementById('signin-form');
-    const signupForm = document.getElementById('signup-form');
+    let currentUser = null;
+    let editingArticleId = null;
 
-    // ============================================
-    // Check if user is already signed in
-    // ============================================
-    async function checkAuthStatus() {
+    // Check auth status - NO REDIRECT, just show/hide content
+    async function checkAuth() {
       try {
         const res = await fetch('/api/auth/status');
         const data = await res.json();
         
-        if (data.authenticated && data.user) {
-          // User is signed in - show welcome state
-          signedInUsername.textContent = data.user.username;
-          signedInState.classList.remove('hidden');
-          authForms.classList.add('hidden');
-          document.querySelector('.init-sub').textContent = 'you are already connected';
-        } else {
-          // User is not signed in - show forms
-          signedInState.classList.add('hidden');
-          authForms.classList.remove('hidden');
-          document.querySelector('.init-sub').textContent = 'establish your presence';
+        if (!data.authenticated) {
+          showAccessDenied('Please sign in to access this area.');
+          return;
         }
+        
+        currentUser = data.user;
+        
+        if (data.user.role !== 'sysadmin') {
+          showAccessDenied(`Welcome, ${data.user.username}. This area requires sysadmin privileges.`);
+          return;
+        }
+        
+        // User is admin - show the panel
+        document.getElementById('panel-content').style.display = 'block';
+        document.getElementById('access-denied').classList.add('hidden');
+        loadArticles();
+        loadUsers();
+        
       } catch (err) {
         console.error('Auth check error:', err);
-        // Show forms on error
-        signedInState.classList.add('hidden');
-        authForms.classList.remove('hidden');
+        showAccessDenied('Unable to verify authentication. Please try again.');
       }
     }
 
-    // ============================================
-    // Sign out from initialization page
-    // ============================================
-    signoutBtn.addEventListener('click', async () => {
-      try {
-        await fetch('/api/auth/signout', { method: 'POST' });
-        // Refresh the page to show sign in forms
-        window.location.reload();
-      } catch (err) {
-        console.error('Signout error:', err);
-        window.location.reload();
-      }
-    });
+    function showAccessDenied(message) {
+      document.getElementById('panel-content').style.display = 'none';
+      const denied = document.getElementById('access-denied');
+      denied.classList.remove('hidden');
+      const p = denied.querySelector('p');
+      if (p) p.textContent = message;
+    }
 
-    // ============================================
-    // Tab switching
-    // ============================================
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        if (tab.dataset.tab === 'signin') {
-          signinForm.classList.remove('hidden');
-          signupForm.classList.add('hidden');
+    async function loadArticles() {
+      try {
+        const articles = await API.articles.list();
+        const container = document.getElementById('articles-list');
+        if (!articles || articles.length === 0) {
+          container.innerHTML = '<div class="empty-state">no articles yet. create one.</div>';
+          return;
+        }
+        container.innerHTML = articles.map(a => `
+          <div class="article-item" data-id="${a.id}">
+            <div>
+              <div class="name">${escapeHtml(a.title)}</div>
+              <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
+            </div>
+            <div class="actions">
+              <button class="edit-btn">✎ Edit</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </div>
+        `).join('');
+        
+        // Edit button handler
+        container.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const item = btn.closest('.article-item');
+            const id = parseInt(item.dataset.id);
+            const msg = document.getElementById('editor-message');
+            
+            try {
+              msg.textContent = 'Loading article...';
+              msg.style.color = '#6b8e9b';
+              
+              const article = await API.articles.get(id);
+              document.getElementById('article-title').value = article.title;
+              document.getElementById('article-content').value = article.content;
+              editingArticleId = id;
+              document.getElementById('publish-btn').textContent = 'Update';
+              
+              msg.textContent = 'Editing: ' + article.title;
+              msg.style.color = '#6b8e9b';
+            } catch (err) {
+              console.error('Edit error:', err);
+              msg.textContent = 'Failed to load article for editing.';
+              msg.style.color = '#ff3b7c';
+            }
+          });
+        });
+        
+        // Delete button handler
+        container.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const item = btn.closest('.article-item');
+            const id = parseInt(item.dataset.id);
+            if (confirm('Delete this article?')) {
+              try {
+                await API.articles.delete(id);
+                loadArticles();
+                // Clear editor if the deleted article was being edited
+                if (editingArticleId === id) {
+                  document.getElementById('article-title').value = '';
+                  document.getElementById('article-content').value = '';
+                  document.getElementById('publish-btn').textContent = 'Publish';
+                  editingArticleId = null;
+                  document.getElementById('editor-message').textContent = 'Article deleted.';
+                }
+              } catch (err) {
+                console.error('Delete error:', err);
+                alert('Failed to delete article.');
+              }
+            }
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load articles:', err);
+        document.getElementById('articles-list').innerHTML = '<div class="empty-state">failed to load articles</div>';
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await API.users.list();
+        const container = document.getElementById('users-list');
+        if (!users || users.length === 0) {
+          container.innerHTML = '<div class="empty-state">no users found</div>';
+          return;
+        }
+        container.innerHTML = users.map(u => `
+          <div class="user-item">
+            <div>
+              <span class="name">${escapeHtml(u.username)}</span>
+              <span class="role ${u.role}">${u.role}</span>
+            </div>
+            <div class="actions">
+              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${escapeHtml(u.username)}">Grant Admin</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+        
+        container.querySelectorAll('.grant-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const username = btn.dataset.user;
+            if (confirm(`Grant sysadmin to ${username}?`)) {
+              try {
+                await API.users.grant(username);
+                loadUsers();
+              } catch (err) {
+                alert('Failed to grant admin: ' + err.message);
+              }
+            }
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load users:', err);
+        document.getElementById('users-list').innerHTML = '<div class="empty-state">failed to load users</div>';
+      }
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Publish/Update article
+    document.getElementById('publish-btn').addEventListener('click', async () => {
+      const title = document.getElementById('article-title').value.trim();
+      const content = document.getElementById('article-content').value.trim();
+      const msg = document.getElementById('editor-message');
+      
+      if (!title || !content) {
+        msg.textContent = 'Title and content are required.';
+        msg.style.color = '#ff3b7c';
+        return;
+      }
+      
+      try {
+        if (editingArticleId) {
+          await API.articles.update(editingArticleId, { title, content });
+          msg.textContent = 'Article updated!';
+          msg.style.color = '#6b8e9b';
+          editingArticleId = null;
+          document.getElementById('publish-btn').textContent = 'Publish';
         } else {
-          signinForm.classList.add('hidden');
-          signupForm.classList.remove('hidden');
+          await API.articles.create({ title, content });
+          msg.textContent = 'Article published!';
+          msg.style.color = '#6b8e9b';
         }
-        document.querySelectorAll('.message').forEach(m => {
-          m.textContent = '';
-          m.className = 'message';
-        });
-      });
-    });
-
-    // ============================================
-    // Sign Up
-    // ============================================
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('signup-username').value.trim();
-      const password = document.getElementById('signup-password').value;
-      const confirm = document.getElementById('signup-confirm').value;
-      const msg = document.getElementById('signup-message');
-      const btn = e.target.querySelector('.init-btn');
-      
-      msg.textContent = '';
-      msg.className = 'message';
-      
-      if (!username || !password || !confirm) {
-        msg.textContent = 'All fields are required.';
-        msg.className = 'message error';
-        return;
-      }
-      if (username.length < 3) {
-        msg.textContent = 'Username must be at least 3 characters.';
-        msg.className = 'message error';
-        return;
-      }
-      if (password.length < 8) {
-        msg.textContent = 'Security token must be at least 8 characters.';
-        msg.className = 'message error';
-        return;
-      }
-      if (password !== confirm) {
-        msg.textContent = 'Tokens do not match.';
-        msg.className = 'message error';
-        return;
-      }
-      
-      btn.disabled = true;
-      msg.textContent = 'Creating account...';
-      msg.className = 'message';
-      
-      try {
-        const res = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
-        });
-        
-        let data;
-        try {
-          data = await res.json();
-        } catch (parseError) {
-          console.error('Response is not JSON:', parseError);
-          throw new Error('Server returned invalid response format');
-        }
-        
-        if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Signup failed.';
-          msg.className = 'message error';
-          btn.disabled = false;
-          return;
-        }
-        
-        msg.textContent = 'Identity established!';
-        msg.className = 'message success';
-        btn.disabled = false;
-        
-        // Clear form
-        document.getElementById('signup-username').value = '';
-        document.getElementById('signup-password').value = '';
-        document.getElementById('signup-confirm').value = '';
-        
-        // Check auth status to show signed-in state
-        setTimeout(() => {
-          checkAuthStatus();
-          // Switch to sign in tab
-          tabs.forEach(t => t.classList.remove('active'));
-          document.querySelector('[data-tab="signin"]').classList.add('active');
-          signinForm.classList.remove('hidden');
-          signupForm.classList.add('hidden');
-        }, 1000);
-        
+        document.getElementById('article-title').value = '';
+        document.getElementById('article-content').value = '';
+        loadArticles();
+        setTimeout(() => { msg.textContent = ''; }, 3000);
       } catch (err) {
-        console.error('Signup error:', err);
-        msg.textContent = 'Network error: ' + err.message;
-        msg.className = 'message error';
-        btn.disabled = false;
+        msg.textContent = 'Failed to save article: ' + err.message;
+        msg.style.color = '#ff3b7c';
+        console.error('Save article error:', err);
       }
     });
 
-    // ============================================
-    // Sign In
-    // ============================================
-    document.getElementById('signin-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('signin-username').value.trim();
-      const password = document.getElementById('signin-password').value;
-      const msg = document.getElementById('signin-message');
-      const btn = e.target.querySelector('.init-btn');
-      
-      msg.textContent = '';
-      msg.className = 'message';
-      
-      if (!username || !password) {
-        msg.textContent = 'All fields are required.';
-        msg.className = 'message error';
-        return;
-      }
-      
-      btn.disabled = true;
-      msg.textContent = 'Authenticating...';
-      msg.className = 'message';
-      
+    document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+      document.getElementById('article-title').value = '';
+      document.getElementById('article-content').value = '';
+      document.getElementById('publish-btn').textContent = 'Publish';
+      document.getElementById('editor-message').textContent = '';
+      editingArticleId = null;
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
-        });
-        
-        let data;
-        try {
-          data = await res.json();
-        } catch (parseError) {
-          console.error('Response is not JSON:', parseError);
-          throw new Error('Server returned invalid response format');
-        }
-        
-        if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Authentication failed.';
-          msg.className = 'message error';
-          btn.disabled = false;
-          return;
-        }
-        
-        msg.textContent = 'Access granted!';
-        msg.className = 'message success';
-        btn.disabled = false;
-        
-        // Clear form
-        document.getElementById('signin-username').value = '';
-        document.getElementById('signin-password').value = '';
-        
-        // Check auth status to show signed-in state
-        setTimeout(() => {
-          checkAuthStatus();
-        }, 500);
-        
+        await API.auth.signout();
+        window.location.href = '/';
       } catch (err) {
-        console.error('Signin error:', err);
-        msg.textContent = 'Network error: ' + err.message;
-        msg.className = 'message error';
-        btn.disabled = false;
+        console.error('Logout error:', err);
+        window.location.href = '/';
       }
     });
 
-    // ============================================
-    // Initialize - Check auth status on load
-    // ============================================
-    checkAuthStatus();
+    // Start
+    checkAuth();
   })();
 </script>
 </body>
