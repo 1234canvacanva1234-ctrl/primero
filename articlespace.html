@@ -82,6 +82,9 @@
       border-radius: 3px;
       padding: 28px 32px;
       transition: all 0.3s ease;
+      cursor: pointer;
+      height: auto;
+      overflow: hidden;
     }
     .article-card:hover { border-color: rgba(255,59,124,0.15); }
     .article-card .title {
@@ -90,6 +93,14 @@
       letter-spacing: 2px;
       color: #6b8e9b;
       margin-bottom: 6px;
+      transition: all 0.3s ease;
+    }
+    .article-card .title.pulse-active {
+      animation: pulse-opacity 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-opacity {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
     .article-card .meta {
       font-family: 'Fira Code', monospace;
@@ -105,6 +116,35 @@
       color: #bcccd6;
       white-space: pre-wrap;
       word-wrap: break-word;
+      transition: all 0.4s ease;
+    }
+    .article-card .content.preview .char-remain {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      color: #ff3b7c;
+      opacity: 0.7;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      display: block;
+      animation: pulse-opacity 2s ease-in-out infinite;
+    }
+    .article-card .content.full {
+      max-height: none;
+    }
+    .article-card .content.full .char-remain {
+      display: none;
+    }
+    .article-card .toggle-hint {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: #4a6673;
+      margin-top: 12px;
+      opacity: 0.4;
+      transition: opacity 0.3s ease;
+    }
+    .article-card:hover .toggle-hint {
+      opacity: 0.8;
     }
     .empty-articles {
       text-align: center;
@@ -143,14 +183,12 @@
       const cursor = document.getElementById('cursor');
       if (!cursor) return;
       
-      // Show cursor
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
       
       let mx = -100, my = -100;
       let cx = -100, cy = -100;
       
-      // Animation loop with smooth following
       function updateCursor() {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
@@ -159,13 +197,11 @@
         requestAnimationFrame(updateCursor);
       }
       
-      // Track mouse position
       document.addEventListener('mousemove', (e) => {
         mx = e.clientX;
         my = e.clientY;
       });
       
-      // Handle mouse leaving the window
       document.addEventListener('mouseleave', () => {
         cursor.classList.remove('active');
       });
@@ -174,7 +210,6 @@
         cursor.classList.add('active');
       });
       
-      // Add hover effect to all interactive elements
       const interactiveElements = document.querySelectorAll('a, .article-card, .space-nav a, .space-header');
       interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
@@ -185,14 +220,15 @@
         });
       });
       
-      // Start the animation
       updateCursor();
     } else {
-      // On mobile, ensure default cursor
       document.body.style.cursor = 'auto';
     }
 
-    // Load articles
+    // Track active card for pulse management
+    let activeCard = null;
+
+    // Load articles and add minimize/maximize functionality
     async function loadArticles() {
       try {
         const res = await fetch('/api/articles');
@@ -205,20 +241,132 @@
           return;
         }
         
-        container.innerHTML = articles.map(a => `
-          <div class="article-card">
-            <div class="title">${escapeHtml(a.title)}</div>
-            <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
-            <div class="content">${escapeHtml(a.content)}</div>
-          </div>
-        `).join('');
+        // Generate article HTML with minimized state
+        container.innerHTML = articles.map((a, index) => {
+          const content = a.content || '';
+          const title = a.title || 'Untitled';
+          const author = a.author || 'Anonymous';
+          const date = new Date(a.created_at).toLocaleDateString();
+          
+          // Truncate to 200 chars for preview
+          const previewText = content.length > 200 ? content.slice(0, 200) : content;
+          const fullText = content;
+          const charRemain = content.length > 200 ? content.length - 200 : 0;
+          
+          // Generate shareable link based on title
+          let shareSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          // Check for duplicates in articles array
+          const duplicateCount = articles.filter((art, idx) => {
+            const artSlug = (art.title || 'Untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            return artSlug === shareSlug && idx < index;
+          }).length;
+          if (duplicateCount > 0) {
+            shareSlug += '-' + (duplicateCount + 1);
+          }
+          
+          return `
+            <div class="article-card" data-article-index="${index}" data-share="${shareSlug}">
+              <div class="title">${escapeHtml(title)}</div>
+              <div class="meta">${date} · ${escapeHtml(author)}</div>
+              <div class="content preview" data-full="${escapeHtml(fullText)}" data-preview="${escapeHtml(previewText)}" data-remain="${charRemain}">
+                ${escapeHtml(previewText)}
+                ${charRemain > 0 ? `<span class="char-remain">${charRemain} characters remain</span>` : ''}
+              </div>
+              <div class="toggle-hint">▸ click to expand · share: ${shareSlug}</div>
+            </div>
+          `;
+        }).join('');
+        
+        // Attach click handlers to each card
+        document.querySelectorAll('.article-card').forEach(card => {
+          card.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleCard(this);
+          });
+        });
+        
       } catch (err) {
         console.error('Error loading articles:', err);
         document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
       }
     }
     
-    // Simple escape function to prevent XSS
+    // Toggle card between minimized and maximized state
+    function toggleCard(card) {
+      const contentDiv = card.querySelector('.content');
+      const titleDiv = card.querySelector('.title');
+      const toggleHint = card.querySelector('.toggle-hint');
+      const fullText = contentDiv.dataset.full;
+      const previewText = contentDiv.dataset.preview;
+      const remain = parseInt(contentDiv.dataset.remain);
+      
+      const isMinimized = contentDiv.classList.contains('preview');
+      
+      if (isMinimized) {
+        // Maximize with satisfying effect
+        contentDiv.classList.remove('preview');
+        contentDiv.classList.add('full');
+        contentDiv.textContent = fullText;
+        contentDiv.style.maxHeight = '0px';
+        contentDiv.style.opacity = '0';
+        
+        // Trigger reflow for animation
+        void contentDiv.offsetHeight;
+        
+        // Animate in
+        contentDiv.style.maxHeight = contentDiv.scrollHeight + 'px';
+        contentDiv.style.opacity = '1';
+        contentDiv.style.transition = 'max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease';
+        
+        // Update toggle hint
+        toggleHint.textContent = `▾ expanded · share: ${card.dataset.share}`;
+        
+        // Pulse the title
+        titleDiv.classList.add('pulse-active');
+        
+        // Remove pulse from previous active card
+        if (activeCard && activeCard !== card) {
+          const prevTitle = activeCard.querySelector('.title');
+          if (prevTitle) prevTitle.classList.remove('pulse-active');
+        }
+        activeCard = card;
+        
+        // Update URL with shareable link (only article name)
+        const shareSlug = card.dataset.share;
+        if (history.pushState) {
+          const newUrl = window.location.pathname + '?article=' + shareSlug;
+          history.pushState({ article: shareSlug }, '', newUrl);
+        }
+        
+      } else {
+        // Minimize back to preview
+        contentDiv.classList.remove('full');
+        contentDiv.classList.add('preview');
+        contentDiv.style.maxHeight = 'none';
+        contentDiv.style.opacity = '1';
+        
+        // Reset content to preview with character count
+        let previewHtml = escapeHtml(previewText);
+        if (remain > 0) {
+          previewHtml += `<span class="char-remain">${remain} characters remain</span>`;
+        }
+        contentDiv.innerHTML = previewHtml;
+        
+        // Remove pulse from title
+        titleDiv.classList.remove('pulse-active');
+        if (activeCard === card) activeCard = null;
+        
+        // Update toggle hint
+        toggleHint.textContent = `▸ click to expand · share: ${card.dataset.share}`;
+        
+        // Remove URL parameter
+        if (history.pushState) {
+          const newUrl = window.location.pathname;
+          history.pushState({}, '', newUrl);
+        }
+      }
+    }
+    
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -226,7 +374,66 @@
       return div.innerHTML;
     }
     
+    // Check URL for article parameter on load
+    function checkUrlForArticle() {
+      const params = new URLSearchParams(window.location.search);
+      const articleSlug = params.get('article');
+      if (articleSlug) {
+        // Wait for articles to load and then find matching card
+        setTimeout(() => {
+          const cards = document.querySelectorAll('.article-card');
+          for (const card of cards) {
+            if (card.dataset.share === articleSlug) {
+              toggleCard(card);
+              break;
+            }
+          }
+        }, 300);
+      }
+    }
+    
     loadArticles();
+    checkUrlForArticle();
+    
+    // Handle back/forward navigation
+    window.addEventListener('popstate', function(e) {
+      const params = new URLSearchParams(window.location.search);
+      const articleSlug = params.get('article');
+      const cards = document.querySelectorAll('.article-card');
+      
+      // Reset all cards
+      cards.forEach(card => {
+        const contentDiv = card.querySelector('.content');
+        const titleDiv = card.querySelector('.title');
+        const toggleHint = card.querySelector('.toggle-hint');
+        const previewText = contentDiv.dataset.preview;
+        const remain = parseInt(contentDiv.dataset.remain);
+        
+        if (contentDiv.classList.contains('full')) {
+          contentDiv.classList.remove('full');
+          contentDiv.classList.add('preview');
+          let previewHtml = escapeHtml(previewText);
+          if (remain > 0) {
+            previewHtml += `<span class="char-remain">${remain} characters remain</span>`;
+          }
+          contentDiv.innerHTML = previewHtml;
+          titleDiv.classList.remove('pulse-active');
+          toggleHint.textContent = `▸ click to expand · share: ${card.dataset.share}`;
+        }
+      });
+      activeCard = null;
+      
+      // If there's an article param, expand that card
+      if (articleSlug) {
+        for (const card of cards) {
+          if (card.dataset.share === articleSlug) {
+            toggleCard(card);
+            break;
+          }
+        }
+      }
+    });
+    
   })();
 </script>
 </body>
