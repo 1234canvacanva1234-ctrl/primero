@@ -3,6 +3,9 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  // Log every request for debugging
+  console.log('API Request:', path, request.method);
+
   // CORS headers
   const headers = {
     'Content-Type': 'application/json',
@@ -17,35 +20,48 @@ export async function onRequest(context) {
     return new Response(null, { headers });
   }
 
-  try {
-    // TEST - Check if API is working
-    if (path === '/api/test') {
-      return new Response(JSON.stringify({ 
-        status: 'OK', 
-        message: 'API is working!',
-        timestamp: new Date().toISOString()
-      }), { headers });
-    }
+  // ============================================
+  // TEST ENDPOINT - Visit /api/test to verify it works
+  // ============================================
+  if (path === '/api/test') {
+    return new Response(JSON.stringify({ 
+      status: 'OK', 
+      message: 'API is working!',
+      timestamp: new Date().toISOString()
+    }), { headers });
+  }
 
-    // TEST - Check database
-    if (path === '/api/db-test') {
-      try {
-        const result = await env.DB.prepare('SELECT 1 as test').first();
+  // ============================================
+  // DATABASE TEST - Visit /api/db-test
+  // ============================================
+  if (path === '/api/db-test') {
+    try {
+      if (!env.DB) {
         return new Response(JSON.stringify({ 
-          status: 'Database connected!',
-          result: result 
-        }), { headers });
-      } catch (err) {
-        return new Response(JSON.stringify({ 
-          error: 'Database error: ' + err.message 
+          error: 'Database binding "DB" not found' 
         }), { status: 500, headers });
       }
+      const result = await env.DB.prepare('SELECT 1 as test').first();
+      return new Response(JSON.stringify({ 
+        status: 'Database connected!',
+        result: result 
+      }), { headers });
+    } catch (err) {
+      return new Response(JSON.stringify({ 
+        error: 'Database error: ' + err.message 
+      }), { status: 500, headers });
     }
+  }
 
-    // SIGNUP
-    if (path === '/api/auth/signup' && request.method === 'POST') {
+  // ============================================
+  // SIGNUP
+  // ============================================
+  if (path === '/api/auth/signup' && request.method === 'POST') {
+    try {
       const body = await request.json();
       const { username, password } = body;
+      
+      console.log('Signup attempt:', username);
       
       // Validate
       if (!username || username.length < 3) {
@@ -90,12 +106,24 @@ export async function onRequest(context) {
         message: 'Account created successfully',
         username: username
       }), { headers });
+      
+    } catch (err) {
+      console.error('Signup error:', err);
+      return new Response(JSON.stringify({ 
+        error: 'Signup failed: ' + err.message 
+      }), { status: 500, headers });
     }
+  }
 
-    // SIGNIN
-    if (path === '/api/auth/signin' && request.method === 'POST') {
+  // ============================================
+  // SIGNIN
+  // ============================================
+  if (path === '/api/auth/signin' && request.method === 'POST') {
+    try {
       const body = await request.json();
       const { username, password } = body;
+      
+      console.log('Signin attempt:', username);
       
       if (!username || !password) {
         return new Response(JSON.stringify({ error: 'Username and password required' }), 
@@ -136,10 +164,20 @@ export async function onRequest(context) {
         username: username,
         role: user.role
       }), { headers });
+      
+    } catch (err) {
+      console.error('Signin error:', err);
+      return new Response(JSON.stringify({ 
+        error: 'Signin failed: ' + err.message 
+      }), { status: 500, headers });
     }
+  }
 
-    // AUTH STATUS
-    if (path === '/api/auth/status') {
+  // ============================================
+  // AUTH STATUS
+  // ============================================
+  if (path === '/api/auth/status') {
+    try {
       const cookie = request.headers.get('Cookie') || '';
       const sessionId = cookie.match(/session=([^;]+)/)?.[1];
       
@@ -154,19 +192,38 @@ export async function onRequest(context) {
       
       const user = await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
       return new Response(JSON.stringify({ authenticated: true, user }), { headers });
+      
+    } catch (err) {
+      return new Response(JSON.stringify({ authenticated: false }), { headers });
     }
-
-    // 404
-    return new Response(JSON.stringify({ 
-      error: 'Not found',
-      path: path 
-    }), { status: 404, headers });
-
-  } catch (error) {
-    console.error('API Error:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error.message
-    }), { status: 500, headers });
   }
+
+  // ============================================
+  // SIGNOUT
+  // ============================================
+  if (path === '/api/auth/signout' && request.method === 'POST') {
+    try {
+      const cookie = request.headers.get('Cookie') || '';
+      const sessionId = cookie.match(/session=([^;]+)/)?.[1];
+      
+      if (sessionId) {
+        await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(sessionId).run();
+      }
+      
+      headers['Set-Cookie'] = 'session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
+      return new Response(JSON.stringify({ success: true }), { headers });
+      
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Signout failed' }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // NOT FOUND - Return JSON instead of HTML
+  // ============================================
+  return new Response(JSON.stringify({ 
+    error: 'Not found',
+    path: path,
+    method: request.method
+  }), { status: 404, headers });
 }
