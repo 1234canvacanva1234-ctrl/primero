@@ -6,9 +6,7 @@
   <title>SoraSys · Articlespace</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
-    
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
     body {
       background: #0b1114;
       color: #bcccd6;
@@ -17,7 +15,6 @@
       min-height: 100vh;
       cursor: none;
     }
-    
     #cursor {
       position: fixed;
       width: 8px;
@@ -41,7 +38,6 @@
       #cursor { display: none !important; }
       body { cursor: auto; }
     }
-    
     .space-header {
       max-width: 900px;
       margin: 0 auto 32px;
@@ -71,37 +67,35 @@
       transition: color 0.3s ease;
     }
     .space-nav a:hover { color: #ff3b7c; }
-    
     .articles-container {
       max-width: 900px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
-    
     .article-card {
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.08);
       border-radius: 3px;
       padding: 28px 32px;
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       cursor: pointer;
       position: relative;
+      max-height: 220px;
       overflow: hidden;
-      max-height: 200px;
     }
     .article-card.expanded {
-      max-height: 2000px;
-      border-color: rgba(255, 59, 124, 0.3);
+      max-height: 3000px;
+      border-color: rgba(255, 59, 124, 0.25);
       background: rgba(20, 30, 35, 0.9);
       box-shadow: 0 0 40px rgba(255, 59, 124, 0.05);
+      padding-bottom: 32px;
     }
     .article-card .title-row {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 6px;
     }
     .article-card .title {
@@ -109,8 +103,7 @@
       font-size: 18px;
       letter-spacing: 2px;
       color: #6b8e9b;
-      transition: color 0.4s ease;
-      flex: 1;
+      transition: color 0.5s ease;
     }
     .article-card.expanded .title {
       color: #ff3b7c;
@@ -120,24 +113,18 @@
       0%, 100% { opacity: 0.7; }
       50% { opacity: 1; }
     }
-    .article-card .title-actions {
-      display: flex;
-      gap: 8px;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
     .article-card .copy-btn {
       background: none;
       border: 1px solid rgba(107, 142, 155, 0.15);
       color: #4a6673;
-      padding: 4px 10px;
-      font-family: 'Fira Code', monospace;
-      font-size: 7px;
-      letter-spacing: 1px;
+      padding: 3px 8px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.3s ease;
       border-radius: 2px;
-      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1;
+      font-family: 'Fira Code', monospace;
     }
     .article-card .copy-btn:hover {
       border-color: #ff3b7c;
@@ -153,11 +140,14 @@
       letter-spacing: 1.5px;
       color: #4a6673;
       margin-bottom: 14px;
-      transition: color 0.4s ease;
+      transition: color 0.5s ease;
     }
     .article-card.expanded .meta {
       color: #ff3b7c;
       animation: pulseText 3s ease-in-out infinite;
+    }
+    .article-card .content-wrapper {
+      position: relative;
     }
     .article-card .content {
       font-family: 'Crimson Text', serif;
@@ -166,31 +156,29 @@
       color: #bcccd6;
       white-space: pre-wrap;
       word-wrap: break-word;
-      transition: all 0.4s ease;
+    }
+    .article-card .content .truncated {
       position: relative;
     }
-    .article-card .content .truncated-text {
-      position: relative;
-    }
-    .article-card .content .truncated-text .fade-out {
+    .article-card .content .fade-overlay {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 40px;
+      height: 50px;
       background: linear-gradient(to bottom, transparent, rgba(20, 30, 35, 0.95));
       pointer-events: none;
     }
-    .article-card .content .char-count {
+    .article-card .char-info {
       font-family: 'Fira Code', monospace;
       font-size: 8px;
       letter-spacing: 1px;
       color: #4a6673;
       margin-top: 8px;
       display: block;
-      transition: color 0.4s ease;
+      transition: color 0.5s ease;
     }
-    .article-card.expanded .content .char-count {
+    .article-card.expanded .char-info {
       color: #ff3b7c;
       animation: pulseText 3s ease-in-out infinite;
     }
@@ -225,8 +213,12 @@
     }
     .article-card.expanded .full-content {
       display: block;
+      animation: fadeIn 0.5s ease;
     }
-    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .empty-articles {
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
@@ -235,15 +227,12 @@
       color: #4a6673;
       padding: 60px 0;
     }
-    
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
-      .article-card { padding: 20px; max-height: 180px; }
+      .article-card { padding: 20px; max-height: 200px; }
       .article-card .title { font-size: 16px; }
-      .article-card .title-row { flex-direction: column; align-items: stretch; }
-      .article-card .title-actions { margin-top: 4px; }
-      .article-card .copy-btn { font-size: 6px; padding: 3px 8px; }
+      .article-card .title-row { flex-wrap: wrap; }
       body { padding: 16px; cursor: auto; }
     }
   </style>
@@ -263,34 +252,38 @@
 
 <script>
   (function() {
-    // Custom cursor
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
       if (!cursor) return;
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
       let mx = -100, my = -100, cx = -100, cy = -100;
-      const update = () => {
+      function updateCursor() {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
         cursor.style.left = cx + 'px';
         cursor.style.top = cy + 'px';
-        requestAnimationFrame(update);
-      };
-      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        requestAnimationFrame(updateCursor);
+      }
+      document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+      document.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+      document.addEventListener('mouseenter', () => cursor.classList.add('active'));
       document.querySelectorAll('a, .article-card, .copy-btn').forEach(el => {
         el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
         el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
       });
-      update();
+      updateCursor();
+    } else {
+      document.body.style.cursor = 'auto';
     }
 
     let allArticles = [];
-    let expandedId = null;
+    let titleCounts = {};
 
     async function loadArticles() {
       try {
         const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error('Failed to fetch');
         const articles = await res.json();
         allArticles = articles;
         const container = document.getElementById('articles-container');
@@ -299,57 +292,71 @@
           container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
           return;
         }
-        
+
+        // Build title counts for duplicate detection
+        titleCounts = {};
+        articles.forEach(a => {
+          titleCounts[a.title] = (titleCounts[a.title] || 0) + 1;
+        });
+
         // Check URL hash for expanded article
         const hash = window.location.hash.replace('#', '');
         let expandedIndex = -1;
         if (hash) {
           const decoded = decodeURIComponent(hash);
           expandedIndex = articles.findIndex(a => {
-            const slug = createSlug(a.title, a.id);
+            const slug = createSlug(a.title);
             return slug === decoded;
           });
+          // If not found by title, try with ID
+          if (expandedIndex === -1) {
+            expandedIndex = articles.findIndex(a => {
+              const slugWithId = createSlug(a.title) + '-' + a.id;
+              return slugWithId === decoded;
+            });
+          }
         }
         
         container.innerHTML = articles.map((a, index) => {
           const isExpanded = (expandedIndex === index);
-          const slug = createSlug(a.title, a.id);
-          const url = `${window.location.origin}${window.location.pathname}#${slug}`;
-          const charLimit = 200;
           const content = a.content || '';
+          const charLimit = 200;
           const isTruncated = content.length > charLimit;
-          const truncated = isTruncated ? content.slice(0, charLimit) : content;
-          const remaining = isTruncated ? content.length - charLimit : 0;
+          const truncated = content.slice(0, charLimit);
+          const remaining = content.length - charLimit;
+          const slug = createSlug(a.title);
+          const url = `${window.location.origin}${window.location.pathname}#${slug}`;
           
           return `
-            <div class="article-card ${isExpanded ? 'expanded' : ''}" data-id="${a.id}" data-index="${index}">
+            <div class="article-card ${isExpanded ? 'expanded' : ''}" data-index="${index}">
               <div class="title-row">
                 <div class="title">${escapeHtml(a.title)}</div>
-                <div class="title-actions">
-                  <button class="copy-btn" data-url="${url}">⧉ Copy Link</button>
-                </div>
+                <button class="copy-btn" data-url="${url}">⧉</button>
               </div>
               <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
-              <div class="content">
-                ${isExpanded ? `
-                  <div>${escapeHtml(content)}</div>
-                  <span class="char-count">${content.length} characters</span>
-                ` : `
-                  <div class="truncated-text">
-                    ${isTruncated ? escapeHtml(truncated) + '...' : escapeHtml(content)}
-                    ${isTruncated ? '<div class="fade-out"></div>' : ''}
-                  </div>
-                  ${isTruncated ? `<span class="char-count">${remaining} characters remaining · click to read more</span>` : ''}
-                `}
+              <div class="content-wrapper">
+                <div class="content">
+                  ${isExpanded ? `
+                    <div>${escapeHtml(content)}</div>
+                    <span class="char-info">${content.length} characters</span>
+                  ` : `
+                    <div class="truncated">
+                      ${escapeHtml(truncated)}${isTruncated ? '...' : ''}
+                      ${isTruncated ? '<div class="fade-overlay"></div>' : ''}
+                    </div>
+                    ${isTruncated ? `<span class="char-info">${remaining} characters remaining</span>` : ''}
+                  `}
+                </div>
               </div>
               <div class="expand-hint">
                 <span class="arrow">▾</span>
                 ${isExpanded ? 'collapse' : 'expand'}
               </div>
+              <div class="full-content"></div>
             </div>
           `;
         }).join('');
-        
+
         // Copy button handler
         document.querySelectorAll('.copy-btn').forEach(btn => {
           btn.addEventListener('click', async (e) => {
@@ -357,10 +364,10 @@
             const url = btn.dataset.url;
             try {
               await navigator.clipboard.writeText(url);
-              btn.textContent = '✓ Copied!';
+              btn.textContent = '✓';
               btn.classList.add('copied');
               setTimeout(() => {
-                btn.textContent = '⧉ Copy Link';
+                btn.textContent = '⧉';
                 btn.classList.remove('copied');
               }, 2000);
             } catch (err) {
@@ -371,33 +378,37 @@
               textarea.select();
               document.execCommand('copy');
               document.body.removeChild(textarea);
-              btn.textContent = '✓ Copied!';
+              btn.textContent = '✓';
               btn.classList.add('copied');
               setTimeout(() => {
-                btn.textContent = '⧉ Copy Link';
+                btn.textContent = '⧉';
                 btn.classList.remove('copied');
               }, 2000);
             }
           });
         });
-        
+
         // Card click handler - toggle expansion
         document.querySelectorAll('.article-card').forEach(card => {
-          card.addEventListener('click', () => {
-            const index = parseInt(card.dataset.index);
-            const isExpanded = card.classList.contains('expanded');
+          card.addEventListener('click', function(e) {
+            // Don't toggle if clicking the copy button
+            if (e.target.closest('.copy-btn')) return;
+            
+            const index = parseInt(this.dataset.index);
+            const isExpanded = this.classList.contains('expanded');
+            const article = allArticles[index];
+            const slug = createSlug(article.title);
             
             // Close all
             document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
             
             if (!isExpanded) {
-              card.classList.add('expanded');
-              expandedId = index;
-              const article = allArticles[index];
-              const slug = createSlug(article.title, article.id);
-              window.location.hash = slug;
+              this.classList.add('expanded');
+              // Update URL hash
+              const titleCount = titleCounts[article.title];
+              const finalSlug = titleCount > 1 ? slug + '-' + article.id : slug;
+              window.location.hash = finalSlug;
             } else {
-              expandedId = null;
               window.location.hash = '';
             }
             
@@ -409,7 +420,7 @@
             });
           });
         });
-        
+
         // If an article was expanded from URL hash, scroll to it
         if (expandedIndex !== -1) {
           setTimeout(() => {
@@ -417,21 +428,20 @@
             if (expandedCard) {
               expandedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-          }, 100);
+          }, 300);
         }
-        
+
       } catch (err) {
         console.error('Error loading articles:', err);
         document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
       }
     }
 
-    function createSlug(title, id) {
-      const slug = title
+    function createSlug(title) {
+      return title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
-      return `${slug}-${id}`;
     }
 
     function escapeHtml(text) {
@@ -445,29 +455,33 @@
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
       if (!hash) {
-        // Close all
-        document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
-        expandedId = null;
-        document.querySelectorAll('.article-card .expand-hint').forEach(hint => {
-          hint.innerHTML = `<span class="arrow">▾</span> expand`;
+        document.querySelectorAll('.article-card').forEach(c => {
+          c.classList.remove('expanded');
+          const hint = c.querySelector('.expand-hint');
+          if (hint) hint.innerHTML = `<span class="arrow">▾</span> expand`;
         });
         return;
       }
       
-      // Find and expand matching article
       const decoded = decodeURIComponent(hash);
       const cards = document.querySelectorAll('.article-card');
       cards.forEach((card, index) => {
         const article = allArticles[index];
         if (!article) return;
-        const slug = createSlug(article.title, article.id);
-        if (slug === decoded) {
-          card.click();
+        const slug = createSlug(article.title);
+        const titleCount = titleCounts[article.title];
+        const finalSlug = titleCount > 1 ? slug + '-' + article.id : slug;
+        if (finalSlug === decoded) {
+          // Close all first
+          document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
+          card.classList.add('expanded');
+          const hint = card.querySelector('.expand-hint');
+          if (hint) hint.innerHTML = `<span class="arrow">▴</span> collapse`;
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       });
     });
 
-    // Initial load
     loadArticles();
   })();
 </script>
