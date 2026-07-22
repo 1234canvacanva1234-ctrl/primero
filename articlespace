@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>SoraSys · Article Space</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b1114;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      padding: 24px;
+      min-height: 100vh;
+      cursor: none;
+    }
+    #cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #ff3b7c;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
+      display: none;
+    }
+    @media (max-width: 640px) { #cursor { display: none !important; } }
+    .space-header {
+      max-width: 900px;
+      margin: 0 auto 32px;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .space-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+    }
+    .space-title span { color: #ff3b7c; }
+    .space-nav a {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      text-decoration: none;
+      margin-left: 16px;
+      transition: color 0.3s ease;
+    }
+    .space-nav a:hover { color: #ff3b7c; }
+    .articles-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .article-card {
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.08);
+      border-radius: 3px;
+      padding: 28px 32px;
+      transition: all 0.3s ease;
+    }
+    .article-card:hover { border-color: rgba(255,59,124,0.15); }
+    .article-card .title {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #6b8e9b;
+      margin-bottom: 6px;
+    }
+    .article-card .meta {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      color: #4a6673;
+      margin-bottom: 14px;
+    }
+    .article-card .content {
+      font-family: 'Crimson Text', serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #bcccd6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .empty-articles {
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 18px;
+      color: #4a6673;
+      padding: 60px 0;
+    }
+    @media (max-width: 640px) {
+      .space-header { flex-direction: column; gap: 12px; text-align: center; }
+      .space-nav a { margin: 0 8px; }
+      .article-card { padding: 20px; }
+      .article-card .title { font-size: 16px; }
+      body { padding: 16px; cursor: auto; }
+    }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+<div class="space-header">
+  <div class="space-title">⟨ <span>Article</span> Space ⟩</div>
+  <div class="space-nav">
+    <a href="/">↩ Home</a>
+    <a href="/control-panel">⌘ Panel</a>
+  </div>
+</div>
+<div id="articles-container" class="articles-container">
+  <div class="empty-articles">loading articles...</div>
+</div>
+
+<script>
+  (function() {
+    if (window.innerWidth > 640) {
+      const cursor = document.getElementById('cursor');
+      cursor.classList.add('active');
+      document.body.style.cursor = 'none';
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
+        cx += (mx - cx) * 0.2;
+        cy += (my - cy) * 0.2;
+        cursor.style.left = cx + 'px';
+        cursor.style.top = cy + 'px';
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('a').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+      update();
+    }
+
+    async function loadArticles() {
+      try {
+        const res = await fetch('/api/articles');
+        const articles = await res.json();
+        const container = document.getElementById('articles-container');
+        if (!articles || articles.length === 0) {
+          container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
+          return;
+        }
+        container.innerHTML = articles.map(a => `
+          <div class="article-card">
+            <div class="title">${a.title}</div>
+            <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${a.author}</div>
+            <div class="content">${a.content}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
+      }
+    }
+    loadArticles();
+  })();
+</script>
+</body>
+</html>
