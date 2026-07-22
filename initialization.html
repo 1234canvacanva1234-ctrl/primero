@@ -189,10 +189,68 @@
       transition: color 0.3s ease;
     }
     .back-link:hover { color: #ff3b7c; }
+
+    /* Already signed in state */
+    .signed-in-state {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .signed-in-state .greeting {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #6b8e9b;
+      margin-bottom: 8px;
+    }
+    .signed-in-state .greeting span { color: #ff3b7c; }
+    .signed-in-state .sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 14px;
+      color: #4a6673;
+      margin-bottom: 16px;
+    }
+    .signed-in-state .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .signed-in-state .actions .panel-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .signed-in-state .actions .panel-btn:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .signed-in-state .actions .panel-btn.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .signed-in-state .actions .panel-btn.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+    .hidden { display: none; }
+
     @media (max-width: 640px) {
       .init-container { padding: 28px 20px 36px; }
       .init-title { font-size: 24px; letter-spacing: 4px; }
       body { padding: 12px; cursor: auto; }
+      .signed-in-state .actions { flex-direction: column; align-items: center; }
     }
   </style>
 </head>
@@ -202,49 +260,63 @@
   <div class="init-title">Initialization</div>
   <div class="init-sub">establish your presence</div>
   
-  <div class="init-tabs">
-    <button class="init-tab active" data-tab="signin">Sign In</button>
-    <button class="init-tab" data-tab="signup">Sign Up</button>
+  <!-- Already Signed In State -->
+  <div id="signed-in-state" class="signed-in-state hidden">
+    <div class="greeting">Welcome, <span id="signed-in-username">User</span>!</div>
+    <div class="sub">You are already signed in.</div>
+    <div class="actions">
+      <a href="/control-panel" class="panel-btn primary">⌘ Control Panel</a>
+      <a href="/articlespace" class="panel-btn">📄 Articles</a>
+      <button id="signout-from-init" class="panel-btn">↯ Sign Out</button>
+    </div>
   </div>
 
-  <!-- Sign In Form -->
-  <form id="signin-form" class="init-form">
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="signin-username" placeholder="your username" required>
+  <!-- Sign In / Sign Up Forms -->
+  <div id="auth-forms">
+    <div class="init-tabs">
+      <button class="init-tab active" data-tab="signin">Sign In</button>
+      <button class="init-tab" data-tab="signup">Sign Up</button>
     </div>
-    <div class="form-group">
-      <label>Security Token</label>
-      <input type="password" id="signin-password" placeholder="••••••••" required>
-    </div>
-    <button type="submit" class="init-btn">Access Network</button>
-    <div id="signin-message" class="message"></div>
-  </form>
 
-  <!-- Sign Up Form -->
-  <form id="signup-form" class="init-form hidden">
-    <div class="form-group">
-      <label>Choose Username</label>
-      <input type="text" id="signup-username" placeholder="unique identifier" required>
-    </div>
-    <div class="form-group">
-      <label>Security Token</label>
-      <input type="password" id="signup-password" placeholder="create a strong token" required>
-    </div>
-    <div class="form-group">
-      <label>Confirm Token</label>
-      <input type="password" id="signup-confirm" placeholder="confirm your token" required>
-    </div>
-    <button type="submit" class="init-btn">Establish Identity</button>
-    <div id="signup-message" class="message"></div>
-  </form>
+    <!-- Sign In Form -->
+    <form id="signin-form" class="init-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="signin-username" placeholder="your username" required>
+      </div>
+      <div class="form-group">
+        <label>Security Token</label>
+        <input type="password" id="signin-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="init-btn">Access Network</button>
+      <div id="signin-message" class="message"></div>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signup-form" class="init-form hidden">
+      <div class="form-group">
+        <label>Choose Username</label>
+        <input type="text" id="signup-username" placeholder="unique identifier" required>
+      </div>
+      <div class="form-group">
+        <label>Security Token</label>
+        <input type="password" id="signup-password" placeholder="create a strong token" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm Token</label>
+        <input type="password" id="signup-confirm" placeholder="confirm your token" required>
+      </div>
+      <button type="submit" class="init-btn">Establish Identity</button>
+      <div id="signup-message" class="message"></div>
+    </form>
+  </div>
 
   <a href="/" class="back-link">↩ return to network</a>
 </div>
 
 <script>
   (function() {
-    // Only enable custom cursor on desktop
+    // Custom cursor
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
       if (!cursor) return;
@@ -276,7 +348,7 @@
         cursor.classList.add('active');
       });
       
-      const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link');
+      const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link, .panel-btn');
       interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
           cursor.classList.add('hover');
@@ -291,11 +363,61 @@
       document.body.style.cursor = 'auto';
     }
 
-    // Tab switching
+    // DOM elements
+    const signedInState = document.getElementById('signed-in-state');
+    const authForms = document.getElementById('auth-forms');
+    const signedInUsername = document.getElementById('signed-in-username');
+    const signoutBtn = document.getElementById('signout-from-init');
+
     const tabs = document.querySelectorAll('.init-tab');
     const signinForm = document.getElementById('signin-form');
     const signupForm = document.getElementById('signup-form');
-    
+
+    // ============================================
+    // Check if user is already signed in
+    // ============================================
+    async function checkAuthStatus() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+        
+        if (data.authenticated && data.user) {
+          // User is signed in - show welcome state
+          signedInUsername.textContent = data.user.username;
+          signedInState.classList.remove('hidden');
+          authForms.classList.add('hidden');
+          document.querySelector('.init-sub').textContent = 'you are already connected';
+        } else {
+          // User is not signed in - show forms
+          signedInState.classList.add('hidden');
+          authForms.classList.remove('hidden');
+          document.querySelector('.init-sub').textContent = 'establish your presence';
+        }
+      } catch (err) {
+        console.error('Auth check error:', err);
+        // Show forms on error
+        signedInState.classList.add('hidden');
+        authForms.classList.remove('hidden');
+      }
+    }
+
+    // ============================================
+    // Sign out from initialization page
+    // ============================================
+    signoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth/signout', { method: 'POST' });
+        // Refresh the page to show sign in forms
+        window.location.reload();
+      } catch (err) {
+        console.error('Signout error:', err);
+        window.location.reload();
+      }
+    });
+
+    // ============================================
+    // Tab switching
+    // ============================================
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
@@ -314,7 +436,9 @@
       });
     });
 
+    // ============================================
     // Sign Up
+    // ============================================
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('signup-username').value.trim();
@@ -323,7 +447,6 @@
       const msg = document.getElementById('signup-message');
       const btn = e.target.querySelector('.init-btn');
       
-      // Clear previous messages
       msg.textContent = '';
       msg.className = 'message';
       
@@ -363,12 +486,10 @@
           body: JSON.stringify({ username, password })
         });
         
-        // Only read the response body ONCE
         let data;
         try {
           data = await res.json();
         } catch (parseError) {
-          // If JSON parsing fails, the response might not be JSON
           console.error('Response is not JSON:', parseError);
           throw new Error('Server returned invalid response format');
         }
@@ -380,13 +501,24 @@
           return;
         }
         
-        msg.textContent = 'Identity established! Redirecting...';
+        msg.textContent = 'Identity established!';
         msg.className = 'message success';
         btn.disabled = false;
         
+        // Clear form
+        document.getElementById('signup-username').value = '';
+        document.getElementById('signup-password').value = '';
+        document.getElementById('signup-confirm').value = '';
+        
+        // Check auth status to show signed-in state
         setTimeout(() => {
-          window.location.href = '/control-panel';
-        }, 1500);
+          checkAuthStatus();
+          // Switch to sign in tab
+          tabs.forEach(t => t.classList.remove('active'));
+          document.querySelector('[data-tab="signin"]').classList.add('active');
+          signinForm.classList.remove('hidden');
+          signupForm.classList.add('hidden');
+        }, 1000);
         
       } catch (err) {
         console.error('Signup error:', err);
@@ -396,7 +528,9 @@
       }
     });
 
+    // ============================================
     // Sign In
+    // ============================================
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('signin-username').value.trim();
@@ -404,7 +538,6 @@
       const msg = document.getElementById('signin-message');
       const btn = e.target.querySelector('.init-btn');
       
-      // Clear previous messages
       msg.textContent = '';
       msg.className = 'message';
       
@@ -429,7 +562,6 @@
           body: JSON.stringify({ username, password })
         });
         
-        // Only read the response body ONCE
         let data;
         try {
           data = await res.json();
@@ -445,13 +577,18 @@
           return;
         }
         
-        msg.textContent = 'Access granted! Redirecting...';
+        msg.textContent = 'Access granted!';
         msg.className = 'message success';
         btn.disabled = false;
         
+        // Clear form
+        document.getElementById('signin-username').value = '';
+        document.getElementById('signin-password').value = '';
+        
+        // Check auth status to show signed-in state
         setTimeout(() => {
-          window.location.href = '/control-panel';
-        }, 1500);
+          checkAuthStatus();
+        }, 500);
         
       } catch (err) {
         console.error('Signin error:', err);
@@ -460,6 +597,11 @@
         btn.disabled = false;
       }
     });
+
+    // ============================================
+    // Initialize - Check auth status on load
+    // ============================================
+    checkAuthStatus();
   })();
 </script>
 </body>
