@@ -74,6 +74,18 @@
       flex-direction: column;
       gap: 12px;
     }
+    .back-to-all {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      text-decoration: none;
+      margin-bottom: 18px;
+      transition: color 0.3s ease;
+    }
+    .back-to-all:hover { color: #ff3b7c; }
     .article-card {
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.1);
@@ -113,6 +125,8 @@
       color: #6b8e9b;
       line-height: 1.3;
       transition: color 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
     }
     .article-card.expanded .title {
       color: #ff3b7c;
@@ -253,10 +267,12 @@
     }
 
     let activeCard = null;
-    let basePath = window.location.pathname.replace(/\/+$/, '') || '';
+    let listBasePath = '';   // path of the list page itself, e.g. '/articlespace'
+    let currentArticles = [];
+    let currentSlugs = [];
 
     function buildArticlePath(slug) {
-      return (basePath === '' ? '' : basePath) + '/' + slug;
+      return (listBasePath === '' ? '' : listBasePath) + '/' + slug;
     }
 
     function escapeHtml(text) {
@@ -294,86 +310,79 @@
       return html;
     }
 
-    async function loadArticles() {
-      try {
-        const res = await fetch('/api/articles');
-        if (!res.ok) throw new Error('Failed to fetch');
-        const articles = await res.json();
-        const container = document.getElementById('articles-container');
+    function currentLastSegment() {
+      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
+      return segments[segments.length - 1];
+    }
 
-        if (!articles || articles.length === 0) {
-          container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
-          return;
-        }
+    function pathWithoutLastSegment() {
+      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
+      return segments.slice(0, -1).join('/');
+    }
 
-        const slugs = articles.map((a, index) => {
-          let slug = slugify(a.title);
-          const duplicateCount = articles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
-          if (duplicateCount > 0) slug += '-' + (duplicateCount + 1);
-          return slug;
-        });
+    // ---------- LIST VIEW ----------
+    function renderList() {
+      listBasePath = window.location.pathname.replace(/\/+$/, '') || '';
+      const container = document.getElementById('articles-container');
 
-        const pathSegments = window.location.pathname.replace(/\/+$/, '').split('/');
-        const lastSegment = pathSegments[pathSegments.length - 1];
-        let initialSlug = null;
-        if (slugs.includes(lastSegment)) {
-          initialSlug = lastSegment;
-          basePath = pathSegments.slice(0, -1).join('/');
-        }
-
-        container.innerHTML = articles.map((a, index) => {
-          const content = a.content || '';
-          const title = a.title || 'Untitled';
-          const author = a.author || 'Anonymous';
-          const date = new Date(a.created_at).toLocaleDateString();
-          const slug = slugs[index];
-
-          const previewText = content.length > 200 ? content.slice(0, 200) : content;
-          const fullText = content;
-          const charRemain = content.length > 200 ? content.length - 200 : 0;
-
-          return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
-            '<div class="card-inner">' +
-              '<div class="title-row">' +
-                '<div class="title">' + escapeHtml(title) + '</div>' +
-                '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
-              '</div>' +
-              '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
-              '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-
-        document.querySelectorAll('.article-card').forEach(card => {
-          card.addEventListener('click', function() { toggleCard(this); });
-        });
-
-        document.querySelectorAll('.copy-link-btn').forEach(btn => {
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const slug = this.dataset.share;
-            const url = window.location.origin + buildArticlePath(slug);
-            navigator.clipboard.writeText(url).then(() => {
-              const original = this.innerHTML;
-              this.innerHTML = CHECK_ICON;
-              this.classList.add('copied');
-              setTimeout(() => {
-                this.innerHTML = original;
-                this.classList.remove('copied');
-              }, 1200);
-            }).catch(() => {});
-          });
-        });
-
-        if (initialSlug) {
-          const match = Array.from(document.querySelectorAll('.article-card')).find(c => c.dataset.share === initialSlug);
-          if (match) toggleCard(match, { skipPush: true, scroll: true });
-        }
-
-      } catch (err) {
-        console.error('Error loading articles:', err);
-        document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
+      if (!currentArticles.length) {
+        container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
+        return;
       }
+
+      container.innerHTML = currentArticles.map((a, index) => {
+        const content = a.content || '';
+        const title = a.title || 'Untitled';
+        const author = a.author || 'Anonymous';
+        const date = new Date(a.created_at).toLocaleDateString();
+        const slug = currentSlugs[index];
+
+        const previewText = content.length > 200 ? content.slice(0, 200) : content;
+        const fullText = content;
+        const charRemain = content.length > 200 ? content.length - 200 : 0;
+
+        return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
+          '<div class="card-inner">' +
+            '<div class="title-row">' +
+              '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
+              '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+            '</div>' +
+            '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
+            '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      document.querySelectorAll('.article-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+          if (e.target.closest('.copy-link-btn')) return;
+          if (e.target.closest('a.title')) {
+            e.preventDefault();
+          }
+          toggleCard(this);
+        });
+      });
+
+      bindCopyButtons();
+    }
+
+    function bindCopyButtons() {
+      document.querySelectorAll('.copy-link-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const slug = this.dataset.share;
+          const url = window.location.origin + buildArticlePath(slug);
+          navigator.clipboard.writeText(url).then(() => {
+            const original = this.innerHTML;
+            this.innerHTML = CHECK_ICON;
+            this.classList.add('copied');
+            setTimeout(() => {
+              this.innerHTML = original;
+              this.classList.remove('copied');
+            }, 1200);
+          }).catch(() => {});
+        });
+      });
     }
 
     function expandCard(card) {
@@ -445,42 +454,89 @@
       if (activeCard === card) activeCard = null;
     }
 
-    function toggleCard(card, opts) {
-      opts = opts || {};
+    function toggleCard(card) {
       const contentDiv = card.querySelector('.content');
       const isMinimized = contentDiv.classList.contains('preview');
+      const slug = card.dataset.share;
 
       if (isMinimized) {
         expandCard(card);
-        if (!opts.skipPush && history.pushState) {
-          history.pushState({ article: card.dataset.share }, '', buildArticlePath(card.dataset.share));
-        }
-        if (opts.scroll) {
-          requestAnimationFrame(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-        }
+        if (history.pushState) history.pushState({ view: 'single', article: slug }, '', buildArticlePath(slug));
       } else {
         collapseCard(card);
-        if (!opts.skipPush && history.pushState) {
-          history.pushState({}, '', basePath === '' ? '/' : basePath);
-        }
+        if (history.pushState) history.pushState({ view: 'list' }, '', listBasePath === '' ? '/' : listBasePath);
+      }
+    }
+
+    // ---------- SINGLE ARTICLE VIEW (real permalink page) ----------
+    function renderSingle(article, slug) {
+      listBasePath = pathWithoutLastSegment();
+      const container = document.getElementById('articles-container');
+
+      const title = article.title || 'Untitled';
+      const author = article.author || 'Anonymous';
+      const date = new Date(article.created_at).toLocaleDateString();
+      const content = article.content || '';
+      const backHref = listBasePath === '' ? '/' : listBasePath;
+
+      container.innerHTML =
+        '<a class="back-to-all" href="' + backHref + '">← All Articles</a>' +
+        '<div class="article-card expanded" data-share="' + slug + '">' +
+          '<div class="card-inner">' +
+            '<div class="title-row">' +
+              '<div class="title">' + escapeHtml(title) + '</div>' +
+              '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+            '</div>' +
+            '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
+            '<div class="content full">' + escapeHtml(content) + '</div>' +
+          '</div>' +
+        '</div>';
+
+      container.querySelector('.back-to-all').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (history.pushState) history.pushState({ view: 'list' }, '', backHref);
+        renderList();
+      });
+
+      bindCopyButtons();
+    }
+
+    // ---------- ROUTER: decide list vs single from the current URL ----------
+    function route() {
+      const lastSegment = currentLastSegment();
+      const idx = currentSlugs.indexOf(lastSegment);
+      if (idx !== -1) {
+        renderSingle(currentArticles[idx], currentSlugs[idx]);
+      } else {
+        renderList();
+      }
+    }
+
+    async function loadArticles() {
+      try {
+        const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error('Failed to fetch');
+        const articles = await res.json();
+        currentArticles = articles || [];
+
+        currentSlugs = currentArticles.map((a, index) => {
+          let slug = slugify(a.title);
+          const dupCount = currentArticles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
+          if (dupCount > 0) slug += '-' + (dupCount + 1);
+          return slug;
+        });
+
+        route();
+      } catch (err) {
+        console.error('Error loading articles:', err);
+        document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
       }
     }
 
     loadArticles();
 
     window.addEventListener('popstate', function() {
-      const pathSegments = window.location.pathname.replace(/\/+$/, '').split('/');
-      const lastSegment = pathSegments[pathSegments.length - 1];
-      const cards = document.querySelectorAll('.article-card');
-      const match = Array.from(cards).find(c => c.dataset.share === lastSegment);
-
-      if (activeCard && activeCard !== match) collapseCard(activeCard);
-      if (match && match !== activeCard) {
-        expandCard(match);
-        match.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (!match && activeCard) {
-        collapseCard(activeCard);
-      }
+      route();
     });
 
   })();
