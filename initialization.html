@@ -363,19 +363,18 @@
           body: JSON.stringify({ username, password })
         });
         
-        // Try to parse response
+        // Only read the response body ONCE
         let data;
         try {
           data = await res.json();
         } catch (parseError) {
-          // If response isn't JSON, get text
-          const text = await res.text();
-          console.error('Non-JSON response:', text);
-          throw new Error('Server returned invalid response');
+          // If JSON parsing fails, the response might not be JSON
+          console.error('Response is not JSON:', parseError);
+          throw new Error('Server returned invalid response format');
         }
         
         if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Signup failed. Status: ' + res.status;
+          msg.textContent = data.error || data.message || 'Signup failed.';
           msg.className = 'message error';
           btn.disabled = false;
           return;
@@ -430,18 +429,17 @@
           body: JSON.stringify({ username, password })
         });
         
-        // Try to parse response
+        // Only read the response body ONCE
         let data;
         try {
           data = await res.json();
         } catch (parseError) {
-          const text = await res.text();
-          console.error('Non-JSON response:', text);
-          throw new Error('Server returned invalid response');
+          console.error('Response is not JSON:', parseError);
+          throw new Error('Server returned invalid response format');
         }
         
         if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Authentication failed. Status: ' + res.status;
+          msg.textContent = data.error || data.message || 'Authentication failed.';
           msg.className = 'message error';
           btn.disabled = false;
           return;
