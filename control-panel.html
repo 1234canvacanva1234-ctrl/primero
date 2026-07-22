@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>SoraSys · Control Panel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b1114;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      padding: 24px;
+      min-height: 100vh;
+      cursor: none;
+    }
+    #cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #ff3b7c;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
+      display: none;
+    }
+    @media (max-width: 640px) { #cursor { display: none !important; } }
+    .panel-header {
+      max-width: 1100px;
+      margin: 0 auto 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      padding-bottom: 16px;
+    }
+    .panel-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+    }
+    .panel-title span { color: #ff3b7c; }
+    .panel-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .panel-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    .panel-btn:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .panel-btn.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .panel-btn.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+    .panel-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .panel-section {
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.12);
+      border-radius: 3px;
+      padding: 24px;
+      backdrop-filter: blur(2px);
+    }
+    .panel-section.full { grid-column: 1 / -1; }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+      margin-bottom: 16px;
+    }
+    .section-title span { color: #ff3b7c; }
+    .article-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .article-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(11, 17, 20, 0.4);
+      border: 1px solid rgba(107, 142, 155, 0.06);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .article-item:hover { border-color: rgba(255,59,124,0.2); }
+    .article-item .name {
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      color: #bcccd6;
+    }
+    .article-item .meta {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: #4a6673;
+    }
+    .article-item .actions {
+      display: flex;
+      gap: 8px;
+    }
+    .article-item .actions button {
+      background: none;
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      color: #4a6673;
+      padding: 4px 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .article-item .actions button:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .article-item .actions button.delete:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-area {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .editor-area input {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      border-radius: 2px;
+      outline: none;
+    }
+    .editor-area input:focus { border-color: #ff3b7c; }
+    .editor-area textarea {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      border-radius: 2px;
+      outline: none;
+      min-height: 200px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .editor-area textarea:focus { border-color: #ff3b7c; }
+    .editor-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .editor-actions button {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      background: transparent;
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .editor-actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-actions button.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .editor-actions button.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+    .empty-state {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      color: #4a6673;
+      text-align: center;
+      padding: 24px 0;
+      font-size: 14px;
+    }
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(11, 17, 20, 0.3);
+      border: 1px solid rgba(107, 142, 155, 0.06);
+      border-radius: 2px;
+    }
+    .user-item .name {
+      font-family: 'Crimson Text', serif;
+      font-size: 13px;
+      color: #bcccd6;
+    }
+    .user-item .role {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: #4a6673;
+    }
+    .user-item .role.sysadmin { color: #ff3b7c; }
+    .user-item .actions button {
+      background: none;
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      color: #4a6673;
+      padding: 4px 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .user-item .actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .user-item .actions button.grant:hover { border-color: #6b8e9b; color: #6b8e9b; }
+    @media (max-width: 768px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
+      .panel-actions { justify-content: center; flex-wrap: wrap; }
+      body { padding: 16px; cursor: auto; }
+    }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+<div class="panel-header">
+  <div class="panel-title">⌘ <span>Control</span> Panel</div>
+  <div class="panel-actions">
+    <a href="/articlespace" class="panel-btn">View Articles</a>
+    <a href="/initialization" class="panel-btn">Account</a>
+    <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+  </div>
+</div>
+
+<div class="panel-grid">
+  <!-- Editor Section -->
+  <div class="panel-section full">
+    <div class="section-title">✎ <span>Article</span> Editor</div>
+    <div class="editor-area">
+      <input type="text" id="article-title" placeholder="Article Title">
+      <textarea id="article-content" placeholder="Write your article here..."></textarea>
+      <div class="editor-actions">
+        <button id="publish-btn" class="primary">Publish</button>
+        <button id="cancel-edit-btn">Cancel</button>
+      </div>
+      <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:#6b8e9b;min-height:20px;"></div>
+    </div>
+  </div>
+
+  <!-- Articles List -->
+  <div class="panel-section">
+    <div class="section-title">📄 <span>Your</span> Articles</div>
+    <div id="articles-list" class="article-list">
+      <div class="empty-state">no articles yet. create one.</div>
+    </div>
+  </div>
+
+  <!-- User Management (sysadmin only) -->
+  <div class="panel-section" id="user-management">
+    <div class="section-title">👥 <span>User</span> Management</div>
+    <div id="users-list" class="user-list">
+      <div class="empty-state">loading users...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    if (window.innerWidth > 640) {
+      const cursor = document.getElementById('cursor');
+      cursor.classList.add('active');
+      document.body.style.cursor = 'none';
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
+        cx += (mx - cx) * 0.2;
+        cy += (my - cy) * 0.2;
+        cursor.style.left = cx + 'px';
+        cursor.style.top = cy + 'px';
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('button, a, input, textarea').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+      update();
+    }
+
+    const API = {
+      auth: {
+        signout: () => fetch('/api/auth/signout', { method: 'POST' })
+      },
+      articles: {
+        list: () => fetch('/api/articles').then(r => r.json()),
+        create: (data) => fetch('/api/articles', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
+        update: (id, data) => fetch(`/api/articles/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r => r.json()),
+        delete: (id) => fetch(`/api/articles/${id}`, { method: 'DELETE' }).then(r => r.json())
+      },
+      users: {
+        list: () => fetch('/api/users').then(r => r.json()),
+        grant: (username) => fetch(`/api/users/${username}/grant`, { method: 'POST' }).then(r => r.json())
+      }
+    };
+
+    let currentUser = null;
+    let editingArticleId = null;
+
+    // Check auth status
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+        if (!data.authenticated || data.role !== 'sysadmin') {
+          window.location.href = '/initialization';
+          return;
+        }
+        currentUser = data.user;
+        loadArticles();
+        loadUsers();
+      } catch (err) {
+        window.location.href = '/initialization';
+      }
+    }
+
+    async function loadArticles() {
+      try {
+        const articles = await API.articles.list();
+        const container = document.getElementById('articles-list');
+        if (!articles || articles.length === 0) {
+          container.innerHTML = '<div class="empty-state">no articles yet. create one.</div>';
+          return;
+        }
+        container.innerHTML = articles.map(a => `
+          <div class="article-item" data-id="${a.id}">
+            <div>
+              <div class="name">${a.title}</div>
+              <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${a.author}</div>
+            </div>
+            <div class="actions">
+              <button class="edit-btn">✎ Edit</button>
+              <button class="delete-btn">✕</button>
+            </div>
+          </div>
+        `).join('');
+        
+        container.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const item = btn.closest('.article-item');
+            const id = parseInt(item.dataset.id);
+            const title = item.querySelector('.name').textContent;
+            // Fetch full article content
+            fetch(`/api/articles/${id}`).then(r => r.json()).then(article => {
+              document.getElementById('article-title').value = article.title;
+              document.getElementById('article-content').value = article.content;
+              editingArticleId = id;
+              document.getElementById('publish-btn').textContent = 'Update';
+              document.getElementById('editor-message').textContent = 'Editing: ' + article.title;
+            });
+          });
+        });
+        
+        container.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const item = btn.closest('.article-item');
+            const id = parseInt(item.dataset.id);
+            if (confirm('Delete this article?')) {
+              await API.articles.delete(id);
+              loadArticles();
+            }
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load articles:', err);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await API.users.list();
+        const container = document.getElementById('users-list');
+        if (!users || users.length === 0) {
+          container.innerHTML = '<div class="empty-state">no users found</div>';
+          return;
+        }
+        container.innerHTML = users.map(u => `
+          <div class="user-item">
+            <div>
+              <span class="name">${u.username}</span>
+              <span class="role ${u.role}">${u.role}</span>
+            </div>
+            <div class="actions">
+              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${u.username}">Grant Admin</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+        
+        container.querySelectorAll('.grant-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const username = btn.dataset.user;
+            if (confirm(`Grant sysadmin to ${username}?`)) {
+              await API.users.grant(username);
+              loadUsers();
+            }
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    }
+
+    // Publish/Update article
+    document.getElementById('publish-btn').addEventListener('click', async () => {
+      const title = document.getElementById('article-title').value.trim();
+      const content = document.getElementById('article-content').value.trim();
+      const msg = document.getElementById('editor-message');
+      
+      if (!title || !content) {
+        msg.textContent = 'Title and content are required.';
+        msg.style.color = '#ff3b7c';
+        return;
+      }
+      
+      try {
+        if (editingArticleId) {
+          await API.articles.update(editingArticleId, { title, content });
+          msg.textContent = 'Article updated!';
+          msg.style.color = '#6b8e9b';
+          editingArticleId = null;
+          document.getElementById('publish-btn').textContent = 'Publish';
+        } else {
+          await API.articles.create({ title, content });
+          msg.textContent = 'Article published!';
+          msg.style.color = '#6b8e9b';
+        }
+        document.getElementById('article-title').value = '';
+        document.getElementById('article-content').value = '';
+        loadArticles();
+        setTimeout(() => { msg.textContent = ''; }, 3000);
+      } catch (err) {
+        msg.textContent = 'Failed to save article.';
+        msg.style.color = '#ff3b7c';
+      }
+    });
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+      document.getElementById('article-title').value = '';
+      document.getElementById('article-content').value = '';
+      document.getElementById('publish-btn').textContent = 'Publish';
+      document.getElementById('editor-message').textContent = '';
+      editingArticleId = null;
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await API.auth.signout();
+      window.location.href = '/';
+    });
+
+    checkAuth();
+  })();
+</script>
+</body>
+</html>
