@@ -8,7 +8,6 @@ export async function onRequest(context) {
   // Everything else passes through to static files
   // ============================================
   if (!path.startsWith('/api/')) {
-    // Let Cloudflare Pages serve the static file
     return next();
   }
   
@@ -194,6 +193,72 @@ export async function onRequest(context) {
       ).bind(title, content, user.username, new Date().toISOString(), new Date().toISOString()).run();
       
       return new Response(JSON.stringify({ success: true, id: result.meta.last_row_id }), { headers });
+      
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // SINGLE ARTICLE - GET /api/articles/:id
+  // ============================================
+  const articleIdMatch = path.match(/^\/api\/articles\/(\d+)$/);
+  if (articleIdMatch && request.method === 'GET') {
+    try {
+      const id = parseInt(articleIdMatch[1]);
+      const article = await env.DB.prepare('SELECT * FROM articles WHERE id = ?').bind(id).first();
+      if (!article) {
+        return new Response(JSON.stringify({ error: 'Article not found' }), { status: 404, headers });
+      }
+      return new Response(JSON.stringify(article), { headers });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // SINGLE ARTICLE - PUT /api/articles/:id (update)
+  // ============================================
+  if (articleIdMatch && request.method === 'PUT') {
+    try {
+      const user = await getSessionUser(request, env);
+      if (!user || user.role !== 'sysadmin') {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
+      }
+      
+      const id = parseInt(articleIdMatch[1]);
+      const body = await request.json();
+      const { title, content } = body;
+      
+      if (!title || !content) {
+        return new Response(JSON.stringify({ error: 'Title and content required' }), { status: 400, headers });
+      }
+      
+      await env.DB.prepare(
+        'UPDATE articles SET title = ?, content = ?, updated_at = ? WHERE id = ?'
+      ).bind(title, content, new Date().toISOString(), id).run();
+      
+      return new Response(JSON.stringify({ success: true }), { headers });
+      
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // SINGLE ARTICLE - DELETE /api/articles/:id
+  // ============================================
+  if (articleIdMatch && request.method === 'DELETE') {
+    try {
+      const user = await getSessionUser(request, env);
+      if (!user || user.role !== 'sysadmin') {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
+      }
+      
+      const id = parseInt(articleIdMatch[1]);
+      await env.DB.prepare('DELETE FROM articles WHERE id = ?').bind(id).run();
+      
+      return new Response(JSON.stringify({ success: true }), { headers });
       
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
