@@ -4,17 +4,14 @@ export async function onRequest(context) {
   const path = url.pathname;
 
   // ============================================
-  // ARTICLE PERMALINKS - ?article=slug
-  //
-  // Deliberately NOT path-based. A query param survives no matter what
-  // base path this page is actually deployed under (root, /articlespace,
-  // /blog, behind a proxy, etc) — there's nothing for a prefix regex to
-  // get out of sync with. Any GET request (outside /api/*) that carries
-  // ?article=slug is treated as a permalink request for the Articlespace
-  // page, full stop.
+  // ARTICLE PERMALINKS - /articlespace/:slug
+  // Handled first, directly in the catch-all, so there's
+  // no dependency on Cloudflare picking a more specific
+  // function route over this one.
   // ============================================
-  if (request.method === 'GET' && !path.startsWith('/api/') && url.searchParams.has('article')) {
-    return handleArticlePermalink(url.searchParams.get('article'), request, env, next);
+  const articleSlugMatch = path.match(/^\/articlespace\/([^\/]+)\/?$/);
+  if (articleSlugMatch) {
+    return handleArticlePermalink(articleSlugMatch[1], request, env, next);
   }
 
   // ============================================
@@ -330,16 +327,16 @@ export async function onRequest(context) {
 
 // ============================================
 // Article permalink handler
-// Any GET request (outside /api/*) carrying ?article=slug.
-//
-// It always fetches /articlespace.html as the shell — that's the one
-// page this mechanism applies to — then:
-//   1. Rewrites og:/twitter: meta tags to match the real article, so
-//      link-preview bots (Discord, Twitter, etc.) see real content
-//      instead of the generic homepage.
-//   2. Embeds the resolved article directly as JSON in a <script> tag,
-//      so the client never has to re-derive which article this URL
-//      refers to — it just reads what the server already decided.
+// GET /articlespace/:slug — serves the articlespace.html
+// shell with:
+//   1. og:/twitter: meta tags rewritten to match the real
+//      article, so link-preview bots (Discord, Twitter, etc.)
+//      see real content instead of the generic homepage.
+//   2. The resolved article embedded directly as JSON in a
+//      <script> tag, so the client never has to re-derive
+//      which article this URL refers to — it just reads what
+//      the server already decided. This is the piece that
+//      makes the permalink authoritative instead of a guess.
 // ============================================
 async function handleArticlePermalink(slug, request, env, next) {
   try {
