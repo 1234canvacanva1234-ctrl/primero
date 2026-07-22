@@ -1,276 +1,536 @@
 export async function onRequest(context) {
   const { request, env, url } = context;
-  const path = new URL(request.url).pathname;
   
-  if (path === '/api/auth/signup' && request.method === 'POST') {
-    return handleSignup(request, env);
-  }
-  if (path === '/api/auth/signin' && request.method === 'POST') {
-    return handleSignin(request, env);
-  }
-  if (path === '/api/auth/signout' && request.method === 'POST') {
-    return handleSignout(request, env);
-  }
-  if (path === '/api/auth/status') {
-    return handleStatus(request, env);
-  }
-  if (path === '/api/articles' && request.method === 'GET') {
-    return getArticles(env);
-  }
-  if (path === '/api/articles' && request.method === 'POST') {
-    return createArticle(request, env);
-  }
-  if (path.match(/^\/api\/articles\/\d+$/) && request.method === 'GET') {
-    const id = path.split('/').pop();
-    return getArticle(env, id);
-  }
-  if (path.match(/^\/api\/articles\/\d+$/) && request.method === 'PUT') {
-    const id = path.split('/').pop();
-    return updateArticle(request, env, id);
-  }
-  if (path.match(/^\/api\/articles\/\d+$/) && request.method === 'DELETE') {
-    const id = path.split('/').pop();
-    return deleteArticle(request, env, id);
-  }
-  if (path === '/api/users' && request.method === 'GET') {
-    return getUsers(request, env);
-  }
-  if (path.match(/^\/api\/users\/.+\/grant$/) && request.method === 'POST') {
-    const username = path.split('/')[3];
-    return grantAdmin(request, env, username);
-  }
-  
-  return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
-}
+  // Enable CORS for all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Cookie',
+    'Access-Control-Allow-Credentials': 'true'
+  };
 
-// ===== AUTH HANDLERS =====
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-async function handleSignup(request, env) {
   try {
-    const { username, password } = await request.json();
-    if (!username || !password || password.length < 8) {
-      return jsonResponse({ error: 'Invalid credentials' }, 400);
+    const path = new URL(request.url).pathname;
+    console.log('Request path:', path);
+    console.log('Request method:', request.method);
+
+    // ===== AUTH ROUTES =====
+    if (path === '/api/auth/signup' && request.method === 'POST') {
+      return handleSignup(request, env, corsHeaders);
     }
     
-    const existing = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
-    if (existing) {
-      return jsonResponse({ error: 'Username already taken' }, 409);
+    if (path === '/api/auth/signin' && request.method === 'POST') {
+      return handleSignin(request, env, corsHeaders);
     }
     
-    const hashed = await hashPassword(password);
-    await env.DB.prepare(
-      'INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, ?)'
-    ).bind(username, hashed, 'user', new Date().toISOString()).run();
+    if (path === '/api/auth/signout' && request.method === 'POST') {
+      return handleSignout(request, env, corsHeaders);
+    }
     
-    const sessionId = crypto.randomUUID();
-    await env.DB.prepare(
-      'INSERT INTO sessions (session_id, username, expires_at) VALUES (?, ?, ?)'
-    ).bind(sessionId, username, new Date(Date.now() + 7*24*60*60*1000).toISOString()).run();
+    if (path === '/api/auth/status') {
+      return handleStatus(request, env, corsHeaders);
+    }
+
+    // ===== ARTICLE ROUTES =====
+    if (path === '/api/articles' && request.method === 'GET') {
+      return getArticles(env, corsHeaders);
+    }
     
-    return jsonResponse({ success: true }, 200, sessionId);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal server error' }, 500);
+    if (path === '/api/articles' && request.method === 'POST') {
+      return createArticle(request, env, corsHeaders);
+    }
+
+    // Handle article by ID
+    const articleMatch = path.match(/^\/api\/articles\/(\d+)$/);
+    if (articleMatch) {
+      const id = parseInt(articleMatch[1]);
+      if (request.method === 'GET') {
+        return getArticle(env, id, corsHeaders);
+      }
+      if (request.method === 'PUT') {
+        return updateArticle(request, env, id, corsHeaders);
+      }
+      if (request.method === 'DELETE') {
+        return deleteArticle(request, env, id, corsHeaders);
+      }
+    }
+
+    // ===== USER ROUTES =====
+    if (path === '/api/users' && request.method === 'GET') {
+      return getUsers(request, env, corsHeaders);
+    }
+
+    const userMatch = path.match(/^\/api\/users\/(.+)\/grant$/);
+    if (userMatch && request.method === 'POST') {
+      const username = userMatch[1];
+      return grantAdmin(request, env, username, corsHeaders);
+    }
+
+    // Test endpoint
+    if (path === '/api/test') {
+      return testEndpoint(env, corsHeaders);
+    }
+
+    // 404 - Route not found
+    return jsonResponse({ 
+      error: 'Not found', 
+      path: path,
+      method: request.method 
+    }, 404, corsHeaders);
+
+  } catch (error) {
+    console.error('API Error:', error);
+    return jsonResponse({ 
+      error: 'Internal server error',
+      details: error.message,
+      stack: error.stack 
+    }, 500, corsHeaders);
   }
 }
 
-async function handleSignin(request, env) {
+// ============================================
+// AUTH HANDLERS
+// ============================================
+
+async function handleSignup(request, env, corsHeaders) {
   try {
-    const { username, password } = await request.json();
+    const body = await request.json();
+    console.log('Signup attempt:', { username: body.username });
+    
+    const { username, password } = body;
+    
+    // Validation
     if (!username || !password) {
-      return jsonResponse({ error: 'Missing credentials' }, 400);
+      return jsonResponse({ error: 'Username and password required' }, 400, corsHeaders);
     }
     
-    const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
-    if (!user) {
-      return jsonResponse({ error: 'Invalid credentials' }, 401);
+    if (username.length < 3) {
+      return jsonResponse({ error: 'Username must be at least 3 characters' }, 400, corsHeaders);
     }
     
-    const hashed = await hashPassword(password);
-    if (user.password_hash !== hashed) {
-      return jsonResponse({ error: 'Invalid credentials' }, 401);
+    if (password.length < 8) {
+      return jsonResponse({ error: 'Password must be at least 8 characters' }, 400, corsHeaders);
     }
     
+    // Check if user exists
+    const existing = await env.DB.prepare(
+      'SELECT username FROM users WHERE username = ?'
+    ).bind(username).first();
+    
+    if (existing) {
+      return jsonResponse({ error: 'Username already taken' }, 409, corsHeaders);
+    }
+    
+    // Hash password
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Create user
+    const result = await env.DB.prepare(
+      'INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, ?)'
+    ).bind(username, hashHex, 'user', new Date().toISOString()).run();
+    
+    console.log('User created:', username);
+    
+    // Create session
     const sessionId = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
     await env.DB.prepare(
       'INSERT INTO sessions (session_id, username, expires_at) VALUES (?, ?, ?)'
-    ).bind(sessionId, username, new Date(Date.now() + 7*24*60*60*1000).toISOString()).run();
+    ).bind(sessionId, username, expiresAt).run();
     
-    return jsonResponse({ success: true, role: user.role }, 200, sessionId);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal server error' }, 500);
+    // Set cookie
+    const cookie = `session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+    
+    return jsonResponse({ 
+      success: true, 
+      message: 'User created successfully',
+      username: username
+    }, 200, corsHeaders, cookie);
+    
+  } catch (error) {
+    console.error('Signup error:', error);
+    return jsonResponse({ 
+      error: 'Signup failed',
+      details: error.message 
+    }, 500, corsHeaders);
   }
 }
 
-async function handleSignout(request, env) {
-  const sessionId = getSessionId(request);
-  if (sessionId) {
-    await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(sessionId).run();
-  }
-  return jsonResponse({ success: true }, 200, null, true);
-}
-
-async function handleStatus(request, env) {
-  const sessionId = getSessionId(request);
-  if (!sessionId) {
-    return jsonResponse({ authenticated: false }, 200);
-  }
-  
-  const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
-  if (!session || new Date(session.expires_at) < new Date()) {
-    if (session) {
-      await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(sessionId).run();
-    }
-    return jsonResponse({ authenticated: false }, 200);
-  }
-  
-  const user = await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
-  return jsonResponse({ authenticated: true, user }, 200);
-}
-
-// ===== ARTICLE HANDLERS =====
-
-async function getArticles(env) {
+async function handleSignin(request, env, corsHeaders) {
   try {
-    const articles = await env.DB.prepare(
+    const body = await request.json();
+    console.log('Signin attempt:', { username: body.username });
+    
+    const { username, password } = body;
+    
+    if (!username || !password) {
+      return jsonResponse({ error: 'Username and password required' }, 400, corsHeaders);
+    }
+    
+    // Get user
+    const user = await env.DB.prepare(
+      'SELECT * FROM users WHERE username = ?'
+    ).bind(username).first();
+    
+    if (!user) {
+      return jsonResponse({ error: 'Invalid credentials' }, 401, corsHeaders);
+    }
+    
+    // Verify password
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    if (user.password_hash !== hashHex) {
+      return jsonResponse({ error: 'Invalid credentials' }, 401, corsHeaders);
+    }
+    
+    // Create session
+    const sessionId = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    await env.DB.prepare(
+      'INSERT INTO sessions (session_id, username, expires_at) VALUES (?, ?, ?)'
+    ).bind(sessionId, username, expiresAt).run();
+    
+    // Set cookie
+    const cookie = `session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`;
+    
+    return jsonResponse({ 
+      success: true, 
+      message: 'Signed in successfully',
+      username: username,
+      role: user.role
+    }, 200, corsHeaders, cookie);
+    
+  } catch (error) {
+    console.error('Signin error:', error);
+    return jsonResponse({ 
+      error: 'Signin failed',
+      details: error.message 
+    }, 500, corsHeaders);
+  }
+}
+
+async function handleSignout(request, env, corsHeaders) {
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const sessionId = cookie.match(/session=([^;]+)/)?.[1];
+    
+    if (sessionId) {
+      await env.DB.prepare(
+        'DELETE FROM sessions WHERE session_id = ?'
+      ).bind(sessionId).run();
+    }
+    
+    return jsonResponse({ 
+      success: true, 
+      message: 'Signed out successfully' 
+    }, 200, corsHeaders, null, true);
+    
+  } catch (error) {
+    console.error('Signout error:', error);
+    return jsonResponse({ error: 'Signout failed' }, 500, corsHeaders);
+  }
+}
+
+async function handleStatus(request, env, corsHeaders) {
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const sessionId = cookie.match(/session=([^;]+)/)?.[1];
+    
+    if (!sessionId) {
+      return jsonResponse({ authenticated: false }, 200, corsHeaders);
+    }
+    
+    // Check session
+    const session = await env.DB.prepare(
+      'SELECT * FROM sessions WHERE session_id = ?'
+    ).bind(sessionId).first();
+    
+    if (!session) {
+      return jsonResponse({ authenticated: false }, 200, corsHeaders);
+    }
+    
+    // Check if session expired
+    if (new Date(session.expires_at) < new Date()) {
+      await env.DB.prepare(
+        'DELETE FROM sessions WHERE session_id = ?'
+      ).bind(sessionId).run();
+      return jsonResponse({ authenticated: false }, 200, corsHeaders);
+    }
+    
+    // Get user
+    const user = await env.DB.prepare(
+      'SELECT username, role FROM users WHERE username = ?'
+    ).bind(session.username).first();
+    
+    if (!user) {
+      return jsonResponse({ authenticated: false }, 200, corsHeaders);
+    }
+    
+    return jsonResponse({ 
+      authenticated: true, 
+      user: user 
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Status error:', error);
+    return jsonResponse({ authenticated: false }, 500, corsHeaders);
+  }
+}
+
+// ============================================
+// ARTICLE HANDLERS
+// ============================================
+
+async function getArticles(env, corsHeaders) {
+  try {
+    const result = await env.DB.prepare(
       'SELECT id, title, content, author, created_at, updated_at FROM articles ORDER BY created_at DESC'
     ).all();
-    return jsonResponse(articles.results || [], 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    
+    return jsonResponse(result.results || [], 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Get articles error:', error);
+    return jsonResponse({ error: 'Failed to fetch articles' }, 500, corsHeaders);
   }
 }
 
-async function createArticle(request, env) {
-  const user = await getSessionUser(request, env);
-  if (!user || user.role !== 'sysadmin') {
-    return jsonResponse({ error: 'Unauthorized' }, 403);
-  }
-  
+async function getArticle(env, id, corsHeaders) {
   try {
-    const { title, content } = await request.json();
+    const article = await env.DB.prepare(
+      'SELECT * FROM articles WHERE id = ?'
+    ).bind(id).first();
+    
+    if (!article) {
+      return jsonResponse({ error: 'Article not found' }, 404, corsHeaders);
+    }
+    
+    return jsonResponse(article, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Get article error:', error);
+    return jsonResponse({ error: 'Failed to fetch article' }, 500, corsHeaders);
+  }
+}
+
+async function createArticle(request, env, corsHeaders) {
+  try {
+    // Check authentication
+    const user = await getSessionUser(request, env);
+    if (!user) {
+      return jsonResponse({ error: 'Authentication required' }, 401, corsHeaders);
+    }
+    
+    if (user.role !== 'sysadmin') {
+      return jsonResponse({ error: 'Admin access required' }, 403, corsHeaders);
+    }
+    
+    const body = await request.json();
+    const { title, content } = body;
+    
     if (!title || !content) {
-      return jsonResponse({ error: 'Missing fields' }, 400);
+      return jsonResponse({ error: 'Title and content required' }, 400, corsHeaders);
     }
     
     const result = await env.DB.prepare(
       'INSERT INTO articles (title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
     ).bind(title, content, user.username, new Date().toISOString(), new Date().toISOString()).run();
     
-    return jsonResponse({ success: true, id: result.meta.last_row_id }, 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    return jsonResponse({ 
+      success: true, 
+      id: result.meta.last_row_id,
+      message: 'Article created successfully' 
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Create article error:', error);
+    return jsonResponse({ error: 'Failed to create article' }, 500, corsHeaders);
   }
 }
 
-async function getArticle(env, id) {
+async function updateArticle(request, env, id, corsHeaders) {
   try {
-    const article = await env.DB.prepare('SELECT * FROM articles WHERE id = ?').bind(id).first();
-    if (!article) {
-      return jsonResponse({ error: 'Not found' }, 404);
+    const user = await getSessionUser(request, env);
+    if (!user) {
+      return jsonResponse({ error: 'Authentication required' }, 401, corsHeaders);
     }
-    return jsonResponse(article, 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
-  }
-}
-
-async function updateArticle(request, env, id) {
-  const user = await getSessionUser(request, env);
-  if (!user || user.role !== 'sysadmin') {
-    return jsonResponse({ error: 'Unauthorized' }, 403);
-  }
-  
-  try {
-    const { title, content } = await request.json();
+    
+    if (user.role !== 'sysadmin') {
+      return jsonResponse({ error: 'Admin access required' }, 403, corsHeaders);
+    }
+    
+    const body = await request.json();
+    const { title, content } = body;
+    
     if (!title || !content) {
-      return jsonResponse({ error: 'Missing fields' }, 400);
+      return jsonResponse({ error: 'Title and content required' }, 400, corsHeaders);
     }
     
     await env.DB.prepare(
       'UPDATE articles SET title = ?, content = ?, updated_at = ? WHERE id = ?'
     ).bind(title, content, new Date().toISOString(), id).run();
     
-    return jsonResponse({ success: true }, 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    return jsonResponse({ 
+      success: true, 
+      message: 'Article updated successfully' 
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Update article error:', error);
+    return jsonResponse({ error: 'Failed to update article' }, 500, corsHeaders);
   }
 }
 
-async function deleteArticle(request, env, id) {
-  const user = await getSessionUser(request, env);
-  if (!user || user.role !== 'sysadmin') {
-    return jsonResponse({ error: 'Unauthorized' }, 403);
-  }
-  
+async function deleteArticle(request, env, id, corsHeaders) {
   try {
-    await env.DB.prepare('DELETE FROM articles WHERE id = ?').bind(id).run();
-    return jsonResponse({ success: true }, 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    const user = await getSessionUser(request, env);
+    if (!user) {
+      return jsonResponse({ error: 'Authentication required' }, 401, corsHeaders);
+    }
+    
+    if (user.role !== 'sysadmin') {
+      return jsonResponse({ error: 'Admin access required' }, 403, corsHeaders);
+    }
+    
+    await env.DB.prepare(
+      'DELETE FROM articles WHERE id = ?'
+    ).bind(id).run();
+    
+    return jsonResponse({ 
+      success: true, 
+      message: 'Article deleted successfully' 
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Delete article error:', error);
+    return jsonResponse({ error: 'Failed to delete article' }, 500, corsHeaders);
   }
 }
 
-// ===== USER HANDLERS =====
+// ============================================
+// USER HANDLERS
+// ============================================
 
-async function getUsers(request, env) {
-  const user = await getSessionUser(request, env);
-  if (!user || user.role !== 'sysadmin') {
-    return jsonResponse({ error: 'Unauthorized' }, 403);
-  }
-  
+async function getUsers(request, env, corsHeaders) {
   try {
-    const users = await env.DB.prepare('SELECT username, role FROM users ORDER BY username').all();
-    return jsonResponse(users.results || [], 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    const user = await getSessionUser(request, env);
+    if (!user || user.role !== 'sysadmin') {
+      return jsonResponse({ error: 'Admin access required' }, 403, corsHeaders);
+    }
+    
+    const result = await env.DB.prepare(
+      'SELECT username, role FROM users ORDER BY username'
+    ).all();
+    
+    return jsonResponse(result.results || [], 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Get users error:', error);
+    return jsonResponse({ error: 'Failed to fetch users' }, 500, corsHeaders);
   }
 }
 
-async function grantAdmin(request, env, username) {
-  const user = await getSessionUser(request, env);
-  if (!user || user.role !== 'sysadmin') {
-    return jsonResponse({ error: 'Unauthorized' }, 403);
-  }
-  
+async function grantAdmin(request, env, username, corsHeaders) {
   try {
-    await env.DB.prepare('UPDATE users SET role = ? WHERE username = ?').bind('sysadmin', username).run();
-    return jsonResponse({ success: true }, 200);
-  } catch (err) {
-    return jsonResponse({ error: 'Internal error' }, 500);
+    const user = await getSessionUser(request, env);
+    if (!user || user.role !== 'sysadmin') {
+      return jsonResponse({ error: 'Admin access required' }, 403, corsHeaders);
+    }
+    
+    await env.DB.prepare(
+      'UPDATE users SET role = ? WHERE username = ?'
+    ).bind('sysadmin', username).run();
+    
+    return jsonResponse({ 
+      success: true, 
+      message: `Admin access granted to ${username}` 
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    console.error('Grant admin error:', error);
+    return jsonResponse({ error: 'Failed to grant admin access' }, 500, corsHeaders);
   }
 }
 
-// ===== UTILITY FUNCTIONS =====
+// ============================================
+// TEST ENDPOINT
+// ============================================
 
-async function hashPassword(password) {
-  const hashed = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
-  return Array.from(new Uint8Array(hashed)).map(b => b.toString(16).padStart(2, '0')).join('');
+async function testEndpoint(env, corsHeaders) {
+  try {
+    // Test database connection
+    const result = await env.DB.prepare('SELECT 1 as test').first();
+    
+    return jsonResponse({
+      status: 'OK',
+      database: 'Connected',
+      test: result,
+      timestamp: new Date().toISOString()
+    }, 200, corsHeaders);
+    
+  } catch (error) {
+    return jsonResponse({
+      status: 'ERROR',
+      database: 'Disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }, 200, corsHeaders);
+  }
 }
 
-function getSessionId(request) {
-  const cookie = request.headers.get('Cookie') || '';
-  return cookie.match(/session=([^;]+)/)?.[1] || null;
-}
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
 async function getSessionUser(request, env) {
-  const sessionId = getSessionId(request);
-  if (!sessionId) return null;
-  
-  const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
-  if (!session || new Date(session.expires_at) < new Date()) return null;
-  
-  return await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const sessionId = cookie.match(/session=([^;]+)/)?.[1];
+    
+    if (!sessionId) return null;
+    
+    const session = await env.DB.prepare(
+      'SELECT * FROM sessions WHERE session_id = ?'
+    ).bind(sessionId).first();
+    
+    if (!session) return null;
+    if (new Date(session.expires_at) < new Date()) return null;
+    
+    const user = await env.DB.prepare(
+      'SELECT username, role FROM users WHERE username = ?'
+    ).bind(session.username).first();
+    
+    return user;
+    
+  } catch (error) {
+    console.error('Get session user error:', error);
+    return null;
+  }
 }
 
-function jsonResponse(data, status, sessionId = null, clearCookie = false) {
-  const headers = { 'Content-Type': 'application/json' };
+function jsonResponse(data, status = 200, corsHeaders = {}, cookie = null, clearCookie = false) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...corsHeaders
+  };
   
-  if (sessionId) {
-    headers['Set-Cookie'] = `session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7*24*60*60}`;
+  if (cookie) {
+    headers['Set-Cookie'] = cookie;
   }
   
   if (clearCookie) {
-    headers['Set-Cookie'] = `session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
+    headers['Set-Cookie'] = 'session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
   }
   
   return new Response(JSON.stringify(data), { status, headers });
