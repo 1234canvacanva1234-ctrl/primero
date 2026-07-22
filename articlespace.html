@@ -84,6 +84,7 @@
       position: relative;
       max-height: 220px;
       overflow: hidden;
+      text-align: left;
     }
     .article-card.expanded {
       max-height: 3000px;
@@ -104,6 +105,7 @@
       letter-spacing: 2px;
       color: #6b8e9b;
       transition: color 0.5s ease;
+      text-align: left;
     }
     .article-card.expanded .title {
       color: #ff3b7c;
@@ -141,13 +143,11 @@
       color: #4a6673;
       margin-bottom: 14px;
       transition: color 0.5s ease;
+      text-align: left;
     }
     .article-card.expanded .meta {
       color: #ff3b7c;
       animation: pulseText 3s ease-in-out infinite;
-    }
-    .article-card .content-wrapper {
-      position: relative;
     }
     .article-card .content {
       font-family: 'Crimson Text', serif;
@@ -156,6 +156,8 @@
       color: #bcccd6;
       white-space: pre-wrap;
       word-wrap: break-word;
+      text-align: left;
+      position: relative;
     }
     .article-card .content .truncated {
       position: relative;
@@ -176,7 +178,7 @@
       color: #4a6673;
       margin-top: 8px;
       display: block;
-      transition: color 0.5s ease;
+      text-align: left;
     }
     .article-card.expanded .char-info {
       color: #ff3b7c;
@@ -193,6 +195,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      text-align: left;
     }
     .article-card .expand-hint .arrow {
       display: inline-block;
@@ -204,20 +207,6 @@
     }
     .article-card.expanded .expand-hint {
       opacity: 0.3;
-    }
-    .article-card .full-content {
-      display: none;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(107, 142, 155, 0.08);
-    }
-    .article-card.expanded .full-content {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
     }
     .empty-articles {
       text-align: center;
@@ -306,15 +295,10 @@
           const decoded = decodeURIComponent(hash);
           expandedIndex = articles.findIndex(a => {
             const slug = createSlug(a.title);
-            return slug === decoded;
+            const titleCount = titleCounts[a.title];
+            const finalSlug = titleCount > 1 ? slug + '-' + a.id : slug;
+            return finalSlug === decoded;
           });
-          // If not found by title, try with ID
-          if (expandedIndex === -1) {
-            expandedIndex = articles.findIndex(a => {
-              const slugWithId = createSlug(a.title) + '-' + a.id;
-              return slugWithId === decoded;
-            });
-          }
         }
         
         container.innerHTML = articles.map((a, index) => {
@@ -325,7 +309,9 @@
           const truncated = content.slice(0, charLimit);
           const remaining = content.length - charLimit;
           const slug = createSlug(a.title);
-          const url = `${window.location.origin}${window.location.pathname}#${slug}`;
+          const titleCount = titleCounts[a.title];
+          const finalSlug = titleCount > 1 ? slug + '-' + a.id : slug;
+          const url = `${window.location.origin}${window.location.pathname}#${finalSlug}`;
           
           return `
             <div class="article-card ${isExpanded ? 'expanded' : ''}" data-index="${index}">
@@ -334,25 +320,22 @@
                 <button class="copy-btn" data-url="${url}">⧉</button>
               </div>
               <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
-              <div class="content-wrapper">
-                <div class="content">
-                  ${isExpanded ? `
-                    <div>${escapeHtml(content)}</div>
-                    <span class="char-info">${content.length} characters</span>
-                  ` : `
-                    <div class="truncated">
-                      ${escapeHtml(truncated)}${isTruncated ? '...' : ''}
-                      ${isTruncated ? '<div class="fade-overlay"></div>' : ''}
-                    </div>
-                    ${isTruncated ? `<span class="char-info">${remaining} characters remaining</span>` : ''}
-                  `}
-                </div>
+              <div class="content">
+                ${isExpanded ? `
+                  <div>${escapeHtml(content)}</div>
+                  ${content.length > 0 ? `<span class="char-info">${content.length} characters</span>` : ''}
+                ` : `
+                  <div class="truncated">
+                    ${escapeHtml(truncated)}${isTruncated ? '...' : ''}
+                    ${isTruncated ? '<div class="fade-overlay"></div>' : ''}
+                  </div>
+                  ${isTruncated ? `<span class="char-info">${remaining} characters remaining</span>` : ''}
+                `}
               </div>
               <div class="expand-hint">
-                <span class="arrow">▾</span>
+                <span class="arrow">${isExpanded ? '▴' : '▾'}</span>
                 ${isExpanded ? 'collapse' : 'expand'}
               </div>
-              <div class="full-content"></div>
             </div>
           `;
         }).join('');
@@ -371,7 +354,6 @@
                 btn.classList.remove('copied');
               }, 2000);
             } catch (err) {
-              // Fallback
               const textarea = document.createElement('textarea');
               textarea.value = url;
               document.body.appendChild(textarea);
@@ -391,22 +373,20 @@
         // Card click handler - toggle expansion
         document.querySelectorAll('.article-card').forEach(card => {
           card.addEventListener('click', function(e) {
-            // Don't toggle if clicking the copy button
             if (e.target.closest('.copy-btn')) return;
             
             const index = parseInt(this.dataset.index);
             const isExpanded = this.classList.contains('expanded');
             const article = allArticles[index];
             const slug = createSlug(article.title);
+            const titleCount = titleCounts[article.title];
+            const finalSlug = titleCount > 1 ? slug + '-' + article.id : slug;
             
             // Close all
             document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
             
             if (!isExpanded) {
               this.classList.add('expanded');
-              // Update URL hash
-              const titleCount = titleCounts[article.title];
-              const finalSlug = titleCount > 1 ? slug + '-' + article.id : slug;
               window.location.hash = finalSlug;
             } else {
               window.location.hash = '';
@@ -472,7 +452,6 @@
         const titleCount = titleCounts[article.title];
         const finalSlug = titleCount > 1 ? slug + '-' + article.id : slug;
         if (finalSlug === decoded) {
-          // Close all first
           document.querySelectorAll('.article-card').forEach(c => c.classList.remove('expanded'));
           card.classList.add('expanded');
           const hint = card.querySelector('.expand-hint');
