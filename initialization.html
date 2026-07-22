@@ -189,17 +189,6 @@
       transition: color 0.3s ease;
     }
     .back-link:hover { color: #ff3b7c; }
-    .status-badge {
-      display: inline-block;
-      font-family: 'Fira Code', monospace;
-      font-size: 7px;
-      letter-spacing: 2px;
-      color: #4a6673;
-      background: rgba(107,142,155,0.06);
-      padding: 4px 10px;
-      border-radius: 2px;
-      margin-top: 8px;
-    }
     @media (max-width: 640px) {
       .init-container { padding: 28px 20px 36px; }
       .init-title { font-size: 24px; letter-spacing: 4px; }
@@ -260,14 +249,12 @@
       const cursor = document.getElementById('cursor');
       if (!cursor) return;
       
-      // Show cursor
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
       
       let mx = -100, my = -100;
       let cx = -100, cy = -100;
       
-      // Animation loop with smooth following
       function updateCursor() {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
@@ -276,13 +263,11 @@
         requestAnimationFrame(updateCursor);
       }
       
-      // Track mouse position
       document.addEventListener('mousemove', (e) => {
         mx = e.clientX;
         my = e.clientY;
       });
       
-      // Handle mouse leaving the window
       document.addEventListener('mouseleave', () => {
         cursor.classList.remove('active');
       });
@@ -291,7 +276,6 @@
         cursor.classList.add('active');
       });
       
-      // Add hover effect to all interactive elements
       const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link');
       interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
@@ -302,10 +286,8 @@
         });
       });
       
-      // Start the animation
       updateCursor();
     } else {
-      // On mobile, ensure default cursor
       document.body.style.cursor = 'auto';
     }
 
@@ -325,7 +307,10 @@
           signinForm.classList.add('hidden');
           signupForm.classList.remove('hidden');
         }
-        document.querySelectorAll('.message').forEach(m => m.textContent = '');
+        document.querySelectorAll('.message').forEach(m => {
+          m.textContent = '';
+          m.className = 'message';
+        });
       });
     });
 
@@ -338,8 +323,17 @@
       const msg = document.getElementById('signup-message');
       const btn = e.target.querySelector('.init-btn');
       
+      // Clear previous messages
+      msg.textContent = '';
+      msg.className = 'message';
+      
       if (!username || !password || !confirm) {
         msg.textContent = 'All fields are required.';
+        msg.className = 'message error';
+        return;
+      }
+      if (username.length < 3) {
+        msg.textContent = 'Username must be at least 3 characters.';
         msg.className = 'message error';
         return;
       }
@@ -355,27 +349,49 @@
       }
       
       btn.disabled = true;
-      msg.textContent = 'Processing...';
+      msg.textContent = 'Creating account...';
       msg.className = 'message';
       
       try {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
           body: JSON.stringify({ username, password })
         });
-        const data = await res.json();
+        
+        // Try to parse response
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseError) {
+          // If response isn't JSON, get text
+          const text = await res.text();
+          console.error('Non-JSON response:', text);
+          throw new Error('Server returned invalid response');
+        }
+        
         if (!res.ok) {
-          msg.textContent = data.error || 'Signup failed.';
+          msg.textContent = data.error || data.message || 'Signup failed. Status: ' + res.status;
           msg.className = 'message error';
           btn.disabled = false;
           return;
         }
+        
         msg.textContent = 'Identity established! Redirecting...';
         msg.className = 'message success';
-        setTimeout(() => window.location.href = '/control-panel', 1000);
+        btn.disabled = false;
+        
+        setTimeout(() => {
+          window.location.href = '/control-panel';
+        }, 1500);
+        
       } catch (err) {
-        msg.textContent = 'Network error. Please try again.';
+        console.error('Signup error:', err);
+        msg.textContent = 'Network error: ' + err.message;
         msg.className = 'message error';
         btn.disabled = false;
       }
@@ -388,6 +404,10 @@
       const password = document.getElementById('signin-password').value;
       const msg = document.getElementById('signin-message');
       const btn = e.target.querySelector('.init-btn');
+      
+      // Clear previous messages
+      msg.textContent = '';
+      msg.className = 'message';
       
       if (!username || !password) {
         msg.textContent = 'All fields are required.';
@@ -402,21 +422,42 @@
       try {
         const res = await fetch('/api/auth/signin', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
           body: JSON.stringify({ username, password })
         });
-        const data = await res.json();
+        
+        // Try to parse response
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseError) {
+          const text = await res.text();
+          console.error('Non-JSON response:', text);
+          throw new Error('Server returned invalid response');
+        }
+        
         if (!res.ok) {
-          msg.textContent = data.error || 'Authentication failed.';
+          msg.textContent = data.error || data.message || 'Authentication failed. Status: ' + res.status;
           msg.className = 'message error';
           btn.disabled = false;
           return;
         }
-        msg.textContent = 'Access granted. Redirecting...';
+        
+        msg.textContent = 'Access granted! Redirecting...';
         msg.className = 'message success';
-        setTimeout(() => window.location.href = '/control-panel', 1000);
+        btn.disabled = false;
+        
+        setTimeout(() => {
+          window.location.href = '/control-panel';
+        }, 1500);
+        
       } catch (err) {
-        msg.textContent = 'Network error. Please try again.';
+        console.error('Signin error:', err);
+        msg.textContent = 'Network error: ' + err.message;
         msg.className = 'message error';
         btn.disabled = false;
       }
