@@ -26,8 +26,20 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
       display: none;
+      transition: transform 0.08s ease, background 0.2s ease;
     }
-    @media (max-width: 640px) { #cursor { display: none !important; } }
+    #cursor.active {
+      display: block;
+    }
+    #cursor.hover {
+      transform: translate(-50%, -50%) scale(2.8);
+      background: rgba(255, 59, 124, 0.25);
+      box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
+    }
+    @media (max-width: 640px) { 
+      #cursor { display: none !important; }
+      body { cursor: auto; }
+    }
     .panel-header {
       max-width: 1100px;
       margin: 0 auto 32px;
@@ -255,6 +267,37 @@
     }
     .user-item .actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
     .user-item .actions button.grant:hover { border-color: #6b8e9b; color: #6b8e9b; }
+    
+    .access-denied {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .access-denied .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .access-denied h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #6b8e9b;
+      margin-bottom: 8px;
+    }
+    .access-denied p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #4a6673;
+      margin-bottom: 20px;
+    }
+    .access-denied .panel-btn {
+      display: inline-block;
+    }
+    .hidden { display: none; }
+    
     @media (max-width: 768px) {
       .panel-grid { grid-template-columns: 1fr; }
       .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
@@ -274,34 +317,45 @@
   </div>
 </div>
 
-<div class="panel-grid">
-  <!-- Editor Section -->
-  <div class="panel-section full">
-    <div class="section-title">✎ <span>Article</span> Editor</div>
-    <div class="editor-area">
-      <input type="text" id="article-title" placeholder="Article Title">
-      <textarea id="article-content" placeholder="Write your article here..."></textarea>
-      <div class="editor-actions">
-        <button id="publish-btn" class="primary">Publish</button>
-        <button id="cancel-edit-btn">Cancel</button>
+<!-- Access Denied Message (shown when not admin) -->
+<div id="access-denied" class="access-denied hidden">
+  <div class="icon">⛔</div>
+  <h2>Access Restricted</h2>
+  <p>This area requires sysadmin privileges. If you believe you should have access, please contact an administrator.</p>
+  <a href="/" class="panel-btn">↩ Return Home</a>
+</div>
+
+<!-- Main Panel Content -->
+<div id="panel-content">
+  <div class="panel-grid">
+    <!-- Editor Section -->
+    <div class="panel-section full">
+      <div class="section-title">✎ <span>Article</span> Editor</div>
+      <div class="editor-area">
+        <input type="text" id="article-title" placeholder="Article Title">
+        <textarea id="article-content" placeholder="Write your article here..."></textarea>
+        <div class="editor-actions">
+          <button id="publish-btn" class="primary">Publish</button>
+          <button id="cancel-edit-btn">Cancel</button>
+        </div>
+        <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:#6b8e9b;min-height:20px;"></div>
       </div>
-      <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:#6b8e9b;min-height:20px;"></div>
     </div>
-  </div>
 
-  <!-- Articles List -->
-  <div class="panel-section">
-    <div class="section-title">📄 <span>Your</span> Articles</div>
-    <div id="articles-list" class="article-list">
-      <div class="empty-state">no articles yet. create one.</div>
+    <!-- Articles List -->
+    <div class="panel-section">
+      <div class="section-title">📄 <span>Your</span> Articles</div>
+      <div id="articles-list" class="article-list">
+        <div class="empty-state">loading articles...</div>
+      </div>
     </div>
-  </div>
 
-  <!-- User Management (sysadmin only) -->
-  <div class="panel-section" id="user-management">
-    <div class="section-title">👥 <span>User</span> Management</div>
-    <div id="users-list" class="user-list">
-      <div class="empty-state">loading users...</div>
+    <!-- User Management (sysadmin only) -->
+    <div class="panel-section" id="user-management">
+      <div class="section-title">👥 <span>User</span> Management</div>
+      <div id="users-list" class="user-list">
+        <div class="empty-state">loading users...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -347,21 +401,44 @@
     let currentUser = null;
     let editingArticleId = null;
 
-    // Check auth status
+    // Check auth status - NO REDIRECT, just show/hide content
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/status');
         const data = await res.json();
-        if (!data.authenticated || data.role !== 'sysadmin') {
-          window.location.href = '/initialization';
+        
+        if (!data.authenticated) {
+          // User is not signed in - show access denied
+          showAccessDenied('Please sign in to access this area.');
           return;
         }
+        
         currentUser = data.user;
+        
+        if (data.user.role !== 'sysadmin') {
+          // User is signed in but not admin
+          showAccessDenied(`Welcome, ${data.user.username}. This area requires sysadmin privileges.`);
+          return;
+        }
+        
+        // User is admin - show the panel
+        document.getElementById('panel-content').style.display = 'block';
+        document.getElementById('access-denied').classList.add('hidden');
         loadArticles();
         loadUsers();
+        
       } catch (err) {
-        window.location.href = '/initialization';
+        console.error('Auth check error:', err);
+        showAccessDenied('Unable to verify authentication. Please try again.');
       }
+    }
+
+    function showAccessDenied(message) {
+      document.getElementById('panel-content').style.display = 'none';
+      const denied = document.getElementById('access-denied');
+      denied.classList.remove('hidden');
+      const p = denied.querySelector('p');
+      if (p) p.textContent = message;
     }
 
     async function loadArticles() {
@@ -375,8 +452,8 @@
         container.innerHTML = articles.map(a => `
           <div class="article-item" data-id="${a.id}">
             <div>
-              <div class="name">${a.title}</div>
-              <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${a.author}</div>
+              <div class="name">${escapeHtml(a.title)}</div>
+              <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
             </div>
             <div class="actions">
               <button class="edit-btn">✎ Edit</button>
@@ -389,14 +466,13 @@
           btn.addEventListener('click', () => {
             const item = btn.closest('.article-item');
             const id = parseInt(item.dataset.id);
-            const title = item.querySelector('.name').textContent;
-            // Fetch full article content
             fetch(`/api/articles/${id}`).then(r => r.json()).then(article => {
               document.getElementById('article-title').value = article.title;
               document.getElementById('article-content').value = article.content;
               editingArticleId = id;
               document.getElementById('publish-btn').textContent = 'Update';
               document.getElementById('editor-message').textContent = 'Editing: ' + article.title;
+              document.getElementById('editor-message').style.color = '#6b8e9b';
             });
           });
         });
@@ -413,6 +489,7 @@
         });
       } catch (err) {
         console.error('Failed to load articles:', err);
+        document.getElementById('articles-list').innerHTML = '<div class="empty-state">failed to load articles</div>';
       }
     }
 
@@ -427,11 +504,11 @@
         container.innerHTML = users.map(u => `
           <div class="user-item">
             <div>
-              <span class="name">${u.username}</span>
+              <span class="name">${escapeHtml(u.username)}</span>
               <span class="role ${u.role}">${u.role}</span>
             </div>
             <div class="actions">
-              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${u.username}">Grant Admin</button>` : ''}
+              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${escapeHtml(u.username)}">Grant Admin</button>` : ''}
             </div>
           </div>
         `).join('');
@@ -440,14 +517,27 @@
           btn.addEventListener('click', async () => {
             const username = btn.dataset.user;
             if (confirm(`Grant sysadmin to ${username}?`)) {
-              await API.users.grant(username);
-              loadUsers();
+              try {
+                await API.users.grant(username);
+                loadUsers();
+              } catch (err) {
+                alert('Failed to grant admin: ' + err.message);
+              }
             }
           });
         });
       } catch (err) {
         console.error('Failed to load users:', err);
+        document.getElementById('users-list').innerHTML = '<div class="empty-state">failed to load users</div>';
       }
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // Publish/Update article
@@ -481,6 +571,7 @@
       } catch (err) {
         msg.textContent = 'Failed to save article.';
         msg.style.color = '#ff3b7c';
+        console.error('Save article error:', err);
       }
     });
 
@@ -494,10 +585,16 @@
 
     // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {
-      await API.auth.signout();
-      window.location.href = '/';
+      try {
+        await API.auth.signout();
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Logout error:', err);
+        window.location.href = '/';
+      }
     });
 
+    // Start
     checkAuth();
   })();
 </script>
