@@ -328,10 +328,15 @@ export async function onRequest(context) {
 // ============================================
 // Article permalink handler
 // GET /articlespace/:slug — serves the articlespace.html
-// shell with og:/twitter: meta tags rewritten to match
-// the real article, so direct links and link-preview bots
-// (Discord, Twitter, etc.) see real content instead of the
-// generic homepage or a blank fallback.
+// shell with:
+//   1. og:/twitter: meta tags rewritten to match the real
+//      article, so link-preview bots (Discord, Twitter, etc.)
+//      see real content instead of the generic homepage.
+//   2. The resolved article embedded directly as JSON in a
+//      <script> tag, so the client never has to re-derive
+//      which article this URL refers to — it just reads what
+//      the server already decided. This is the piece that
+//      makes the permalink authoritative instead of a guess.
 // ============================================
 async function handleArticlePermalink(slug, request, env, next) {
   try {
@@ -369,9 +374,32 @@ async function handleArticlePermalink(slug, request, env, next) {
       console.error('Permalink DB lookup failed:', err);
     }
 
+    // Embed the resolved article (or null) as JSON the client reads on load.
+    // Escaping every '<' prevents the JSON payload from ever being able to
+    // break out of the <script> tag, even if an article's content contains
+    // literal "</script>" text.
+    const articleData = article ? {
+      id: article.id,
+      title: article.title,
+      content: article.content,
+      author: article.author,
+      created_at: article.created_at,
+      slug: slug
+    } : null;
+
+    const dataScript = '<script>window.__ARTICLE__ = ' +
+      JSON.stringify(articleData).replace(/</g, '\\u003c') +
+      ';</script>';
+
+    html = html.includes('</head>')
+      ? html.replace('</head>', dataScript + '</head>')
+      : dataScript + html;
+
     if (!article) {
-      // No matching article — still serve the shell so the client
-      // JS can show its own "not found" state, but mark it 404.
+      // No matching article — still serve the shell (now telling the
+      // client explicitly "checked, nothing here" via window.__ARTICLE__
+      // = null) so it can show a clear not-found state rather than
+      // silently falling back to the general list.
       return new Response(html, {
         status: 404,
         headers: { 'content-type': 'text/html;charset=UTF-8' },
