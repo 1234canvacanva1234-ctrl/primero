@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>SoraSys · Initialization</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: #0b1114;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      cursor: none;
+    }
+    #cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #ff3b7c;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
+      display: none;
+    }
+    @media (max-width: 640px) { #cursor { display: none !important; } }
+    .init-container {
+      max-width: 440px;
+      width: 100%;
+      padding: 40px 32px 48px;
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.12);
+      border-radius: 3px;
+      backdrop-filter: blur(2px);
+    }
+    .init-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .init-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 13px;
+      color: #ff3b7c;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 28px;
+      opacity: 0.8;
+    }
+    .init-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+    }
+    .init-tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .init-tab.active {
+      color: #ff3b7c;
+      border-bottom-color: #ff3b7c;
+    }
+    .init-tab:hover { color: #6b8e9b; }
+    .init-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .init-form.hidden { display: none; }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-family: 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+    }
+    .form-group input {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      border-radius: 2px;
+      transition: border-color 0.3s ease;
+      outline: none;
+      width: 100%;
+    }
+    .form-group input:focus {
+      border-color: #ff3b7c;
+    }
+    .form-group input::placeholder {
+      color: #4a6673;
+      font-style: italic;
+      font-size: 13px;
+    }
+    .init-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #0b1114;
+      background: #ff3b7c;
+      padding: 12px 28px;
+      border: 1px solid rgba(255,59,124,0.3);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 6px;
+      width: 100%;
+    }
+    .init-btn:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 28px rgba(255,59,124,0.25);
+      transform: translateY(-2px);
+    }
+    .init-btn:active { transform: scale(0.96); }
+    .init-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .message {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: #6b8e9b;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+    .message.error { color: #ff3b7c; }
+    .message.success { color: #6b8e9b; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: #4a6673;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .back-link:hover { color: #ff3b7c; }
+    .status-badge {
+      display: inline-block;
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: #4a6673;
+      background: rgba(107,142,155,0.06);
+      padding: 4px 10px;
+      border-radius: 2px;
+      margin-top: 8px;
+    }
+    @media (max-width: 640px) {
+      .init-container { padding: 28px 20px 36px; }
+      .init-title { font-size: 24px; letter-spacing: 4px; }
+      body { padding: 12px; cursor: auto; }
+    }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+<div class="init-container">
+  <div class="init-title">Initialization</div>
+  <div class="init-sub">establish your presence</div>
+  
+  <div class="init-tabs">
+    <button class="init-tab active" data-tab="signin">Sign In</button>
+    <button class="init-tab" data-tab="signup">Sign Up</button>
+  </div>
+
+  <!-- Sign In Form -->
+  <form id="signin-form" class="init-form">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="signin-username" placeholder="your username" required>
+    </div>
+    <div class="form-group">
+      <label>Security Token</label>
+      <input type="password" id="signin-password" placeholder="••••••••" required>
+    </div>
+    <button type="submit" class="init-btn">Access Network</button>
+    <div id="signin-message" class="message"></div>
+  </form>
+
+  <!-- Sign Up Form -->
+  <form id="signup-form" class="init-form hidden">
+    <div class="form-group">
+      <label>Choose Username</label>
+      <input type="text" id="signup-username" placeholder="unique identifier" required>
+    </div>
+    <div class="form-group">
+      <label>Security Token</label>
+      <input type="password" id="signup-password" placeholder="create a strong token" required>
+    </div>
+    <div class="form-group">
+      <label>Confirm Token</label>
+      <input type="password" id="signup-confirm" placeholder="confirm your token" required>
+    </div>
+    <button type="submit" class="init-btn">Establish Identity</button>
+    <div id="signup-message" class="message"></div>
+  </form>
+
+  <a href="/" class="back-link">↩ return to network</a>
+</div>
+
+<script>
+  (function() {
+    if (window.innerWidth > 640) {
+      const cursor = document.getElementById('cursor');
+      cursor.classList.add('active');
+      document.body.style.cursor = 'none';
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
+        cx += (mx - cx) * 0.2;
+        cy += (my - cy) * 0.2;
+        cursor.style.left = cx + 'px';
+        cursor.style.top = cy + 'px';
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('button, input, a').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+      update();
+    }
+
+    // Tab switching
+    const tabs = document.querySelectorAll('.init-tab');
+    const signinForm = document.getElementById('signin-form');
+    const signupForm = document.getElementById('signup-form');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.tab === 'signin') {
+          signinForm.classList.remove('hidden');
+          signupForm.classList.add('hidden');
+        } else {
+          signinForm.classList.add('hidden');
+          signupForm.classList.remove('hidden');
+        }
+        document.querySelectorAll('.message').forEach(m => m.textContent = '');
+      });
+    });
+
+    // Sign Up
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('signup-username').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirm = document.getElementById('signup-confirm').value;
+      const msg = document.getElementById('signup-message');
+      const btn = e.target.querySelector('.init-btn');
+      
+      if (!username || !password || !confirm) {
+        msg.textContent = 'All fields are required.';
+        msg.className = 'message error';
+        return;
+      }
+      if (password.length < 8) {
+        msg.textContent = 'Security token must be at least 8 characters.';
+        msg.className = 'message error';
+        return;
+      }
+      if (password !== confirm) {
+        msg.textContent = 'Tokens do not match.';
+        msg.className = 'message error';
+        return;
+      }
+      
+      btn.disabled = true;
+      msg.textContent = 'Processing...';
+      msg.className = 'message';
+      
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.error || 'Signup failed.';
+          msg.className = 'message error';
+          btn.disabled = false;
+          return;
+        }
+        msg.textContent = 'Identity established! Redirecting...';
+        msg.className = 'message success';
+        setTimeout(() => window.location.href = '/control-panel', 1000);
+      } catch (err) {
+        msg.textContent = 'Network error. Please try again.';
+        msg.className = 'message error';
+        btn.disabled = false;
+      }
+    });
+
+    // Sign In
+    document.getElementById('signin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('signin-username').value.trim();
+      const password = document.getElementById('signin-password').value;
+      const msg = document.getElementById('signin-message');
+      const btn = e.target.querySelector('.init-btn');
+      
+      if (!username || !password) {
+        msg.textContent = 'All fields are required.';
+        msg.className = 'message error';
+        return;
+      }
+      
+      btn.disabled = true;
+      msg.textContent = 'Authenticating...';
+      msg.className = 'message';
+      
+      try {
+        const res = await fetch('/api/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.error || 'Authentication failed.';
+          msg.className = 'message error';
+          btn.disabled = false;
+          return;
+        }
+        msg.textContent = 'Access granted. Redirecting...';
+        msg.className = 'message success';
+        setTimeout(() => window.location.href = '/control-panel', 1000);
+      } catch (err) {
+        msg.textContent = 'Network error. Please try again.';
+        msg.className = 'message error';
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
