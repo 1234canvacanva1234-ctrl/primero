@@ -89,11 +89,11 @@
       transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       position: relative;
       overflow: hidden;
-      max-height: 230px;
+      /* FIXED: No fixed height - grows with content */
+      height: auto;
     }
     
     .article-card.expanded {
-      max-height: 4000px;
       border-color: rgba(255, 59, 124, 0.2);
       background: rgba(20, 30, 35, 0.85);
     }
@@ -102,7 +102,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 6px;
+      margin-bottom: 0; /* FIXED: No margin below title */
     }
     
     .article-card .title {
@@ -111,6 +111,7 @@
       letter-spacing: 2px;
       color: #6b8e9b;
       transition: color 0.5s ease;
+      margin: 0; /* FIXED: No margin */
     }
     
     .article-card.expanded .title {
@@ -145,12 +146,13 @@
       color: #6b8e9b;
     }
     
+    /* FIXED: Meta directly below title with minimal spacing */
     .article-card .meta {
       font-family: 'Fira Code', monospace;
       font-size: 8px;
       letter-spacing: 1.5px;
       color: #4a6673;
-      margin-bottom: 14px;
+      margin: 2px 0 8px 0; /* FIXED: Minimal margin */
       transition: color 0.5s ease;
     }
     
@@ -159,6 +161,7 @@
       animation: pulseText 3s ease-in-out infinite;
     }
     
+    /* FIXED: Body text starts immediately after meta */
     .article-card .body {
       font-family: 'Crimson Text', serif;
       font-size: 16px;
@@ -167,9 +170,20 @@
       white-space: pre-wrap;
       word-wrap: break-word;
       position: relative;
+      margin: 0; /* FIXED: No margin */
+      padding: 0; /* FIXED: No padding */
     }
     
     .article-card .body .text-content {
+      position: relative;
+      margin: 0; /* FIXED: No margin */
+      padding: 0; /* FIXED: No padding */
+    }
+    
+    /* FIXED: Text truncation with fade */
+    .article-card .body .truncated-text {
+      max-height: 200px;
+      overflow: hidden;
       position: relative;
     }
     
@@ -181,6 +195,17 @@
       height: 60px;
       background: linear-gradient(to bottom, transparent, rgba(20, 30, 35, 0.95));
       pointer-events: none;
+      display: block;
+    }
+    
+    .article-card.expanded .body .fade {
+      display: none;
+    }
+    
+    /* FIXED: Expanded text shows fully */
+    .article-card.expanded .body .text-content {
+      max-height: none;
+      overflow: visible;
     }
     
     .article-card .char-remaining {
@@ -190,6 +215,7 @@
       color: #4a6673;
       display: block;
       margin-top: 8px;
+      transition: color 0.5s ease;
     }
     
     .article-card.expanded .char-remaining {
@@ -229,7 +255,7 @@
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
-      .article-card { padding: 20px; max-height: 200px; }
+      .article-card { padding: 20px; }
       .article-card .title { font-size: 16px; }
       .article-card .title-wrap { flex-wrap: wrap; }
       body { padding: 16px; cursor: auto; }
@@ -332,8 +358,13 @@
         const remaining = content.length - charLimit;
         const slug = makeSlug(a.title);
         const count = titleCounts[a.title];
+        // FIXED: Only append ID if duplicate
         const finalSlug = count > 1 ? slug + '-' + a.id : slug;
         const url = window.location.origin + window.location.pathname + '#' + finalSlug;
+
+        // FIXED: Clean text - no leading spaces
+        const displayText = isExpanded ? content : preview;
+        const truncatedClass = (!isExpanded && isLong) ? 'truncated-text' : '';
 
         html += `
           <div class="article-card ${isExpanded ? 'expanded' : ''}" data-id="${a.id}">
@@ -343,8 +374,8 @@
             </div>
             <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
             <div class="body">
-              <div class="text-content">
-                ${isExpanded ? escapeHtml(content) : escapeHtml(preview) + (isLong ? '...' : '')}
+              <div class="text-content ${truncatedClass}">
+                ${escapeHtml(displayText)}
                 ${!isExpanded && isLong ? '<div class="fade"></div>' : ''}
               </div>
               ${!isExpanded && isLong ? `<span class="char-remaining">${remaining} characters remaining</span>` : ''}
