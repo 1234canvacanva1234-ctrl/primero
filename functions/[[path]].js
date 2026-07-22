@@ -2,7 +2,18 @@ export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
-  
+
+  // ============================================
+  // ARTICLE PERMALINKS - /articlespace/:slug
+  // Handled first, directly in the catch-all, so there's
+  // no dependency on Cloudflare picking a more specific
+  // function route over this one.
+  // ============================================
+  const articleSlugMatch = path.match(/^\/articlespace\/([^\/]+)\/?$/);
+  if (articleSlugMatch) {
+    return handleArticlePermalink(articleSlugMatch[1], request, env, next);
+  }
+
   // ============================================
   // IMPORTANT: ONLY handle /api/* routes
   // Everything else passes through to static files
@@ -312,6 +323,96 @@ export async function onRequest(context) {
     path: path,
     method: request.method
   }), { status: 404, headers });
+}
+
+// ============================================
+// Article permalink handler
+// GET /articlespace/:slug — serves the articlespace.html
+// shell with og:/twitter: meta tags rewritten to match
+// the real article, so direct links and link-preview bots
+// (Discord, Twitter, etc.) see real content instead of the
+// generic homepage or a blank fallback.
+// ============================================
+async function handleArticlePermalink(slug, request, env, next) {
+  try {
+    const shellRequest = new Request(new URL('/articlespace.html', request.url), request);
+    const shellResponse = await env.ASSETS.fetch(shellRequest);
+
+    if (!shellResponse.ok) {
+      return shellResponse;
+    }
+
+    let html = await shellResponse.text();
+    let article = null;
+
+    try {
+      const { results } = await env.DB.prepare(
+        'SELECT id, title, content, author, created_at FROM articles ORDER BY created_at DESC'
+      ).all();
+      const articles = results || [];
+
+      const slugify = (t) => (t || 'Untitled')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      const slugs = articles.map((a, index) => {
+        let s = slugify(a.title);
+        const dupCount = articles.filter((art, idx) => idx < index && slugify(art.title) === s).length;
+        if (dupCount > 0) s += '-' + (dupCount + 1);
+        return s;
+      });
+
+      const idx = slugs.indexOf(slug);
+      if (idx !== -1) article = articles[idx];
+    } catch (err) {
+      console.error('Permalink DB lookup failed:', err);
+    }
+
+    if (!article) {
+      // No matching article — still serve the shell so the client
+      // JS can show its own "not found" state, but mark it 404.
+      return new Response(html, {
+        status: 404,
+        headers: { 'content-type': 'text/html;charset=UTF-8' },
+      });
+    }
+
+    const title = article.title || 'Untitled';
+    const rawDesc = (article.content || '').replace(/\s+/g, ' ').trim();
+    const desc = rawDesc.length > 200 ? rawDesc.slice(0, 200) + '…' : rawDesc;
+
+    const esc = (s) => String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const pageTitle = esc(title) + ' · SoraSys Articlespace';
+    const ogTitle = esc(title);
+    const ogDesc = esc(desc || 'Read this article on SoraSys Articlespace.');
+    const ogUrl = esc(request.url);
+
+    html = html
+      .replace(/<title>.*?<\/title>/s, `<title>${pageTitle}</title>`)
+      .replace(/<meta property="og:url" content=".*?">/, `<meta property="og:url" content="${ogUrl}">`)
+      .replace(/<meta property="og:title" content=".*?">/, `<meta property="og:title" content="${ogTitle}">`)
+      .replace(/<meta property="og:description" content=".*?">/, `<meta property="og:description" content="${ogDesc}">`)
+      .replace(/<meta name="twitter:title" content=".*?">/, `<meta name="twitter:title" content="${ogTitle}">`)
+      .replace(/<meta name="twitter:description" content=".*?">/, `<meta name="twitter:description" content="${ogDesc}">`);
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+        'cache-control': 'public, max-age=60',
+      },
+    });
+
+  } catch (err) {
+    console.error('Article permalink handler failed:', err);
+    return next();
+  }
 }
 
 // ============================================
