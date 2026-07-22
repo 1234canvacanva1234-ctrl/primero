@@ -1,7 +1,7 @@
 name = "soratest"
-pages_build_output_dir = "/"
 compatibility_date = "2026-07-22"
+
+[[d1_databases]]
 binding = "DB"
 database_name = "primero"
 database_id = "48f2ef0c-8ded-437d-a78b-0f8ac4cf4139"
-preview_database_id = "48f2ef0c-8ded-437d-a78b-0f8ac4cf4139"
