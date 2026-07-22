@@ -28,15 +28,13 @@
       display: none;
       transition: transform 0.08s ease, background 0.2s ease;
     }
-    #cursor.active {
-      display: block;
-    }
+    #cursor.active { display: block; }
     #cursor.hover {
       transform: translate(-50%, -50%) scale(2.8);
       background: rgba(255, 59, 124, 0.25);
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
-    @media (max-width: 640px) { 
+    @media (max-width: 640px) {
       #cursor { display: none !important; }
       body { cursor: auto; }
     }
@@ -78,23 +76,35 @@
     }
     .article-card {
       background: rgba(20, 30, 35, 0.7);
-      border: 1px solid rgba(107, 142, 155, 0.08);
-      border-left: 2px solid rgba(107, 142, 155, 0.08);
-      border-radius: 3px;
-      transition: border-color 0.3s ease, background 0.3s ease;
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      border-radius: 4px;
       cursor: pointer;
       overflow: hidden;
+      transition:
+        transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.35s ease,
+        border-color 0.3s ease,
+        background 0.3s ease;
     }
     .article-card:hover {
-      border-color: rgba(255, 59, 124, 0.15);
-      border-left-color: rgba(255, 59, 124, 0.35);
+      border-color: rgba(255, 59, 124, 0.3);
+    }
+    .article-card:active {
+      transform: scale(0.997);
     }
     .article-card.expanded {
-      border-left-color: #ff3b7c;
-      background: rgba(20, 30, 35, 0.9);
+      border-color: #ff3b7c;
+      background: rgba(20, 30, 35, 0.92);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.1), 0 2px 10px rgba(0, 0, 0, 0.35);
     }
     .article-card .card-inner {
       padding: 16px 20px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .article-card .title {
       font-family: 'Cinzel', serif;
@@ -105,7 +115,7 @@
       transition: color 0.3s ease;
     }
     .article-card.expanded .title {
-      color: #86aab8;
+      color: #ff3b7c;
     }
     .article-card .title.pulse-active {
       animation: pulse-opacity 1.5s ease-in-out infinite;
@@ -114,6 +124,33 @@
       0%, 100% { opacity: 0.65; }
       50% { opacity: 1; }
     }
+    .copy-link-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #4a6673;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(1px);
+      transition: opacity 0.25s ease, color 0.25s ease;
+      flex-shrink: 0;
+    }
+    .article-card:hover .copy-link-btn,
+    .article-card.expanded .copy-link-btn {
+      opacity: 0.55;
+    }
+    .copy-link-btn:hover {
+      opacity: 1 !important;
+      color: #ff3b7c;
+    }
+    .copy-link-btn.copied {
+      opacity: 1 !important;
+      color: #4ade80;
+    }
+    .copy-link-btn svg { width: 13px; height: 13px; display: block; }
     .article-card .meta {
       font-family: 'Fira Code', monospace;
       font-size: 8px;
@@ -121,6 +158,10 @@
       color: #4a6673;
       margin-top: 4px;
       margin-bottom: 10px;
+      transition: color 0.3s ease;
+    }
+    .article-card.expanded .meta {
+      color: rgba(255, 59, 124, 0.65);
     }
     .article-card .content {
       font-family: 'Crimson Text', serif;
@@ -131,10 +172,6 @@
       word-wrap: break-word;
       overflow: hidden;
     }
-    .article-card .content.full {
-      max-height: none;
-      transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
-    }
     .article-card .char-remain {
       font-family: 'Fira Code', monospace;
       font-size: 11px;
@@ -144,18 +181,6 @@
       margin-top: 6px;
       display: block;
       animation: pulse-opacity 2s ease-in-out infinite;
-    }
-    .article-card .toggle-hint {
-      font-family: 'Fira Code', monospace;
-      font-size: 7px;
-      letter-spacing: 2px;
-      color: #4a6673;
-      margin-top: 10px;
-      opacity: 0.4;
-      transition: opacity 0.3s ease;
-    }
-    .article-card:hover .toggle-hint {
-      opacity: 0.8;
     }
     .empty-articles {
       text-align: center;
@@ -170,6 +195,7 @@
       .space-nav a { margin: 0 8px; }
       .article-card .card-inner { padding: 14px 16px; }
       .article-card .title { font-size: 15px; }
+      .copy-link-btn { opacity: 0.55; }
       body { padding: 16px; cursor: auto; }
     }
   </style>
@@ -189,6 +215,9 @@
 
 <script>
   (function() {
+    const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+    const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
     // Only enable custom cursor on desktop
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
@@ -207,24 +236,15 @@
           requestAnimationFrame(updateCursor);
         }
 
-        document.addEventListener('mousemove', (e) => {
-          mx = e.clientX;
-          my = e.clientY;
-        });
+        document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+        document.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        document.addEventListener('mouseenter', () => cursor.classList.add('active'));
 
-        document.addEventListener('mouseleave', () => {
-          cursor.classList.remove('active');
-        });
-
-        document.addEventListener('mouseenter', () => {
-          cursor.classList.add('active');
-        });
-
-        const interactiveElements = document.querySelectorAll('a, .article-card, .space-nav a, .space-header');
-        interactiveElements.forEach(el => {
+        function bindHover(el) {
           el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
           el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-        });
+        }
+        document.querySelectorAll('a, .article-card, .space-nav a, .space-header').forEach(bindHover);
 
         updateCursor();
       }
@@ -232,15 +252,11 @@
       document.body.style.cursor = 'auto';
     }
 
-    // Track active (expanded) card
     let activeCard = null;
-
-    // Base path the app is mounted at (everything before an article slug, if any)
     let basePath = window.location.pathname.replace(/\/+$/, '') || '';
 
-    function buildArticleUrl(slug) {
-      const b = basePath === '' ? '' : basePath;
-      return (b === '' ? '' : b) + '/' + slug;
+    function buildArticlePath(slug) {
+      return (basePath === '' ? '' : basePath) + '/' + slug;
     }
 
     function escapeHtml(text) {
@@ -257,6 +273,27 @@
         .replace(/^-+|-+$/g, '');
     }
 
+    // Measures the rendered height a given text would take inside contentDiv,
+    // without touching the visible DOM (used to animate between preview/full heights).
+    function measureHeight(contentDiv, text) {
+      const clone = contentDiv.cloneNode(false);
+      clone.style.position = 'absolute';
+      clone.style.visibility = 'hidden';
+      clone.style.maxHeight = 'none';
+      clone.style.width = contentDiv.clientWidth + 'px';
+      clone.textContent = text;
+      contentDiv.parentNode.appendChild(clone);
+      const h = clone.scrollHeight;
+      clone.remove();
+      return h;
+    }
+
+    function previewMarkup(previewText, remain) {
+      let html = escapeHtml(previewText);
+      if (remain > 0) html += '<span class="char-remain">' + remain + ' characters remain</span>';
+      return html;
+    }
+
     async function loadArticles() {
       try {
         const res = await fetch('/api/articles');
@@ -269,18 +306,13 @@
           return;
         }
 
-        // Compute unique share slugs up front
         const slugs = articles.map((a, index) => {
           let slug = slugify(a.title);
-          const duplicateCount = articles.filter((art, idx) => {
-            return idx < index && slugify(art.title) === slug;
-          }).length;
+          const duplicateCount = articles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
           if (duplicateCount > 0) slug += '-' + (duplicateCount + 1);
           return slug;
         });
 
-        // If the current URL's last path segment matches a slug, treat everything
-        // before it as the app's base path (so links keep working after navigation).
         const pathSegments = window.location.pathname.replace(/\/+$/, '').split('/');
         const lastSegment = pathSegments[pathSegments.length - 1];
         let initialSlug = null;
@@ -300,33 +332,42 @@
           const fullText = content;
           const charRemain = content.length > 200 ? content.length - 200 : 0;
 
-          const previewInner = escapeHtml(previewText) +
-            (charRemain > 0 ? '<span class="char-remain">' + charRemain + ' characters remain</span>' : '');
-
           return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
             '<div class="card-inner">' +
-              '<div class="title">' + escapeHtml(title) + '</div>' +
+              '<div class="title-row">' +
+                '<div class="title">' + escapeHtml(title) + '</div>' +
+                '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+              '</div>' +
               '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
-              '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewInner + '</div>' +
-              '<div class="toggle-hint">▸ click to expand · share: ' + slug + '</div>' +
+              '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
             '</div>' +
           '</div>';
         }).join('');
 
         document.querySelectorAll('.article-card').forEach(card => {
-          card.addEventListener('click', function(e) {
+          card.addEventListener('click', function() { toggleCard(this); });
+        });
+
+        document.querySelectorAll('.copy-link-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggleCard(this);
+            const slug = this.dataset.share;
+            const url = window.location.origin + buildArticlePath(slug);
+            navigator.clipboard.writeText(url).then(() => {
+              const original = this.innerHTML;
+              this.innerHTML = CHECK_ICON;
+              this.classList.add('copied');
+              setTimeout(() => {
+                this.innerHTML = original;
+                this.classList.remove('copied');
+              }, 1200);
+            }).catch(() => {});
           });
         });
 
-        // If the page loaded on a direct article link, expand + scroll to it
         if (initialSlug) {
-          const match = Array.from(document.querySelectorAll('.article-card'))
-            .find(c => c.dataset.share === initialSlug);
-          if (match) {
-            toggleCard(match, { skipPush: true, scroll: true });
-          }
+          const match = Array.from(document.querySelectorAll('.article-card')).find(c => c.dataset.share === initialSlug);
+          if (match) toggleCard(match, { skipPush: true, scroll: true });
         }
 
       } catch (err) {
@@ -335,46 +376,75 @@
       }
     }
 
-    function collapseCard(card) {
-      const contentDiv = card.querySelector('.content');
-      const titleDiv = card.querySelector('.title');
-      const toggleHint = card.querySelector('.toggle-hint');
-      const previewText = contentDiv.dataset.preview;
-      const remain = parseInt(contentDiv.dataset.remain, 10);
-
-      contentDiv.classList.remove('full');
-      contentDiv.classList.add('preview');
-
-      let previewHtml = escapeHtml(previewText);
-      if (remain > 0) previewHtml += '<span class="char-remain">' + remain + ' characters remain</span>';
-      contentDiv.innerHTML = previewHtml;
-
-      titleDiv.classList.remove('pulse-active');
-      card.classList.remove('expanded');
-      toggleHint.textContent = '▸ click to expand · share: ' + card.dataset.share;
-
-      if (activeCard === card) activeCard = null;
-    }
-
     function expandCard(card) {
       const contentDiv = card.querySelector('.content');
       const titleDiv = card.querySelector('.title');
-      const toggleHint = card.querySelector('.toggle-hint');
       const fullText = contentDiv.dataset.full;
+
+      const startHeight = contentDiv.getBoundingClientRect().height;
+      contentDiv.style.transition = 'none';
+      contentDiv.style.maxHeight = startHeight + 'px';
+      void contentDiv.offsetHeight;
 
       contentDiv.classList.remove('preview');
       contentDiv.classList.add('full');
       contentDiv.textContent = fullText;
 
+      const endHeight = contentDiv.scrollHeight;
+      requestAnimationFrame(() => {
+        contentDiv.style.transition = 'max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+        contentDiv.style.maxHeight = endHeight + 'px';
+      });
+
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          contentDiv.style.maxHeight = 'none';
+          contentDiv.removeEventListener('transitionend', onEnd);
+        }
+      };
+      contentDiv.addEventListener('transitionend', onEnd);
+
       titleDiv.classList.add('pulse-active');
       card.classList.add('expanded');
-      toggleHint.textContent = '▾ expanded · share: ' + card.dataset.share;
 
       if (activeCard && activeCard !== card) collapseCard(activeCard);
       activeCard = card;
     }
 
-    // Toggle card between minimized and maximized state
+    function collapseCard(card) {
+      const contentDiv = card.querySelector('.content');
+      const titleDiv = card.querySelector('.title');
+      const previewText = contentDiv.dataset.preview;
+      const remain = parseInt(contentDiv.dataset.remain, 10);
+
+      const startHeight = contentDiv.scrollHeight;
+      contentDiv.style.transition = 'none';
+      contentDiv.style.maxHeight = startHeight + 'px';
+      void contentDiv.offsetHeight;
+
+      const endHeight = measureHeight(contentDiv, previewText + (remain > 0 ? ' ' + remain + ' characters remain' : ''));
+
+      requestAnimationFrame(() => {
+        contentDiv.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        contentDiv.style.maxHeight = endHeight + 'px';
+      });
+
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          contentDiv.classList.remove('full');
+          contentDiv.classList.add('preview');
+          contentDiv.innerHTML = previewMarkup(previewText, remain);
+          contentDiv.style.maxHeight = 'none';
+          contentDiv.removeEventListener('transitionend', onEnd);
+        }
+      };
+      contentDiv.addEventListener('transitionend', onEnd);
+
+      titleDiv.classList.remove('pulse-active');
+      card.classList.remove('expanded');
+      if (activeCard === card) activeCard = null;
+    }
+
     function toggleCard(card, opts) {
       opts = opts || {};
       const contentDiv = card.querySelector('.content');
@@ -383,12 +453,10 @@
       if (isMinimized) {
         expandCard(card);
         if (!opts.skipPush && history.pushState) {
-          history.pushState({ article: card.dataset.share }, '', buildArticleUrl(card.dataset.share));
+          history.pushState({ article: card.dataset.share }, '', buildArticlePath(card.dataset.share));
         }
         if (opts.scroll) {
-          requestAnimationFrame(() => {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          });
+          requestAnimationFrame(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }));
         }
       } else {
         collapseCard(card);
@@ -400,7 +468,6 @@
 
     loadArticles();
 
-    // Handle back/forward navigation
     window.addEventListener('popstate', function() {
       const pathSegments = window.location.pathname.replace(/\/+$/, '').split('/');
       const lastSegment = pathSegments[pathSegments.length - 1];
@@ -408,10 +475,10 @@
       const match = Array.from(cards).find(c => c.dataset.share === lastSegment);
 
       if (activeCard && activeCard !== match) collapseCard(activeCard);
-      if (match) {
+      if (match && match !== activeCard) {
         expandCard(match);
         match.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (activeCard) {
+      } else if (!match && activeCard) {
         collapseCard(activeCard);
       }
     });
