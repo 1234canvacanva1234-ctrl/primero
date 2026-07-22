@@ -2,7 +2,6 @@ export async function onRequest(context) {
   const { request, env, url } = context;
   const path = new URL(request.url).pathname;
   
-  // Routes
   if (path === '/api/auth/signup' && request.method === 'POST') {
     return handleSignup(request, env);
   }
