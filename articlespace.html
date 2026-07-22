@@ -267,9 +267,10 @@
     }
 
     let activeCard = null;
-    let listBasePath = '';   // path of the list page itself, e.g. '/articlespace'
+    let listBasePath = '';        // path of the list page itself, e.g. '/articlespace'
     let currentArticles = [];
     let currentSlugs = [];
+    let articlesLoadPromise = null;
 
     function buildArticlePath(slug) {
       return (listBasePath === '' ? '' : listBasePath) + '/' + slug;
@@ -289,8 +290,6 @@
         .replace(/^-+|-+$/g, '');
     }
 
-    // Measures the rendered height a given text would take inside contentDiv,
-    // without touching the visible DOM (used to animate between preview/full heights).
     function measureHeight(contentDiv, text) {
       const clone = contentDiv.cloneNode(false);
       clone.style.position = 'absolute';
@@ -310,14 +309,38 @@
       return html;
     }
 
+    function pathWithoutLastSegment() {
+      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
+      return segments.slice(0, -1).join('/');
+    }
+
     function currentLastSegment() {
       const segments = window.location.pathname.replace(/\/+$/, '').split('/');
       return segments[segments.length - 1];
     }
 
-    function pathWithoutLastSegment() {
-      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
-      return segments.slice(0, -1).join('/');
+    // Fetches the full article list once, in the background if needed.
+    // Used to populate the list view, and to resolve client-side
+    // navigation (back button / popstate) after landing on a permalink.
+    function ensureArticlesLoaded() {
+      if (articlesLoadPromise) return articlesLoadPromise;
+      articlesLoadPromise = fetch('/api/articles')
+        .then(res => res.ok ? res.json() : [])
+        .then(articles => {
+          currentArticles = articles || [];
+          currentSlugs = currentArticles.map((a, index) => {
+            let slug = slugify(a.title);
+            const dupCount = currentArticles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
+            if (dupCount > 0) slug += '-' + (dupCount + 1);
+            return slug;
+          });
+        })
+        .catch(err => {
+          console.error('Error loading articles:', err);
+          currentArticles = [];
+          currentSlugs = [];
+        });
+      return articlesLoadPromise;
     }
 
     // ---------- LIST VIEW ----------
@@ -356,14 +379,19 @@
       document.querySelectorAll('.article-card').forEach(card => {
         card.addEventListener('click', function(e) {
           if (e.target.closest('.copy-link-btn')) return;
-          if (e.target.closest('a.title')) {
-            e.preventDefault();
-          }
+          if (e.target.closest('a.title')) e.preventDefault();
           toggleCard(this);
         });
       });
 
       bindCopyButtons();
+    }
+
+    async function showListView() {
+      const container = document.getElementById('articles-container');
+      container.innerHTML = '<div class="empty-articles">loading articles...</div>';
+      await ensureArticlesLoaded();
+      renderList();
     }
 
     function bindCopyButtons() {
@@ -495,15 +523,33 @@
       container.querySelector('.back-to-all').addEventListener('click', function(e) {
         e.preventDefault();
         if (history.pushState) history.pushState({ view: 'list' }, '', backHref);
-        renderList();
+        showListView();
       });
 
       bindCopyButtons();
     }
 
-    // ---------- ROUTER: decide list vs single from the current URL ----------
-    function route() {
+    function renderNotFound() {
+      listBasePath = pathWithoutLastSegment();
+      const backHref = listBasePath === '' ? '/' : listBasePath;
+      const container = document.getElementById('articles-container');
+
+      container.innerHTML =
+        '<a class="back-to-all" href="' + backHref + '">← All Articles</a>' +
+        '<div class="empty-articles">no article found at this link.</div>';
+
+      container.querySelector('.back-to-all').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (history.pushState) history.pushState({ view: 'list' }, '', backHref);
+        showListView();
+      });
+    }
+
+    // ---------- ROUTER (used for back/forward navigation only —
+    // initial page render is decided by window.__ARTICLE__ below) ----------
+    async function route() {
       const lastSegment = currentLastSegment();
+      await ensureArticlesLoaded();
       const idx = currentSlugs.indexOf(lastSegment);
       if (idx !== -1) {
         renderSingle(currentArticles[idx], currentSlugs[idx]);
@@ -512,28 +558,26 @@
       }
     }
 
-    async function loadArticles() {
-      try {
-        const res = await fetch('/api/articles');
-        if (!res.ok) throw new Error('Failed to fetch');
-        const articles = await res.json();
-        currentArticles = articles || [];
-
-        currentSlugs = currentArticles.map((a, index) => {
-          let slug = slugify(a.title);
-          const dupCount = currentArticles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
-          if (dupCount > 0) slug += '-' + (dupCount + 1);
-          return slug;
-        });
-
-        route();
-      } catch (err) {
-        console.error('Error loading articles:', err);
-        document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
+    // ---------- BOOTSTRAP ----------
+    // window.__ARTICLE__ is set by the server (in [[path]].js) only when
+    // this page was requested as an /articlespace/:slug permalink. Its
+    // presence — not a client-side slug recomputation — is what decides
+    // whether we render a single article or the list. This is the fix:
+    // the server already resolved the slug against the database, so the
+    // client trusts that result instead of re-deriving it and risking a
+    // mismatch.
+    if (typeof window.__ARTICLE__ !== 'undefined') {
+      if (window.__ARTICLE__) {
+        renderSingle(window.__ARTICLE__, window.__ARTICLE__.slug);
+      } else {
+        renderNotFound();
       }
+      // Load the full list in the background so the back-link and any
+      // later client-side navigation (popstate) work without a reload.
+      ensureArticlesLoaded();
+    } else {
+      showListView();
     }
-
-    loadArticles();
 
     window.addEventListener('popstate', function() {
       route();
