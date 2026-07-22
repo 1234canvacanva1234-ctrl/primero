@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>SoraSys · Articlespace</title>
+  <title>SoraSys · Article Space</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,8 +26,20 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
       display: none;
+      transition: transform 0.08s ease, background 0.2s ease;
     }
-    @media (max-width: 640px) { #cursor { display: none !important; } }
+    #cursor.active {
+      display: block;
+    }
+    #cursor.hover {
+      transform: translate(-50%, -50%) scale(2.8);
+      background: rgba(255, 59, 124, 0.25);
+      box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
+    }
+    @media (max-width: 640px) { 
+      #cursor { display: none !important; }
+      body { cursor: auto; }
+    }
     .space-header {
       max-width: 900px;
       margin: 0 auto 32px;
@@ -126,46 +138,94 @@
 
 <script>
   (function() {
+    // Only enable custom cursor on desktop
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
+      if (!cursor) return;
+      
+      // Show cursor
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
-      let mx = -100, my = -100, cx = -100, cy = -100;
-      const update = () => {
+      
+      let mx = -100, my = -100;
+      let cx = -100, cy = -100;
+      
+      // Animation loop with smooth following
+      function updateCursor() {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
         cursor.style.left = cx + 'px';
         cursor.style.top = cy + 'px';
-        requestAnimationFrame(update);
-      };
-      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-      document.querySelectorAll('a').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        requestAnimationFrame(updateCursor);
+      }
+      
+      // Track mouse position
+      document.addEventListener('mousemove', (e) => {
+        mx = e.clientX;
+        my = e.clientY;
       });
-      update();
+      
+      // Handle mouse leaving the window
+      document.addEventListener('mouseleave', () => {
+        cursor.classList.remove('active');
+      });
+      
+      document.addEventListener('mouseenter', () => {
+        cursor.classList.add('active');
+      });
+      
+      // Add hover effect to all interactive elements
+      const interactiveElements = document.querySelectorAll('a, .article-card, .space-nav a, .space-header');
+      interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          cursor.classList.add('hover');
+        });
+        el.addEventListener('mouseleave', () => {
+          cursor.classList.remove('hover');
+        });
+      });
+      
+      // Start the animation
+      updateCursor();
+    } else {
+      // On mobile, ensure default cursor
+      document.body.style.cursor = 'auto';
     }
 
+    // Load articles
     async function loadArticles() {
       try {
         const res = await fetch('/api/articles');
+        if (!res.ok) throw new Error('Failed to fetch');
         const articles = await res.json();
         const container = document.getElementById('articles-container');
+        
         if (!articles || articles.length === 0) {
           container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
           return;
         }
+        
         container.innerHTML = articles.map(a => `
           <div class="article-card">
-            <div class="title">${a.title}</div>
-            <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${a.author}</div>
-            <div class="content">${a.content}</div>
+            <div class="title">${escapeHtml(a.title)}</div>
+            <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
+            <div class="content">${escapeHtml(a.content)}</div>
           </div>
         `).join('');
       } catch (err) {
+        console.error('Error loading articles:', err);
         document.getElementById('articles-container').innerHTML = '<div class="empty-articles">failed to load articles.</div>';
       }
     }
+    
+    // Simple escape function to prevent XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
     loadArticles();
   })();
 </script>
