@@ -30,8 +30,20 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
       display: none;
+      transition: transform 0.08s ease, background 0.2s ease;
     }
-    @media (max-width: 640px) { #cursor { display: none !important; } }
+    #cursor.active {
+      display: block;
+    }
+    #cursor.hover {
+      transform: translate(-50%, -50%) scale(2.8);
+      background: rgba(255, 59, 124, 0.25);
+      box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
+    }
+    @media (max-width: 640px) { 
+      #cursor { display: none !important; }
+      body { cursor: auto; }
+    }
     .init-container {
       max-width: 440px;
       width: 100%;
@@ -243,24 +255,58 @@
 
 <script>
   (function() {
+    // Only enable custom cursor on desktop
     if (window.innerWidth > 640) {
       const cursor = document.getElementById('cursor');
+      if (!cursor) return;
+      
+      // Show cursor
       cursor.classList.add('active');
       document.body.style.cursor = 'none';
-      let mx = -100, my = -100, cx = -100, cy = -100;
-      const update = () => {
+      
+      let mx = -100, my = -100;
+      let cx = -100, cy = -100;
+      
+      // Animation loop with smooth following
+      function updateCursor() {
         cx += (mx - cx) * 0.2;
         cy += (my - cy) * 0.2;
         cursor.style.left = cx + 'px';
         cursor.style.top = cy + 'px';
-        requestAnimationFrame(update);
-      };
-      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-      document.querySelectorAll('button, input, a').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        requestAnimationFrame(updateCursor);
+      }
+      
+      // Track mouse position
+      document.addEventListener('mousemove', (e) => {
+        mx = e.clientX;
+        my = e.clientY;
       });
-      update();
+      
+      // Handle mouse leaving the window
+      document.addEventListener('mouseleave', () => {
+        cursor.classList.remove('active');
+      });
+      
+      document.addEventListener('mouseenter', () => {
+        cursor.classList.add('active');
+      });
+      
+      // Add hover effect to all interactive elements
+      const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link');
+      interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          cursor.classList.add('hover');
+        });
+        el.addEventListener('mouseleave', () => {
+          cursor.classList.remove('hover');
+        });
+      });
+      
+      // Start the animation
+      updateCursor();
+    } else {
+      // On mobile, ensure default cursor
+      document.body.style.cursor = 'auto';
     }
 
     // Tab switching
