@@ -267,13 +267,15 @@
     }
 
     let activeCard = null;
-    let listBasePath = '';        // path of the list page itself, e.g. '/articlespace'
     let currentArticles = [];
     let currentSlugs = [];
     let articlesLoadPromise = null;
 
-    function buildArticlePath(slug) {
-      return (listBasePath === '' ? '' : listBasePath) + '/' + slug;
+    // Build a query-parameter URL for an article
+    function buildArticleUrl(slug) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('article', slug);
+      return url.pathname + '?' + url.searchParams.toString();
     }
 
     function escapeHtml(text) {
@@ -309,19 +311,13 @@
       return html;
     }
 
-    function pathWithoutLastSegment() {
-      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
-      return segments.slice(0, -1).join('/');
-    }
-
-    function currentLastSegment() {
-      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
-      return segments[segments.length - 1];
+    // Get article slug from URL query parameter
+    function getArticleFromQuery() {
+      const url = new URL(window.location.href);
+      return url.searchParams.get('article');
     }
 
     // Fetches the full article list once, in the background if needed.
-    // Used to populate the list view, and to resolve client-side
-    // navigation (back button / popstate) after landing on a permalink.
     function ensureArticlesLoaded() {
       if (articlesLoadPromise) return articlesLoadPromise;
       articlesLoadPromise = fetch('/api/articles')
@@ -344,12 +340,7 @@
     }
 
     // ---------- LIST VIEW ----------
-    // basePath: optional explicit base path for building article links.
-    // Needed because when we land on a permalink URL (/articlespace/some-slug),
-    // the list must still generate links relative to /articlespace, not
-    // relative to /articlespace/some-slug.
-    function renderList(basePath) {
-      listBasePath = (basePath !== undefined) ? basePath : (window.location.pathname.replace(/\/+$/, '') || '');
+    function renderList() {
       const container = document.getElementById('articles-container');
 
       if (!currentArticles.length) {
@@ -371,7 +362,7 @@
         return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
           '<div class="card-inner">' +
             '<div class="title-row">' +
-              '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
+              '<a class="title" href="' + buildArticleUrl(slug) + '">' + escapeHtml(title) + '</a>' +
               '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
             '</div>' +
             '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
@@ -403,7 +394,7 @@
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
           const slug = this.dataset.share;
-          const url = window.location.origin + buildArticlePath(slug);
+          const url = window.location.origin + buildArticleUrl(slug);
           navigator.clipboard.writeText(url).then(() => {
             const original = this.innerHTML;
             this.innerHTML = CHECK_ICON;
@@ -493,16 +484,21 @@
 
       if (isMinimized) {
         expandCard(card);
-        if (history.pushState) history.pushState({ view: 'single', article: slug }, '', buildArticlePath(slug));
+        // Update URL with query parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set('article', slug);
+        if (history.pushState) history.pushState({ view: 'single', article: slug }, '', url.pathname + '?' + url.searchParams.toString());
       } else {
         collapseCard(card);
-        if (history.pushState) history.pushState({ view: 'list' }, '', listBasePath === '' ? '/' : listBasePath);
+        // Remove query parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('article');
+        if (history.pushState) history.pushState({ view: 'list' }, '', url.pathname + url.search);
       }
     }
 
     // Expands the card matching `slug` (if present in the currently
-    // rendered list) and smoothly scrolls it into view, however far
-    // down the list it is. Returns false if the slug wasn't found.
+    // rendered list) and smoothly scrolls it into view.
     function expandAndScrollToSlug(slug) {
       const idx = currentSlugs.indexOf(slug);
       if (idx === -1) return false;
@@ -511,18 +507,13 @@
 
       expandCard(card);
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // The card's final height (and thus its true centered position)
-      // isn't known until the expand transition finishes, so re-center
-      // once it settles.
+      // Re-center after expansion transition
       setTimeout(function() {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 480);
       return true;
     }
 
-    // Shown when a permalink's slug doesn't match any current article
-    // (e.g. it was deleted) — the user still gets the live, real list
-    // instead of a dead end.
     function showNotFoundBanner() {
       const container = document.getElementById('articles-container');
       const banner = document.createElement('div');
@@ -533,45 +524,67 @@
       container.prepend(banner);
     }
 
-    // ---------- ROUTER (used for back/forward navigation) ----------
-    // A permalink URL always renders the full list (with the matching
-    // card expanded and scrolled into view) rather than an isolated
-    // single-article page, so visitors always land on the real, live site.
+    // ---------- ROUTER (for back/forward navigation) ----------
     async function route() {
       await ensureArticlesLoaded();
-      const lastSegment = currentLastSegment();
-      const idx = currentSlugs.indexOf(lastSegment);
-      if (idx !== -1) {
-        renderList(pathWithoutLastSegment());
-        expandAndScrollToSlug(lastSegment);
-      } else {
-        renderList(window.location.pathname.replace(/\/+$/, '') || '');
+      const slug = getArticleFromQuery();
+      
+      // Always render the full list first
+      renderList();
+      
+      // If there's a slug in the query, try to expand it
+      if (slug) {
+        if (!expandAndScrollToSlug(slug)) {
+          showNotFoundBanner();
+        }
       }
     }
 
     // ---------- BOOTSTRAP ----------
-    // window.__ARTICLE__ is set by the server (in [[path]].js) only when
-    // this page was requested as an /articlespace/:slug permalink. Its
-    // presence tells us the server already resolved the slug against the
-    // database (and set the og:/twitter: meta tags for link-preview bots).
-    // For an actual visitor, we still render the normal, full list — just
-    // with that one card already expanded and scrolled into view — so a
-    // shared link lands on the real, live site rather than an isolated
-    // single-article stub.
+    // window.__ARTICLE__ is set by the server (in the worker) when this
+    // page was requested with ?article=slug. It contains the resolved
+    // article data and allows the client to skip the API fetch for the
+    // initial load.
     if (typeof window.__ARTICLE__ !== 'undefined') {
       const initialSlug = window.__ARTICLE__ ? window.__ARTICLE__.slug : null;
       const container = document.getElementById('articles-container');
       container.innerHTML = '<div class="empty-articles">loading articles...</div>';
-      ensureArticlesLoaded().then(function() {
-        renderList(pathWithoutLastSegment());
-        if (!initialSlug || !expandAndScrollToSlug(initialSlug)) {
-          showNotFoundBanner();
+      
+      // We have the article data already, but we still need the full list
+      // for rendering. Use the server-provided data to avoid an extra fetch,
+      // but still fetch in the background to keep things in sync.
+      if (window.__ARTICLE__) {
+        // Pre-populate with the single article the server provided
+        // But we need the full list for rendering, so fetch anyway
+        ensureArticlesLoaded().then(function() {
+          renderList();
+          if (initialSlug && !expandAndScrollToSlug(initialSlug)) {
+            showNotFoundBanner();
+          }
+        });
+      } else {
+        // No article data (shouldn't happen if __ARTICLE__ is defined, but just in case)
+        ensureArticlesLoaded().then(function() {
+          renderList();
+        });
+      }
+    } else {
+      // Normal load - just show the list
+      showListView().then(function() {
+        // Check if there's a slug in the query on initial load
+        const slug = getArticleFromQuery();
+        if (slug) {
+          // Wait a moment for the list to render, then expand
+          setTimeout(function() {
+            if (!expandAndScrollToSlug(slug)) {
+              showNotFoundBanner();
+            }
+          }, 100);
         }
       });
-    } else {
-      showListView();
     }
 
+    // Handle popstate for back/forward navigation
     window.addEventListener('popstate', function() {
       route();
     });
