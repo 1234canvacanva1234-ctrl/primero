@@ -204,6 +204,28 @@
       color: #4a6673;
       padding: 60px 0;
     }
+    /* Permalink hero: the server renders the expanded article directly
+       into this wrapper, front-and-center on first paint — no waiting
+       on JS to find and expand a card buried in the full list. */
+    .permalink-hero {
+      display: flex;
+      justify-content: center;
+      padding-top: 8vh;
+    }
+    .permalink-card-wrap {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .permalink-card-wrap > .back-to-all {
+      align-self: flex-start;
+      margin-bottom: 0;
+    }
+    @media (max-width: 640px) {
+      .permalink-hero { padding-top: 4vh; }
+    }
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
@@ -572,23 +594,27 @@
 
     // ---------- BOOTSTRAP ----------
     // window.__ARTICLE__ is set by the server (in [[path]].js) only when
-    // this page was requested as an /articlespace/:slug permalink. Its
-    // presence tells us the server already resolved the slug against the
-    // database (and set the og:/twitter: meta tags for link-preview bots).
-    // For an actual visitor, we still render the normal, full list — just
-    // with that one card already expanded and scrolled into view — so a
-    // shared link lands on the real, live site rather than an isolated
-    // single-article stub.
+    // this page was requested as an /articlespace/:slug permalink. When
+    // an article was found, the server has ALREADY rendered the expanded
+    // card's actual markup into #articles-container (see handleArticlePermalink) —
+    // it's on the page the moment the browser paints, full-size and
+    // front-and-center, with no JS-driven expand/scroll step needed. All
+    // the client has to do here is wire up the interactive bits (copy
+    // link button) and set listBasePath so it points "back" correctly.
+    //
+    // If no article matched (deleted link, bad slug), the server leaves
+    // window.__ARTICLE__ as null and doesn't touch the container — in
+    // that case we fall back to the normal full list plus a banner.
     if (typeof window.__ARTICLE__ !== 'undefined') {
-      const initialSlug = window.__ARTICLE__ ? window.__ARTICLE__.slug : null;
-      const container = document.getElementById('articles-container');
-      container.innerHTML = '<div class="empty-articles">loading articles...</div>';
-      ensureArticlesLoaded().then(function() {
-        renderList(pathWithoutLastSegment());
-        if (!initialSlug || !expandAndScrollToSlug(initialSlug)) {
+      if (window.__ARTICLE__) {
+        listBasePath = pathWithoutLastSegment();
+        bindCopyButtons();
+      } else {
+        ensureArticlesLoaded().then(function() {
+          renderList(window.location.pathname.replace(/\/articlespace\/[^\/]+\/?$/, '/articlespace') || '');
           showNotFoundBanner();
-        }
-      });
+        });
+      }
     } else {
       showListView();
     }
