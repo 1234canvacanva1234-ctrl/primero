@@ -8,6 +8,15 @@ export async function onRequest(context) {
   // Handled first, directly in the catch-all, so there's
   // no dependency on Cloudflare picking a more specific
   // function route over this one.
+  //
+  // NOTE: this file must live at exactly
+  //   functions/[[path]].js
+  // Cloudflare Pages' catch-all syntax is [[name]].js (double
+  // brackets closing before the extension). A misnamed file
+  // (e.g. "[[path.js]]") will not be recognized as a route at
+  // all, and every request here — including /articlespace/:slug
+  // permalinks — will silently fall through to your project's
+  // default static handling instead of running this function.
   // ============================================
   const articleSlugMatch = path.match(/^\/articlespace\/([^\/]+)\/?$/);
   if (articleSlugMatch) {
@@ -337,6 +346,14 @@ export async function onRequest(context) {
 //      which article this URL refers to — it just reads what
 //      the server already decided. This is the piece that
 //      makes the permalink authoritative instead of a guess.
+//
+// Slugs are <slugified-title>-<id>. We resolve the ID straight
+// out of the slug and look the article up by primary key —
+// a single deterministic query, with no dependency on the
+// article list's sort order matching between when a link was
+// copied and when it's later visited (which is what breaks
+// permalinks under an index/dupe-count based scheme whenever
+// titles collide or new articles get published in between).
 // ============================================
 async function handleArticlePermalink(slug, request, env, next) {
   try {
@@ -350,28 +367,16 @@ async function handleArticlePermalink(slug, request, env, next) {
     let html = await shellResponse.text();
     let article = null;
 
-    try {
-      const { results } = await env.DB.prepare(
-        'SELECT id, title, content, author, created_at FROM articles ORDER BY created_at DESC'
-      ).all();
-      const articles = results || [];
-
-      const slugify = (t) => (t || 'Untitled')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
-      const slugs = articles.map((a, index) => {
-        let s = slugify(a.title);
-        const dupCount = articles.filter((art, idx) => idx < index && slugify(art.title) === s).length;
-        if (dupCount > 0) s += '-' + (dupCount + 1);
-        return s;
-      });
-
-      const idx = slugs.indexOf(slug);
-      if (idx !== -1) article = articles[idx];
-    } catch (err) {
-      console.error('Permalink DB lookup failed:', err);
+    const idMatch = /-(\d+)$/.exec(slug);
+    if (idMatch) {
+      const id = parseInt(idMatch[1], 10);
+      try {
+        article = await env.DB.prepare(
+          'SELECT id, title, content, author, created_at FROM articles WHERE id = ?'
+        ).bind(id).first();
+      } catch (err) {
+        console.error('Permalink DB lookup failed:', err);
+      }
     }
 
     // Embed the resolved article (or null) as JSON the client reads on load.
