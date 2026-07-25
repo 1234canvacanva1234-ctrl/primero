@@ -290,6 +290,23 @@
         .replace(/^-+|-+$/g, '');
     }
 
+    // Slugs are <slugified-title>-<id>. Embedding the real article ID
+    // means the permalink is anchored to something that can never
+    // collide or drift — no more relying on two separate requests
+    // (the one that generated the link, and the one that later visits
+    // it) re-deriving an identical, stably-ordered article list to
+    // figure out "the 2nd article named X". A duplicate title, a
+    // newly published article, or a same-timestamp ordering tie can
+    // no longer break the link.
+    function articleSlug(article) {
+      return slugify(article.title) + '-' + article.id;
+    }
+
+    function slugToId(slug) {
+      const m = /-(\d+)$/.exec(slug || '');
+      return m ? parseInt(m[1], 10) : null;
+    }
+
     function measureHeight(contentDiv, text) {
       const clone = contentDiv.cloneNode(false);
       clone.style.position = 'absolute';
@@ -328,12 +345,7 @@
         .then(res => res.ok ? res.json() : [])
         .then(articles => {
           currentArticles = articles || [];
-          currentSlugs = currentArticles.map((a, index) => {
-            let slug = slugify(a.title);
-            const dupCount = currentArticles.filter((art, idx) => idx < index && slugify(art.title) === slug).length;
-            if (dupCount > 0) slug += '-' + (dupCount + 1);
-            return slug;
-          });
+          currentSlugs = currentArticles.map(a => articleSlug(a));
         })
         .catch(err => {
           console.error('Error loading articles:', err);
@@ -500,11 +512,19 @@
       }
     }
 
-    // Expands the card matching `slug` (if present in the currently
+    // Expands the card matching `slugOrId` (if present in the currently
     // rendered list) and smoothly scrolls it into view, however far
-    // down the list it is. Returns false if the slug wasn't found.
-    function expandAndScrollToSlug(slug) {
-      const idx = currentSlugs.indexOf(slug);
+    // down the list it is. Returns false if it wasn't found.
+    // Matches on the exact current slug first, then falls back to the
+    // ID embedded in the slug — so a permalink still resolves even if
+    // an article's title (and therefore its slug text) was edited
+    // after the link was shared.
+    function expandAndScrollToSlug(slugOrId) {
+      let idx = currentSlugs.indexOf(slugOrId);
+      if (idx === -1) {
+        const id = slugToId(slugOrId);
+        if (id !== null) idx = currentArticles.findIndex(a => a.id === id);
+      }
       if (idx === -1) return false;
       const card = document.querySelector('.article-card[data-article-index="' + idx + '"]');
       if (!card) return false;
@@ -540,8 +560,9 @@
     async function route() {
       await ensureArticlesLoaded();
       const lastSegment = currentLastSegment();
-      const idx = currentSlugs.indexOf(lastSegment);
-      if (idx !== -1) {
+      const id = slugToId(lastSegment);
+      const matches = id !== null && currentArticles.some(a => a.id === id);
+      if (matches) {
         renderList(pathWithoutLastSegment());
         expandAndScrollToSlug(lastSegment);
       } else {
