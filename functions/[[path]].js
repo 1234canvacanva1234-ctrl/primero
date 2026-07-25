@@ -355,6 +355,50 @@ export async function onRequest(context) {
 // permalinks under an index/dupe-count based scheme whenever
 // titles collide or new articles get published in between).
 // ============================================
+function url_articlespaceBase(request) {
+  const segments = new URL(request.url).pathname.replace(/\/+$/, '').split('/');
+  const base = segments.slice(0, -1).join('/');
+  return base === '' ? '/' : base;
+}
+
+const COPY_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Renders the same markup structure the client uses for an expanded
+// .article-card — but as real HTML in the initial response, so a
+// visitor sees the full article immediately, centered near the top
+// of the viewport, with zero dependency on JS running, finding the
+// right card in a list, and scrolling to it after the fact.
+function renderHeroMarkup(article, slug, backHref, selfHref) {
+  const title = escHtml(article.title || 'Untitled');
+  const author = escHtml(article.author || 'Anonymous');
+  const date = escHtml(new Date(article.created_at).toLocaleDateString());
+  const content = escHtml(article.content || '');
+
+  return '<div class="permalink-hero">' +
+    '<div class="permalink-card-wrap">' +
+      '<a class="back-to-all" href="' + escHtml(backHref) + '">↩ All articles</a>' +
+      '<div class="article-card expanded" data-article-index="0" data-share="' + escHtml(slug) + '">' +
+        '<div class="card-inner">' +
+          '<div class="title-row">' +
+            '<a class="title" href="' + escHtml(selfHref) + '">' + title + '</a>' +
+            '<button class="copy-link-btn" type="button" data-share="' + escHtml(slug) + '" aria-label="Copy link to this article">' + COPY_ICON_SVG + '</button>' +
+          '</div>' +
+          '<div class="meta">' + date + ' · ' + author + '</div>' +
+          '<div class="content full">' + content + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 async function handleArticlePermalink(slug, request, env, next) {
   try {
     const shellRequest = new Request(new URL('/articlespace.html', request.url), request);
@@ -379,10 +423,11 @@ async function handleArticlePermalink(slug, request, env, next) {
       }
     }
 
-    // Embed the resolved article (or null) as JSON the client reads on load.
-    // Escaping every '<' prevents the JSON payload from ever being able to
-    // break out of the <script> tag, even if an article's content contains
-    // literal "</script>" text.
+    // Embed the resolved article (or null) as JSON too, so the client
+    // knows whether the server found something (used only to decide
+    // whether to fall back to the full list — see articlespace.html).
+    // Escaping every '<' prevents the JSON payload from ever being able
+    // to break out of the <script> tag.
     const articleData = article ? {
       id: article.id,
       title: article.title,
@@ -410,6 +455,19 @@ async function handleArticlePermalink(slug, request, env, next) {
         headers: { 'content-type': 'text/html;charset=UTF-8' },
       });
     }
+
+    // Server-render the expanded card directly into the container that
+    // ships in the initial HTML, replacing the "loading articles..."
+    // placeholder. This is the actual fix: the maximized view is no
+    // longer something JS has to go find and toggle after the page
+    // loads — it's just what the page IS, from the first paint.
+    const backHref = url_articlespaceBase(request);
+    const selfHref = backHref + '/' + slug;
+    const heroHtml = renderHeroMarkup(article, slug, backHref, selfHref);
+    html = html.replace(
+      /<div id="articles-container" class="articles-container">[\s\S]*?<\/div>\s*<\/div>/,
+      '<div id="articles-container" class="articles-container">' + heroHtml + '</div>'
+    );
 
     const title = article.title || 'Untitled';
     const rawDesc = (article.content || '').replace(/\s+/g, ' ').trim();
