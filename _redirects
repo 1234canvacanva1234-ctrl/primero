@@ -1,1 +1,1 @@
-/articlespace/* /articlespace/ 301
+/articlespace/:slug /articlespace/index.html 200
