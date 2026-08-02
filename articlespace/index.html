@@ -2,31 +2,348 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>SoraSys : Articlespace</title>
   <meta property="og:type" content="website">
   <meta property="og:title" content="SoraSys : Articlespace">
   <meta property="og:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
-  <meta name="theme-color" content="#ff3b7c">
+  <meta name="theme-color" content="#0b1114">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="SoraSys : Articlespace">
   <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    :root {
+      --void: #0b1114;
+      --panel: rgba(20, 30, 35, 0.7);
+      --panel-solid: rgba(18, 26, 30, 0.92);
+      --line: rgba(107, 142, 155, 0.12);
+      --steel: #6b8e9b;
+      --ink: #bcccd6;
+      --dim: #4a6673;
+      --pulse: #ff3b7c;
+      --pulse-soft: #ff9bc0;
+    }
     body {
-      background: #0b1114;
-      color: #bcccd6;
+      background: var(--void);
+      color: var(--ink);
       font-family: 'Crimson Text', serif;
-      padding: 24px;
       min-height: 100vh;
       cursor: none;
+      overflow-x: hidden;
+      position: relative;
     }
+
+    /* ---------- ambient backdrop, toned to the articlespace theme ---------- */
+    .nebula {
+      position: fixed;
+      inset: -20%;
+      z-index: -2;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 40% 30% at 20% 15%, rgba(107,142,155,0.10), transparent 60%),
+        radial-gradient(ellipse 36% 30% at 85% 75%, rgba(255,59,124,0.08), transparent 60%),
+        radial-gradient(ellipse 46% 36% at 55% 95%, rgba(107,142,155,0.07), transparent 60%);
+      animation: driftNebula 50s ease-in-out infinite alternate;
+      filter: blur(2px);
+    }
+    @keyframes driftNebula {
+      0%   { transform: translate(0%, 0%) scale(1); }
+      50%  { transform: translate(-2%, 2%) scale(1.03); }
+      100% { transform: translate(2%, -2%) scale(1.05); }
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 80% 65% at 50% 30%, transparent 45%, rgba(4,6,7,0.55) 100%);
+    }
+
+    .thread {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(90deg, transparent 0%, var(--steel) 18%, var(--pulse) 50%, var(--steel) 82%, transparent 100%);
+      background-size: 240% 100%;
+      animation: threadFlow 9s ease-in-out infinite;
+      opacity: 0.5;
+    }
+    @keyframes threadFlow {
+      0%   { background-position: 0% 50%; opacity: 0.3; }
+      50%  { background-position: 100% 50%; opacity: 0.65; }
+      100% { background-position: 0% 50%; opacity: 0.3; }
+    }
+
+    /* ---------- fluctuating hot-pink frame, used on every profile picture ---------- */
+    @keyframes frame-rotate { to { filter: hue-rotate(360deg); } }
+    @keyframes frame-pulse {
+      0%, 100% { opacity: 0.6; box-shadow: 0 0 12px rgba(255,59,124,0.22); }
+      50%      { opacity: 1;   box-shadow: 0 0 22px rgba(255,59,124,0.4), 0 0 10px rgba(107,142,155,0.25); }
+    }
+    .avatar-frame {
+      position: absolute;
+      inset: -5px;
+      border-radius: 10px;
+      background: conic-gradient(from 0deg, var(--pulse), var(--pulse-soft), var(--steel), var(--pulse));
+      animation: frame-rotate 10s linear infinite, frame-pulse 4.5s ease-in-out infinite;
+    }
+
+    /* ---------- top bar ---------- */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 24px;
+      padding: 16px 28px;
+      background: rgba(11, 17, 20, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+      justify-self: start;
+    }
+    .nav-logo img {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+    }
+    .nav-logo .word {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--steel);
+      transition: color 0.3s ease;
+    }
+    .nav-logo .word span { color: var(--pulse); }
+    .nav-logo:hover .word { color: var(--ink); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      justify-self: center;
+    }
+    .nav-link {
+      position: relative;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      padding: 4px 1px;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 100%;
+      bottom: 0;
+      height: 1px;
+      background: var(--pulse);
+      transition: right 0.3s ease;
+    }
+    .nav-link:hover { color: var(--ink); }
+    .nav-link:hover::after { right: 0; }
+    .nav-link.current { color: var(--pulse); }
+    .nav-link.current::after { right: 0; }
+    .nav-link.locked { color: var(--dim); cursor: not-allowed; }
+    .nav-link.locked::after { display: none; }
+
+    .panel-toggle {
+      display: none;
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+      justify-self: end;
+    }
+
+    /* ---------- side panel ---------- */
+    .panel-backdrop { display: none; }
+    .side-panel {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100vh;
+      width: 280px;
+      z-index: 300;
+      background: rgba(15, 22, 25, 0.86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .side-panel-inner {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+    .side-account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border-radius: 9px;
+      background: rgba(30, 42, 47, 0.5);
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+    .side-account:hover { border-color: var(--pulse); background: rgba(30, 42, 47, 0.8); }
+    .side-account.signed-in { align-items: flex-start; padding: 16px; gap: 14px; }
+    .side-account.signed-in .side-avatar-wrap,
+    .side-account.signed-in .side-avatar,
+    .side-account.signed-in .side-avatar-fallback {
+      width: 60px; height: 60px; font-size: 21px;
+    }
+    .side-avatar-wrap { width: 38px; height: 38px; position: relative; flex-shrink: 0; }
+    .side-avatar, .side-avatar-fallback {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+    .side-avatar { object-fit: cover; border: 1px solid var(--line); }
+    .side-avatar-fallback {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      color: var(--steel);
+      background: rgba(4,6,7,0.7);
+      border: 1px solid var(--line);
+    }
+    .side-account-text { min-width: 0; padding-top: 1px; }
+    .side-account-cta {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .side-account-username {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--ink);
+      word-break: break-word;
+    }
+    .side-account-role {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pulse);
+      margin-top: 3px;
+    }
+    .side-account-bio {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--steel);
+      margin-top: 7px;
+    }
+    .side-label {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 20px 4px 9px;
+    }
+    .side-links { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .side-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 15px;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: rgba(30, 42, 47, 0.28);
+      text-decoration: none;
+      color: var(--ink);
+      overflow: hidden;
+      transition: all 0.35s ease;
+    }
+    .side-link::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(255,59,124,0.1), rgba(107,142,155,0.1));
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+    .side-link:hover::before { transform: translateX(0); }
+    .side-link:hover { border-color: var(--pulse); transform: translateX(-3px); }
+    .side-link-title {
+      font-family: 'Cinzel', serif;
+      font-size: 11.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: block;
+      position: relative; z-index: 1;
+    }
+    .side-link-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 11px;
+      color: var(--steel);
+      margin-top: 2px;
+      display: block;
+      position: relative; z-index: 1;
+    }
+    .side-link-arrow { position: relative; z-index: 1; font-size: 12px; color: var(--dim); transition: all 0.3s ease; }
+    .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
+    .side-link.locked { cursor: not-allowed; }
+    .side-link.locked::before { display: none; }
+    .side-link.locked:hover { border-color: transparent; transform: none; }
+    .side-link.locked .side-link-arrow { color: var(--dim); }
+
+    .side-foot { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .side-foot-sig {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    .page { margin-right: 280px; }
+
     #cursor {
       position: fixed;
-      width: 8px;
-      height: 8px;
-      background: #ff3b7c;
+      width: 8px; height: 8px;
+      background: var(--pulse);
       border-radius: 50%;
       pointer-events: none;
       z-index: 10000;
@@ -41,191 +358,151 @@
       background: rgba(255, 59, 124, 0.25);
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
-    @media (max-width: 640px) {
-      #cursor { display: none !important; }
-      body { cursor: auto; }
-    }
+
     .space-header {
       max-width: 900px;
-      margin: 0 auto 28px;
-      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
-      padding-bottom: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      margin: 34px auto 26px;
+      padding: 0 24px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .space-eyebrow {
+      font-family: 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 8px;
+      display: block;
     }
     .space-title {
       font-family: 'Cinzel', serif;
       font-weight: 600;
-      font-size: 22px;
+      font-size: 24px;
       letter-spacing: 5px;
       text-transform: uppercase;
-      color: #6b8e9b;
+      color: var(--steel);
     }
-    .space-title span { color: #ff3b7c; }
-    .space-nav a {
-      font-family: 'Cinzel', serif;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #4a6673;
-      text-decoration: none;
-      margin-left: 16px;
-      transition: color 0.3s ease;
-    }
-    .space-nav a:hover { color: #ff3b7c; }
+    .space-title span { color: var(--pulse); }
+
     .articles-container {
       max-width: 900px;
       margin: 0 auto;
+      padding: 0 24px 60px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
     .article-card {
-      background: rgba(20, 30, 35, 0.7);
-      border: 1px solid rgba(107, 142, 155, 0.1);
-      border-radius: 4px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
       cursor: pointer;
       overflow: hidden;
-      transition:
-        transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.35s ease,
-        border-color 0.3s ease,
-        background 0.3s ease;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.3s ease, background 0.3s ease;
     }
-    .article-card:hover {
-      border-color: rgba(255, 59, 124, 0.3);
-    }
-    .article-card:active {
-      transform: scale(0.997);
-    }
+    .article-card:hover { border-color: rgba(255, 59, 124, 0.3); }
+    .article-card:active { transform: scale(0.997); }
     .article-card.expanded {
-      border-color: #ff3b7c;
-      background: rgba(20, 30, 35, 0.92);
+      border-color: var(--pulse);
+      background: var(--panel-solid);
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.1), 0 2px 10px rgba(0, 0, 0, 0.35);
     }
-    .article-card .card-inner {
-      padding: 16px 20px;
-      display: flex;
-      align-items: stretch;
-      gap: 0;
-    }
+    .article-card .card-inner { padding: 16px 20px; display: flex; align-items: stretch; gap: 0; }
+    .article-card .card-main { flex: 1 1 auto; min-width: 0; }
+    .article-card.has-author-panel .card-main { padding-right: 18px; }
 
-    /* ---------- main text column ---------- */
-    .article-card .card-main {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    .article-card.has-author-panel .card-main {
-      padding-right: 18px;
-    }
-
-    .title-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .title-row { display: flex; align-items: center; gap: 8px; }
     .article-card .title {
       font-family: 'Cinzel', serif;
       font-size: 16px;
       letter-spacing: 1.5px;
-      color: #6b8e9b;
+      color: var(--steel);
       line-height: 1.3;
       transition: color 0.3s ease;
       text-decoration: none;
       display: inline-block;
     }
-    .article-card.expanded .title {
-      color: #ff3b7c;
-    }
-    .article-card .title.pulse-active {
-      animation: pulse-opacity 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse-opacity {
-      0%, 100% { opacity: 0.65; }
-      50% { opacity: 1; }
-    }
+    .article-card.expanded .title { color: var(--pulse); }
+    .article-card .title.pulse-active { animation: pulse-opacity 1.5s ease-in-out infinite; }
+    @keyframes pulse-opacity { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+
     .copy-link-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #4a6673;
+      background: none; border: none; cursor: pointer;
+      color: var(--dim);
       padding: 3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       opacity: 0;
       transform: translateY(1px);
       transition: opacity 0.25s ease, color 0.25s ease;
       flex-shrink: 0;
     }
-    .article-card:hover .copy-link-btn,
-    .article-card.expanded .copy-link-btn {
-      opacity: 0.55;
-    }
-    .copy-link-btn:hover {
-      opacity: 1 !important;
-      color: #ff3b7c;
-    }
-    .copy-link-btn.copied {
-      opacity: 1 !important;
-      color: #4ade80;
-    }
+    .article-card:hover .copy-link-btn, .article-card.expanded .copy-link-btn { opacity: 0.55; }
+    .copy-link-btn:hover { opacity: 1 !important; color: var(--pulse); }
+    .copy-link-btn.copied { opacity: 1 !important; color: #4ade80; }
     .copy-link-btn svg { width: 13px; height: 13px; display: block; }
+
     .article-card .meta {
       font-family: 'Fira Code', monospace;
       font-size: 8px;
       letter-spacing: 1.5px;
-      color: #4a6673;
+      color: var(--dim);
       margin-top: 4px;
       margin-bottom: 10px;
       transition: color 0.3s ease;
     }
-    .article-card.expanded .meta {
-      color: rgba(255, 59, 124, 0.65);
-    }
+    .article-card.expanded .meta { color: rgba(255, 59, 124, 0.65); }
+
     .article-card .content {
       font-family: 'Crimson Text', serif;
       font-size: 15px;
       line-height: 1.65;
-      color: #bcccd6;
+      color: var(--ink);
       white-space: pre-wrap;
       word-wrap: break-word;
+    }
+    /* Preview state clamps to however many lines the card can hold
+       elegantly (this scales with card width / viewport instead of
+       a fixed character count) and lets the browser supply the
+       ellipsis on the last visible line. */
+    .article-card .content.preview {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
       overflow: hidden;
     }
-    .article-card .char-remain {
-      font-family: 'Fira Code', monospace;
-      font-size: 11px;
-      color: #ff3b7c;
-      opacity: 0.7;
-      letter-spacing: 1px;
-      margin-top: 6px;
+    .article-card .content.full {
       display: block;
-      animation: pulse-opacity 2s ease-in-out infinite;
+      -webkit-line-clamp: unset;
+    }
+    .read-more-hint {
+      font-family: 'Fira Code', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pulse);
+      opacity: 0.65;
+      margin-top: 8px;
+      display: block;
+      animation: pulse-opacity 2.2s ease-in-out infinite;
     }
     .empty-articles {
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 18px;
-      color: #4a6673;
+      color: var(--dim);
       padding: 60px 0;
     }
 
     /* ---------- author subcard ---------- */
-    /* A quiet "marginalia" panel, in the spirit of an old journal's
-       contributor note — set apart from the main text by a soft
-       tonal shift and a thin rule, rather than a loud box. Visible
-       in both the collapsed and expanded states of the card, since
-       it lives outside the part that animates. */
     .author-card {
-      flex: 0 0 208px;
-      width: 208px;
+      flex: 0 0 200px;
+      width: 200px;
       margin-left: 18px;
       padding: 18px 16px;
       background: linear-gradient(165deg, rgba(107, 142, 155, 0.05), rgba(11, 17, 20, 0.34));
-      border: 1px solid rgba(107, 142, 155, 0.1);
+      border: 1px solid var(--line);
       border-radius: 3px;
       display: flex;
       flex-direction: column;
@@ -233,89 +510,42 @@
       gap: 12px;
       transition: border-color 0.3s ease, background 0.3s ease;
     }
-    .article-card:hover .author-card {
-      border-color: rgba(255, 59, 124, 0.16);
-    }
+    .article-card:hover .author-card { border-color: rgba(255, 59, 124, 0.16); }
     .article-card.expanded .author-card {
       border-color: rgba(255, 59, 124, 0.25);
       background: linear-gradient(165deg, rgba(255, 59, 124, 0.04), rgba(11, 17, 20, 0.4));
     }
 
-    /* Wikipedia-infobox-scaled portrait with a slowly rotating,
-       colour-fluctuating gradient frame — the same pink/teal
-       fluctuation the rest of the UI already uses for emphasis
-       (title pulse, focus glow), just applied as a ring instead. */
-    .author-avatar-wrap {
-      width: 128px;
-      height: 128px;
-      position: relative;
-      flex-shrink: 0;
-    }
-    .author-avatar-ring {
-      position: absolute;
-      inset: -6px;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, #ff3b7c, #ff9bc0, #6b8e9b, #ff3b7c);
-      animation: ring-rotate 9s linear infinite, ring-pulse 4.5s ease-in-out infinite;
-    }
+    /* square (not circular) portrait with the same fluctuating
+       hot-pink frame used across the site */
+    .author-avatar-wrap { width: 124px; height: 124px; position: relative; flex-shrink: 0; }
     .author-avatar,
     .author-avatar-fallback {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border-radius: 10px;
       z-index: 1;
     }
-    .author-avatar {
-      object-fit: cover;
-      display: block;
-      background: rgba(11, 17, 20, 0.6);
-    }
+    .author-avatar { object-fit: cover; display: block; background: rgba(11, 17, 20, 0.6); }
     .author-avatar-fallback {
       display: none;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       font-family: 'Cinzel', serif;
-      font-size: 38px;
-      color: #4a6673;
+      font-size: 36px;
+      color: var(--dim);
       background: rgba(11, 17, 20, 0.75);
     }
-    @keyframes ring-rotate {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes ring-pulse {
-      0%, 100% {
-        opacity: 0.55;
-        box-shadow: 0 0 14px rgba(255, 59, 124, 0.2);
-      }
-      50% {
-        opacity: 1;
-        box-shadow: 0 0 22px rgba(107, 142, 155, 0.35);
-      }
-    }
 
-    .author-card-text {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 5px;
-    }
+    .author-card-text { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; }
     .author-card-label {
       font-family: 'Fira Code', monospace;
       font-size: 7px;
       letter-spacing: 2.5px;
       text-transform: uppercase;
-      color: #ff3b7c;
+      color: var(--pulse);
       opacity: 0.65;
     }
-    .author-name {
-      font-family: 'Cinzel', serif;
-      font-size: 12px;
-      letter-spacing: 1px;
-      color: #6b8e9b;
-    }
+    .author-name { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px; color: var(--steel); }
     .author-bio {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
@@ -329,42 +559,154 @@
       overflow: hidden;
     }
 
+    @media (max-width: 1100px) {
+      .nav-links { gap: 16px; }
+      .nav-link { font-size: 9px; letter-spacing: 1.5px; }
+    }
+
+    @media (max-width: 900px) {
+      .page { margin-right: 0; }
+      .side-panel {
+        top: auto; bottom: 0; right: 0; left: 0;
+        height: auto; max-height: 82vh; width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--line);
+        border-radius: 16px 16px 0 0;
+        transform: translateY(105%);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+      }
+      .side-panel.open { transform: translateY(0); }
+      .panel-toggle { display: flex; }
+      .nav-links { display: none; }
+      .panel-backdrop {
+        display: block;
+        position: fixed; inset: 0;
+        z-index: 290;
+        background: rgba(4,6,7,0.6);
+        backdrop-filter: blur(2px);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.35s ease;
+      }
+      .panel-backdrop.open { opacity: 1; pointer-events: auto; }
+      .side-panel-inner { padding: 18px 16px 26px; }
+      .side-panel::before {
+        content: '';
+        display: block;
+        width: 40px; height: 4px;
+        border-radius: 4px;
+        background: var(--line);
+        margin: 0 auto 14px;
+      }
+    }
+
     @media (max-width: 640px) {
-      .space-header { flex-direction: column; gap: 12px; text-align: center; }
-      .space-nav a { margin: 0 8px; }
+      body { cursor: auto; }
+      #cursor { display: none !important; }
+      .site-nav { padding: 10px 14px; }
+      .nav-logo .word { font-size: 11px; letter-spacing: 2px; }
+      .nav-logo img { width: 24px; height: 24px; }
+      .space-header { margin: 22px auto 18px; padding: 0 16px 12px; }
+      .space-title { font-size: 19px; letter-spacing: 3px; }
+      .articles-container { padding: 0 16px 40px; }
       .article-card .card-inner { padding: 14px 16px; flex-direction: column; }
       .article-card .title { font-size: 15px; }
       .copy-link-btn { opacity: 0.55; }
-      body { padding: 16px; cursor: auto; }
-
       .article-card.has-author-panel .card-main { padding-right: 0; }
-      .author-card {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        text-align: left;
-        margin-left: 0;
-        margin-top: 14px;
-      }
+      .author-card { width: 100%; flex-direction: row; align-items: center; text-align: left; margin-left: 0; margin-top: 14px; }
       .author-card-text { align-items: flex-start; text-align: left; }
       .author-bio { -webkit-line-clamp: 2; }
-      .author-avatar-wrap { width: 64px; height: 64px; }
-      .author-avatar-ring { inset: -4px; }
-      .author-avatar-fallback { font-size: 22px; }
+      .author-avatar-wrap { width: 60px; height: 60px; }
+      .author-avatar-fallback { font-size: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .nebula, .thread, .read-more-hint, .title.pulse-active, .avatar-frame { animation: none !important; }
     }
   </style>
 </head>
 <body>
+
+<div class="nebula"></div>
+<div class="vignette"></div>
 <div id="cursor"></div>
-<div class="space-header">
-  <div class="space-title">⟨ <span>Article</span>space ⟩</div>
-  <div class="space-nav">
-    <a href="/">↩ Home</a>
-    <a href="/control-panel">⌘ Panel</a>
+<div class="panel-backdrop" id="panel-backdrop"></div>
+
+<aside class="side-panel" id="side-panel">
+  <div class="side-panel-inner">
+    <a href="/initialization" class="side-account" id="side-account">
+      <span class="side-avatar-fallback" id="side-avatar-slot">?</span>
+      <div class="side-account-text">
+        <div class="side-account-cta" id="side-account-name">Sign In</div>
+        <div class="side-account-role" id="side-account-role" style="display:none;"></div>
+        <div class="side-account-bio" id="side-account-bio" style="display:none;"></div>
+      </div>
+    </a>
+
+    <div class="side-label">◈ Navigate</div>
+    <nav class="side-links">
+      <a href="/" class="side-link">
+        <span class="side-link-main">
+          <span class="side-link-title">Home</span>
+          <span class="side-link-sub">back to the network</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+      <a href="/initialization" class="side-link">
+        <span class="side-link-main">
+          <span class="side-link-title">Initialization</span>
+          <span class="side-link-sub">sign in / create access</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
+        <span class="side-link-main">
+          <span class="side-link-title">Profile Configuration</span>
+          <span class="side-link-sub">sign in required</span>
+        </span>
+        <span class="side-link-arrow">⛔</span>
+      </a>
+      <a href="/control-panel" class="side-link locked" data-gate="sysadmin" aria-disabled="true">
+        <span class="side-link-main">
+          <span class="side-link-title">Control Panel</span>
+          <span class="side-link-sub">sysadmin only</span>
+        </span>
+        <span class="side-link-arrow">⛔</span>
+      </a>
+    </nav>
+
+    <div class="side-foot">
+      <div class="thread"></div>
+      <div class="side-foot-sig" style="margin-top:12px;">sorasys.net</div>
+    </div>
   </div>
-</div>
-<div id="articles-container" class="articles-container">
-  <div class="empty-articles">loading articles...</div>
+</aside>
+
+<div class="page">
+
+  <nav class="site-nav">
+    <a href="/" class="nav-logo">
+      <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
+      <span class="word">SoraSys <span>·</span> Articlespace</span>
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/articlespace" class="nav-link current">Articlespace</a>
+      <a href="/initialization" class="nav-link">Initialization</a>
+      <a href="/profile-config" class="nav-link locked" data-gate="auth" aria-disabled="true">Profile Config</a>
+      <a href="/control-panel" class="nav-link locked" data-gate="sysadmin" aria-disabled="true">Control Panel</a>
+    </div>
+    <button class="panel-toggle" id="panel-toggle" type="button" aria-label="Open menu">☰</button>
+  </nav>
+
+  <div class="space-header">
+    <span class="space-eyebrow">◈ writings from the network</span>
+    <div class="space-title">⟨ <span>Article</span>space ⟩</div>
+  </div>
+
+  <div id="articles-container" class="articles-container">
+    <div class="empty-articles">loading articles...</div>
+  </div>
+
 </div>
 
 <script>
@@ -372,16 +714,14 @@
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
     const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
-    // Only enable custom cursor on desktop
+    // ---------- custom cursor (desktop only) ----------
+    let cursor, bindHoverables;
     if (window.innerWidth > 640) {
-      const cursor = document.getElementById('cursor');
+      cursor = document.getElementById('cursor');
       if (cursor) {
         cursor.classList.add('active');
         document.body.style.cursor = 'none';
-
-        let mx = -100, my = -100;
-        let cx = -100, cy = -100;
-
+        let mx = -100, my = -100, cx = -100, cy = -100;
         function updateCursor() {
           cx += (mx - cx) * 0.2;
           cy += (my - cy) * 0.2;
@@ -389,38 +729,36 @@
           cursor.style.top = cy + 'px';
           requestAnimationFrame(updateCursor);
         }
-
         document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
         document.addEventListener('mouseleave', () => cursor.classList.remove('active'));
         document.addEventListener('mouseenter', () => cursor.classList.add('active'));
-
-        function bindHover(el) {
-          el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-          el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-        }
-        document.querySelectorAll('a, .article-card, .space-nav a, .space-header').forEach(bindHover);
-
+        bindHoverables = function() {
+          document.querySelectorAll('a, .article-card, .copy-link-btn, .side-link, .side-account, .panel-toggle')
+            .forEach(el => {
+              el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+              el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+            });
+        };
+        bindHoverables();
         updateCursor();
       }
     } else {
       document.body.style.cursor = 'auto';
     }
 
-    let activeCard = null;
-    let currentArticles = [];
-    let currentSlugs = [];
-    let authorProfiles = {}; // username -> { username, role, avatar_url, bio }
+    // ---------- side panel (mobile slide-up) ----------
+    (function() {
+      const panel = document.getElementById('side-panel');
+      const toggle = document.getElementById('panel-toggle');
+      const backdrop = document.getElementById('panel-backdrop');
+      if (!panel || !toggle || !backdrop) return;
+      function open() { panel.classList.add('open'); backdrop.classList.add('open'); }
+      function close() { panel.classList.remove('open'); backdrop.classList.remove('open'); }
+      toggle.addEventListener('click', () => panel.classList.contains('open') ? close() : open());
+      backdrop.addEventListener('click', close);
+    })();
 
-    // Article identity now lives entirely in the URL fragment (#slug).
-    // Fragments are never transmitted to the server as part of the
-    // HTTP request — the browser resolves them purely client-side.
-    // That means there's no path or query shape for any server-side
-    // routing/redirect layer to ever see or act on: every request to
-    // this page, permalink or not, is the exact same plain request.
-    function buildArticlePath(slug) {
-      return '#' + encodeURIComponent(slug);
-    }
-
+    // ---------- account area: sidebar + top bar auth state ----------
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -428,55 +766,117 @@
       return div.innerHTML;
     }
 
+    function unlockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.remove('locked');
+        el.removeAttribute('aria-disabled');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    async function initAuthNav() {
+      const accountLink = document.getElementById('side-account');
+      const avatarSlot = document.getElementById('side-avatar-slot');
+      const nameSlot = document.getElementById('side-account-name');
+      const roleSlot = document.getElementById('side-account-role');
+      const bioSlot = document.getElementById('side-account-bio');
+
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+
+        if (data.authenticated && data.user) {
+          accountLink.setAttribute('href', '/profile-config');
+          accountLink.classList.add('signed-in');
+          nameSlot.textContent = data.user.username;
+          nameSlot.classList.remove('side-account-cta');
+          nameSlot.classList.add('side-account-username');
+
+          if (data.user.role) {
+            roleSlot.style.display = 'block';
+            roleSlot.textContent = data.user.role;
+          }
+
+          unlockGate('auth', 'avatar, bio, presence');
+
+          let avatarUrl = '';
+          let bio = '';
+          try {
+            const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
+            if (profRes.ok) {
+              const prof = await profRes.json();
+              avatarUrl = (prof.avatar_url || '').trim();
+              bio = (prof.bio || '').trim();
+            }
+          } catch (e) { /* fall back to initials, no bio */ }
+
+          if (bio && bioSlot) {
+            bioSlot.style.display = 'block';
+            bioSlot.textContent = bio;
+          }
+
+          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+          if (avatarUrl) {
+            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
+              '<div class="avatar-frame"></div>' +
+              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+            '</span>';
+          } else {
+            avatarSlot.textContent = initial;
+          }
+
+          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        } else {
+          accountLink.setAttribute('href', '/initialization');
+          accountLink.classList.remove('signed-in');
+          nameSlot.textContent = 'Sign In';
+        }
+      } catch (err) {
+        console.error('Auth nav error:', err);
+        accountLink.setAttribute('href', '/initialization');
+        nameSlot.textContent = 'Sign In';
+      }
+      if (bindHoverables) bindHoverables();
+    }
+
+    document.querySelectorAll('.locked').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        if (this.classList.contains('locked')) e.preventDefault();
+      });
+    });
+
+    initAuthNav();
+
+    // ---------- articles ----------
+    let activeCard = null;
+    let currentArticles = [];
+    let currentSlugs = [];
+    let authorProfiles = {}; // username -> { username, role, avatar_url, bio }
+
+    // Article identity lives entirely in the URL fragment (#slug).
+    // Fragments never reach the server — the browser resolves them
+    // purely client-side, so every request for this page is the
+    // same plain request whether or not it's a permalink.
+    function buildArticlePath(slug) { return '#' + encodeURIComponent(slug); }
+
     function slugify(title) {
-      return (title || 'Untitled')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      return (title || 'Untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
-
-    // Slugs are <slugified-title>-<id>. Embedding the real article ID
-    // means the permalink is anchored to something that can never
-    // collide or drift.
-    function articleSlug(article) {
-      return slugify(article.title) + '-' + article.id;
-    }
-
-    function slugToId(slug) {
-      const m = /-(\d+)$/.exec(slug || '');
-      return m ? parseInt(m[1], 10) : null;
-    }
-
+    // Slugs are <slugified-title>-<id> so the permalink is anchored
+    // to something that can never collide or drift.
+    function articleSlug(article) { return slugify(article.title) + '-' + article.id; }
+    function slugToId(slug) { const m = /-(\d+)$/.exec(slug || ''); return m ? parseInt(m[1], 10) : null; }
     function currentHashSlug() {
       const h = window.location.hash || '';
       if (!h || h === '#') return null;
       return decodeURIComponent(h.slice(1));
     }
 
-    function measureHeight(contentDiv, text) {
-      const clone = contentDiv.cloneNode(false);
-      clone.style.position = 'absolute';
-      clone.style.visibility = 'hidden';
-      clone.style.maxHeight = 'none';
-      clone.style.width = contentDiv.clientWidth + 'px';
-      clone.textContent = text;
-      contentDiv.parentNode.appendChild(clone);
-      const h = clone.scrollHeight;
-      clone.remove();
-      return h;
-    }
-
-    function previewMarkup(previewText, remain) {
-      let html = escapeHtml(previewText);
-      if (remain > 0) html += '<span class="char-remain">' + remain + ' characters remain</span>';
-      return html;
-    }
-
-    // ---------- AUTHOR PROFILES ----------
-    // Pulls the public profile (avatar_url / bio) for every distinct
-    // author in the current article list. Missing or failed lookups
-    // simply leave that author absent from the map, which is enough
-    // for renderList() to fall back to the plain, panel-less layout.
+    // ---------- author profiles ----------
     async function fetchAuthorProfiles(articles) {
       const usernames = [...new Set(articles.map(a => a.author).filter(Boolean))];
       const map = {};
@@ -484,11 +884,8 @@
         try {
           const res = await fetch('/api/users/' + encodeURIComponent(username) + '/profile');
           if (!res.ok) return;
-          const data = await res.json();
-          map[username] = data;
-        } catch (err) {
-          // silently skip — article still renders without the panel
-        }
+          map[username] = await res.json();
+        } catch (err) { /* silently skip — article still renders without the panel */ }
       }));
       return map;
     }
@@ -496,9 +893,7 @@
     function hasAuthorPanel(username) {
       const p = authorProfiles[username];
       if (!p) return false;
-      const avatar = (p.avatar_url || '').trim();
-      const bio = (p.bio || '').trim();
-      return Boolean(avatar && bio);
+      return Boolean((p.avatar_url || '').trim() && (p.bio || '').trim());
     }
 
     function authorCardMarkup(username) {
@@ -509,7 +904,7 @@
 
       return '<div class="author-card">' +
         '<div class="author-avatar-wrap">' +
-          '<div class="author-avatar-ring"></div>' +
+          '<div class="avatar-frame"></div>' +
           '<img class="author-avatar" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(username) + '" ' +
             'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
           '<div class="author-avatar-fallback">' + escapeHtml(initial) + '</div>' +
@@ -522,10 +917,9 @@
       '</div>';
     }
 
-    // ---------- LIST VIEW ----------
+    // ---------- list view ----------
     function renderList() {
       const container = document.getElementById('articles-container');
-
       if (!currentArticles.length) {
         container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
         return;
@@ -539,10 +933,6 @@
         const slug = currentSlugs[index];
         const showAuthorPanel = hasAuthorPanel(author);
 
-        const previewText = content.length > 200 ? content.slice(0, 200) : content;
-        const fullText = content;
-        const charRemain = content.length > 200 ? content.length - 200 : 0;
-
         return '<div class="article-card' + (showAuthorPanel ? ' has-author-panel' : '') + '" data-article-index="' + index + '" data-share="' + slug + '">' +
           '<div class="card-inner">' +
             '<div class="card-main">' +
@@ -551,12 +941,26 @@
                 '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
               '</div>' +
               '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
-              '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
+              '<div class="content preview" data-expanded="0">' + escapeHtml(content) + '</div>' +
             '</div>' +
             (showAuthorPanel ? authorCardMarkup(author) : '') +
           '</div>' +
         '</div>';
       }).join('');
+
+      // A card only gets the "continue reading" hint if its preview
+      // is actually being clipped — measured after layout, so it
+      // reflects whatever the card can elegantly fit, not a fixed
+      // character count.
+      document.querySelectorAll('.article-card').forEach(card => {
+        const contentDiv = card.querySelector('.content');
+        if (contentDiv.scrollHeight - contentDiv.clientHeight > 4) {
+          const hint = document.createElement('span');
+          hint.className = 'read-more-hint';
+          hint.textContent = 'continue reading ↓';
+          contentDiv.insertAdjacentElement('afterend', hint);
+        }
+      });
 
       document.querySelectorAll('.article-card').forEach(card => {
         card.addEventListener('click', function(e) {
@@ -568,6 +972,7 @@
       });
 
       bindCopyButtons();
+      if (bindHoverables) bindHoverables();
     }
 
     async function loadArticles() {
@@ -595,10 +1000,7 @@
             const original = this.innerHTML;
             this.innerHTML = CHECK_ICON;
             this.classList.add('copied');
-            setTimeout(() => {
-              this.innerHTML = original;
-              this.classList.remove('copied');
-            }, 1200);
+            setTimeout(() => { this.innerHTML = original; this.classList.remove('copied'); }, 1200);
           }).catch(() => {});
         });
       });
@@ -607,16 +1009,17 @@
     function expandCard(card) {
       const contentDiv = card.querySelector('.content');
       const titleDiv = card.querySelector('.title');
-      const fullText = contentDiv.dataset.full;
+      const hint = card.querySelector('.read-more-hint');
 
       const startHeight = contentDiv.getBoundingClientRect().height;
       contentDiv.style.transition = 'none';
       contentDiv.style.maxHeight = startHeight + 'px';
+      contentDiv.style.overflow = 'hidden';
       void contentDiv.offsetHeight;
 
       contentDiv.classList.remove('preview');
       contentDiv.classList.add('full');
-      contentDiv.textContent = fullText;
+      contentDiv.dataset.expanded = '1';
 
       const endHeight = contentDiv.scrollHeight;
       requestAnimationFrame(() => {
@@ -627,11 +1030,13 @@
       const onEnd = (e) => {
         if (e.propertyName === 'max-height') {
           contentDiv.style.maxHeight = 'none';
+          contentDiv.style.overflow = 'visible';
           contentDiv.removeEventListener('transitionend', onEnd);
         }
       };
       contentDiv.addEventListener('transitionend', onEnd);
 
+      if (hint) hint.style.display = 'none';
       titleDiv.classList.add('pulse-active');
       card.classList.add('expanded');
 
@@ -642,15 +1047,25 @@
     function collapseCard(card) {
       const contentDiv = card.querySelector('.content');
       const titleDiv = card.querySelector('.title');
-      const previewText = contentDiv.dataset.preview;
-      const remain = parseInt(contentDiv.dataset.remain, 10);
+      const hint = card.querySelector('.read-more-hint');
 
       const startHeight = contentDiv.scrollHeight;
       contentDiv.style.transition = 'none';
       contentDiv.style.maxHeight = startHeight + 'px';
+      contentDiv.style.overflow = 'hidden';
       void contentDiv.offsetHeight;
 
-      const endHeight = measureHeight(contentDiv, previewText + (remain > 0 ? ' ' + remain + ' characters remain' : ''));
+      // Measure the clamped (preview) height by toggling the class
+      // first, then animate down to whatever that turns out to be —
+      // this adapts to the card's real width instead of assuming a
+      // fixed line count in pixels.
+      contentDiv.classList.remove('full');
+      contentDiv.classList.add('preview');
+      contentDiv.dataset.expanded = '0';
+      contentDiv.style.maxHeight = startHeight + 'px';
+      const endHeight = contentDiv.clientHeight;
+      contentDiv.style.maxHeight = startHeight + 'px';
+      void contentDiv.offsetHeight;
 
       requestAnimationFrame(() => {
         contentDiv.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -659,11 +1074,10 @@
 
       const onEnd = (e) => {
         if (e.propertyName === 'max-height') {
-          contentDiv.classList.remove('full');
-          contentDiv.classList.add('preview');
-          contentDiv.innerHTML = previewMarkup(previewText, remain);
           contentDiv.style.maxHeight = 'none';
+          contentDiv.style.overflow = 'hidden';
           contentDiv.removeEventListener('transitionend', onEnd);
+          if (hint && contentDiv.scrollHeight - contentDiv.clientHeight > 4) hint.style.display = 'block';
         }
       };
       contentDiv.addEventListener('transitionend', onEnd);
@@ -675,7 +1089,7 @@
 
     function toggleCard(card) {
       const contentDiv = card.querySelector('.content');
-      const isMinimized = contentDiv.classList.contains('preview');
+      const isMinimized = contentDiv.dataset.expanded !== '1';
       const slug = card.dataset.share;
 
       if (isMinimized) {
@@ -687,8 +1101,6 @@
       }
     }
 
-    // Expands the card matching `slugOrId` and smoothly scrolls it
-    // into view. Returns false if it wasn't found.
     function expandAndScrollToSlug(slugOrId) {
       let idx = currentSlugs.indexOf(slugOrId);
       if (idx === -1) {
@@ -701,14 +1113,10 @@
 
       expandCard(card);
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(function() {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 480);
+      setTimeout(function() { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 480);
       return true;
     }
 
-    // Shown when a permalink's slug doesn't match any current article
-    // (e.g. it was deleted) — the user still gets the live, real list.
     function showNotFoundBanner() {
       const container = document.getElementById('articles-container');
       const banner = document.createElement('div');
@@ -719,9 +1127,6 @@
       container.prepend(banner);
     }
 
-    // Resolves whatever's currently in the hash against the loaded
-    // article list — used both on first load and on hash/popstate
-    // changes (back/forward, clicking another card's link, etc).
     function resolveHash() {
       const slug = currentHashSlug();
       if (!slug) return;
@@ -729,25 +1134,16 @@
       if (!found) showNotFoundBanner();
     }
 
-    // ---------- BOOTSTRAP ----------
-    loadArticles().then(function() {
-      resolveHash();
-    });
+    loadArticles().then(function() { resolveHash(); });
 
-    window.addEventListener('hashchange', function() {
-      resolveHash();
-    });
-
+    window.addEventListener('hashchange', resolveHash);
     window.addEventListener('popstate', function() {
-      // If navigating back past a hash, popstate fires without a
-      // hashchange in some browsers — re-check either way.
       if (!currentHashSlug() && activeCard) {
         collapseCard(activeCard);
       } else {
         resolveHash();
       }
     });
-
   })();
 </script>
 </body>
