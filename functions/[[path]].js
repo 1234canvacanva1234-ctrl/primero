@@ -336,7 +336,7 @@ export async function onRequest(context) {
 
 // ============================================
 // Article permalink handler
-// GET /articlespace/:slug — serves the articlespace.html
+// GET /articlespace/:slug — serves the articlespace/index.html
 // shell with:
 //   1. og:/twitter: meta tags rewritten to match the real
 //      article, so link-preview bots (Discord, Twitter, etc.)
@@ -401,7 +401,11 @@ function renderHeroMarkup(article, slug, backHref, selfHref) {
 
 async function handleArticlePermalink(slug, request, env, next) {
   try {
-    const shellRequest = new Request(new URL('/articlespace.html', request.url), request);
+    // Fetch the shell from articlespace/index.html rather than
+    // articlespace.html — the site now serves that page from a
+    // directory-style path, and env.ASSETS.fetch needs the exact
+    // static asset path to resolve it.
+    const shellRequest = new Request(new URL('/articlespace/index.html', request.url), request);
     const shellResponse = await env.ASSETS.fetch(shellRequest);
 
     if (!shellResponse.ok) {
