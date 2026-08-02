@@ -294,8 +294,15 @@
     let currentSlugs = [];
     let articlesLoadPromise = null;
 
+    // Article identity now travels as a ?a= query param rather than a
+    // path segment — path segments under this directory were getting
+    // canonicalized/redirected by the platform's static-asset handling
+    // before any app code ran. Query strings aren't part of that
+    // decision, so /articlespace?a=slug is treated as the same
+    // resource as plain /articlespace.
     function buildArticlePath(slug) {
-      return (listBasePath === '' ? '' : listBasePath) + '/' + slug;
+      const base = listBasePath || '/articlespace';
+      return base + '?a=' + encodeURIComponent(slug);
     }
 
     function escapeHtml(text) {
@@ -314,12 +321,7 @@
 
     // Slugs are <slugified-title>-<id>. Embedding the real article ID
     // means the permalink is anchored to something that can never
-    // collide or drift — no more relying on two separate requests
-    // (the one that generated the link, and the one that later visits
-    // it) re-deriving an identical, stably-ordered article list to
-    // figure out "the 2nd article named X". A duplicate title, a
-    // newly published article, or a same-timestamp ordering tie can
-    // no longer break the link.
+    // collide or drift.
     function articleSlug(article) {
       return slugify(article.title) + '-' + article.id;
     }
@@ -348,19 +350,16 @@
       return html;
     }
 
-    function pathWithoutLastSegment() {
-      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
-      return segments.slice(0, -1).join('/');
+    // Reads the ?a= slug from the current URL, if present.
+    function currentSlugParam() {
+      return new URLSearchParams(window.location.search).get('a');
     }
 
-    function currentLastSegment() {
-      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
-      return segments[segments.length - 1];
+    function basePathWithoutQuery() {
+      return window.location.pathname.replace(/\/+$/, '') || '';
     }
 
     // Fetches the full article list once, in the background if needed.
-    // Used to populate the list view, and to resolve client-side
-    // navigation (back button / popstate) after landing on a permalink.
     function ensureArticlesLoaded() {
       if (articlesLoadPromise) return articlesLoadPromise;
       articlesLoadPromise = fetch('/api/articles')
@@ -378,12 +377,8 @@
     }
 
     // ---------- LIST VIEW ----------
-    // basePath: optional explicit base path for building article links.
-    // Needed because when we land on a permalink URL (/articlespace/some-slug),
-    // the list must still generate links relative to /articlespace, not
-    // relative to /articlespace/some-slug.
     function renderList(basePath) {
-      listBasePath = (basePath !== undefined) ? basePath : (window.location.pathname.replace(/\/+$/, '') || '');
+      listBasePath = (basePath !== undefined) ? basePath : basePathWithoutQuery();
       const container = document.getElementById('articles-container');
 
       if (!currentArticles.length) {
@@ -534,13 +529,8 @@
       }
     }
 
-    // Expands the card matching `slugOrId` (if present in the currently
-    // rendered list) and smoothly scrolls it into view, however far
-    // down the list it is. Returns false if it wasn't found.
-    // Matches on the exact current slug first, then falls back to the
-    // ID embedded in the slug — so a permalink still resolves even if
-    // an article's title (and therefore its slug text) was edited
-    // after the link was shared.
+    // Expands the card matching `slugOrId` and smoothly scrolls it
+    // into view. Returns false if it wasn't found.
     function expandAndScrollToSlug(slugOrId) {
       let idx = currentSlugs.indexOf(slugOrId);
       if (idx === -1) {
@@ -553,9 +543,6 @@
 
       expandCard(card);
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // The card's final height (and thus its true centered position)
-      // isn't known until the expand transition finishes, so re-center
-      // once it settles.
       setTimeout(function() {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 480);
@@ -563,8 +550,7 @@
     }
 
     // Shown when a permalink's slug doesn't match any current article
-    // (e.g. it was deleted) — the user still gets the live, real list
-    // instead of a dead end.
+    // (e.g. it was deleted) — the user still gets the live, real list.
     function showNotFoundBanner() {
       const container = document.getElementById('articles-container');
       const banner = document.createElement('div');
@@ -576,42 +562,41 @@
     }
 
     // ---------- ROUTER (used for back/forward navigation) ----------
-    // A permalink URL always renders the full list (with the matching
-    // card expanded and scrolled into view) rather than an isolated
-    // single-article page, so visitors always land on the real, live site.
+    // A permalink URL (?a=slug) always renders the full list (with the
+    // matching card expanded and scrolled into view) rather than an
+    // isolated single-article page.
     async function route() {
       await ensureArticlesLoaded();
-      const lastSegment = currentLastSegment();
-      const id = slugToId(lastSegment);
-      const matches = id !== null && currentArticles.some(a => a.id === id);
+      const slug = currentSlugParam();
+      const id = slugToId(slug);
+      const matches = slug !== null && id !== null && currentArticles.some(a => a.id === id);
+      renderList(basePathWithoutQuery());
       if (matches) {
-        renderList(pathWithoutLastSegment());
-        expandAndScrollToSlug(lastSegment);
-      } else {
-        renderList(window.location.pathname.replace(/\/+$/, '') || '');
+        expandAndScrollToSlug(slug);
       }
     }
 
     // ---------- BOOTSTRAP ----------
-    // window.__ARTICLE__ is set by the server (in [[path]].js) only when
-    // this page was requested as an /articlespace/:slug permalink. When
-    // an article was found, the server has ALREADY rendered the expanded
-    // card's actual markup into #articles-container (see handleArticlePermalink) —
-    // it's on the page the moment the browser paints, full-size and
-    // front-and-center, with no JS-driven expand/scroll step needed. All
-    // the client has to do here is wire up the interactive bits (copy
-    // link button) and set listBasePath so it points "back" correctly.
+    // window.__ARTICLE__ is set by the server (in [[path]].js) only
+    // when this page was requested as /articlespace?a=slug. When an
+    // article was found, the server has ALREADY rendered the expanded
+    // card's actual markup into #articles-container — it's on the page
+    // the moment the browser paints, full-size and front-and-center.
+    // All the client has to do here is wire up the interactive bits
+    // (copy link button) and set listBasePath so it points "back"
+    // correctly.
     //
-    // If no article matched (deleted link, bad slug), the server leaves
-    // window.__ARTICLE__ as null and doesn't touch the container — in
-    // that case we fall back to the normal full list plus a banner.
+    // If no article matched (deleted link, bad slug), the server
+    // leaves window.__ARTICLE__ as null and doesn't touch the
+    // container — in that case we fall back to the normal full list
+    // plus a banner.
     if (typeof window.__ARTICLE__ !== 'undefined') {
+      listBasePath = basePathWithoutQuery();
       if (window.__ARTICLE__) {
-        listBasePath = pathWithoutLastSegment();
         bindCopyButtons();
       } else {
         ensureArticlesLoaded().then(function() {
-          renderList(window.location.pathname.replace(/\/articlespace\/[^\/]+\/?$/, '/articlespace') || '');
+          renderList(basePathWithoutQuery());
           showNotFoundBanner();
         });
       }
