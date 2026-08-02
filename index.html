@@ -119,8 +119,10 @@
     }
 
     /* ============================================
-       SITE NAV — slim top bar; primary navigation
-       now lives in the side panel.
+       SITE NAV — a proper top bar that mirrors the
+       side panel's four destinations, gated the
+       same way. The side panel remains for account
+       state and the mobile drawer.
        ============================================ */
     .site-nav {
       position: sticky;
@@ -129,43 +131,87 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 12px 24px;
-      background: rgba(12, 12, 12, 0.55);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      gap: 28px;
+      padding: 18px 30px;
+      background: rgba(12, 12, 12, 0.6);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--line);
     }
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
       text-decoration: none;
       color: inherit;
       flex-shrink: 0;
     }
     .nav-logo img {
-      width: 30px;
-      height: 30px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       object-fit: cover;
       border: 1px solid rgba(255,255,255,0.08);
     }
     .nav-logo .word {
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 15px;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--ink);
       transition: color 0.3s ease;
+      display: inline-block;
+      margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
     .nav-logo:hover .word { color: #ff5c8f; }
 
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      flex: 1;
+      justify-content: center;
+    }
+    .nav-link {
+      position: relative;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      padding: 4px 1px;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 100%;
+      bottom: 0;
+      height: 1px;
+      background: var(--pulse);
+      transition: right 0.3s ease;
+    }
+    .nav-link:hover { color: var(--ink); }
+    .nav-link:hover::after { right: 0; }
+    .nav-link.current {
+      color: var(--pulse);
+    }
+    .nav-link.current::after { right: 0; }
+    .nav-link.locked {
+      color: var(--dim);
+      filter: grayscale(1);
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .nav-link.locked::after { display: none; }
+
     .panel-toggle {
       display: none;
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: 1px solid var(--line);
       background: rgba(28,28,26,0.6);
@@ -174,6 +220,7 @@
       justify-content: center;
       font-size: 15px;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     /* ============================================
@@ -407,6 +454,8 @@
       color: var(--steel);
       opacity: 0.75;
       margin-bottom: 18px;
+      display: inline-block;
+      margin-right: -5px;
     }
     .hero-title {
       font-family: 'Cinzel', serif;
@@ -417,6 +466,8 @@
       color: var(--steel);
       text-shadow: 0 0 30px rgba(163,160,153,0.35), 0 0 60px rgba(255,59,124,0.12);
       line-height: 1.05;
+      display: inline-block;
+      margin-right: clamp(-16px, -2vw, -6px);
     }
     .hero-sub {
       font-family: 'Cormorant Garamond', serif;
@@ -427,6 +478,7 @@
       letter-spacing: 3px;
       margin-top: 14px;
       opacity: 0.85;
+      display: block;
     }
     .hero-statement {
       max-width: 640px;
@@ -445,28 +497,39 @@
       font-weight: 400;
     }
     .discord-btn-container {
-      margin-top: 34px;
+      margin-top: 26px;
     }
     .discord-btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-family: 'Cinzel', serif;
       font-size: 12px;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: #121212;
-      background: var(--pulse);
-      padding: 14px 36px;
-      border: 1px solid rgba(255,59,124,0.3);
-      border-radius: 2px;
+      background: linear-gradient(135deg, #ff5c8f, var(--pulse));
+      padding: 15px 30px 15px 34px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 999px;
       text-decoration: none;
       transition: all 0.3s ease;
-      box-shadow: 0 0 20px rgba(255,59,124,0.2);
+      box-shadow: 0 6px 24px rgba(255,59,124,0.28);
       -webkit-tap-highlight-color: transparent;
     }
+    .discord-btn::after {
+      content: '↗';
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      letter-spacing: 0;
+      transition: transform 0.3s ease;
+    }
     .discord-btn:hover {
-      background: #ff5c8f;
-      box-shadow: 0 0 40px rgba(255,59,124,0.32);
+      box-shadow: 0 8px 32px rgba(255,59,124,0.4);
       transform: translateY(-2px);
+    }
+    .discord-btn:hover::after {
+      transform: translate(2px, -2px);
     }
     .discord-btn:active {
       transform: scale(0.96);
@@ -704,6 +767,11 @@
        triggered by the toggle button; directory and
        hero scale down; cursor effects disabled.
        ============================================ */
+    @media (max-width: 1100px) {
+      .nav-links { gap: 18px; }
+      .nav-link { font-size: 10px; letter-spacing: 1.5px; }
+    }
+
     @media (max-width: 900px) {
       .page { margin-right: 0; }
       .side-panel {
@@ -722,6 +790,7 @@
       }
       .side-panel.open { transform: translateY(0); }
       .panel-toggle { display: flex; }
+      .nav-links { display: none; }
       .panel-backdrop {
         display: block;
         position: fixed;
@@ -837,14 +906,14 @@
         </span>
         <span class="side-link-arrow">→</span>
       </a>
-      <a href="/profile-config" class="side-link locked" id="profile-config-link" aria-disabled="true">
+      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Profile Configuration</span>
           <span class="side-link-sub">sign in required</span>
         </span>
         <span class="side-link-arrow">⛔</span>
       </a>
-      <a href="/control-panel" class="side-link locked" id="control-panel-link" aria-disabled="true">
+      <a href="/control-panel" class="side-link locked" data-gate="sysadmin" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Control Panel</span>
           <span class="side-link-sub">sysadmin only</span>
@@ -867,12 +936,17 @@
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
       <span class="word"><span class="highlight">✦</span> SoraSys</span>
     </a>
+    <div class="nav-links">
+      <a href="/articlespace" class="nav-link">Articlespace</a>
+      <a href="/initialization" class="nav-link">Initialization</a>
+      <a href="/profile-config" class="nav-link locked" data-gate="auth" aria-disabled="true">Profile Config</a>
+      <a href="/control-panel" class="nav-link locked" data-gate="sysadmin" aria-disabled="true">Control Panel</a>
+    </div>
     <button class="panel-toggle" id="panel-toggle" type="button" aria-label="Open menu">☰</button>
   </nav>
 
   <div class="hero">
     <div class="hero-content">
-      <div class="hero-eyebrow">iteration CHORDATA</div>
       <div class="hero-title">SoraSys</div>
       <div class="hero-sub">sciences · structures · unconstrained exchange</div>
       <div class="hero-statement">
