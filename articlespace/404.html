@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>SoraSys · Articlespace</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b1114;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      padding: 24px;
+      min-height: 100vh;
+      cursor: none;
+    }
+    #cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #ff3b7c;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
+      display: none;
+      transition: transform 0.08s ease, background 0.2s ease;
+    }
+    #cursor.active { display: block; }
+    #cursor.hover {
+      transform: translate(-50%, -50%) scale(2.8);
+      background: rgba(255, 59, 124, 0.25);
+      box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
+    }
+    @media (max-width: 640px) {
+      #cursor { display: none !important; }
+      body { cursor: auto; }
+    }
+    .space-header {
+      max-width: 900px;
+      margin: 0 auto 28px;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      padding-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .space-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+    }
+    .space-title span { color: #ff3b7c; }
+    .space-nav a {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      text-decoration: none;
+      margin-left: 16px;
+      transition: color 0.3s ease;
+    }
+    .space-nav a:hover { color: #ff3b7c; }
+    .articles-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .back-to-all {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      text-decoration: none;
+      margin-bottom: 18px;
+      transition: color 0.3s ease;
+    }
+    .back-to-all:hover { color: #ff3b7c; }
+    .article-card {
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+      overflow: hidden;
+      transition:
+        transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.35s ease,
+        border-color 0.3s ease,
+        background 0.3s ease;
+    }
+    .article-card:hover {
+      border-color: rgba(255, 59, 124, 0.3);
+    }
+    .article-card:active {
+      transform: scale(0.997);
+    }
+    .article-card.expanded {
+      border-color: #ff3b7c;
+      background: rgba(20, 30, 35, 0.92);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.1), 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+    .article-card .card-inner {
+      padding: 16px 20px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .article-card .title {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      letter-spacing: 1.5px;
+      color: #6b8e9b;
+      line-height: 1.3;
+      transition: color 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .article-card.expanded .title {
+      color: #ff3b7c;
+    }
+    .article-card .title.pulse-active {
+      animation: pulse-opacity 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-opacity {
+      0%, 100% { opacity: 0.65; }
+      50% { opacity: 1; }
+    }
+    .copy-link-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #4a6673;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(1px);
+      transition: opacity 0.25s ease, color 0.25s ease;
+      flex-shrink: 0;
+    }
+    .article-card:hover .copy-link-btn,
+    .article-card.expanded .copy-link-btn {
+      opacity: 0.55;
+    }
+    .copy-link-btn:hover {
+      opacity: 1 !important;
+      color: #ff3b7c;
+    }
+    .copy-link-btn.copied {
+      opacity: 1 !important;
+      color: #4ade80;
+    }
+    .copy-link-btn svg { width: 13px; height: 13px; display: block; }
+    .article-card .meta {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      color: #4a6673;
+      margin-top: 4px;
+      margin-bottom: 10px;
+      transition: color 0.3s ease;
+    }
+    .article-card.expanded .meta {
+      color: rgba(255, 59, 124, 0.65);
+    }
+    .article-card .content {
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #bcccd6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow: hidden;
+    }
+    .article-card .char-remain {
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      color: #ff3b7c;
+      opacity: 0.7;
+      letter-spacing: 1px;
+      margin-top: 6px;
+      display: block;
+      animation: pulse-opacity 2s ease-in-out infinite;
+    }
+    .empty-articles {
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 18px;
+      color: #4a6673;
+      padding: 60px 0;
+    }
+    /* Permalink hero: the server renders the expanded article directly
+       into this wrapper, front-and-center on first paint — no waiting
+       on JS to find and expand a card buried in the full list. */
+    .permalink-hero {
+      display: flex;
+      justify-content: center;
+      padding-top: 8vh;
+    }
+    .permalink-card-wrap {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .permalink-card-wrap > .back-to-all {
+      align-self: flex-start;
+      margin-bottom: 0;
+    }
+    @media (max-width: 640px) {
+      .permalink-hero { padding-top: 4vh; }
+    }
+    @media (max-width: 640px) {
+      .space-header { flex-direction: column; gap: 12px; text-align: center; }
+      .space-nav a { margin: 0 8px; }
+      .article-card .card-inner { padding: 14px 16px; }
+      .article-card .title { font-size: 15px; }
+      .copy-link-btn { opacity: 0.55; }
+      body { padding: 16px; cursor: auto; }
+    }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+<div class="space-header">
+  <div class="space-title">⟨ <span>Article</span>space ⟩</div>
+  <div class="space-nav">
+    <a href="/">↩ Home</a>
+    <a href="/control-panel">⌘ Panel</a>
+  </div>
+</div>
+<div id="articles-container" class="articles-container">
+  <div class="empty-articles">loading articles...</div>
+</div>
+
+<script>
+  (function() {
+    const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+    const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+    // Only enable custom cursor on desktop
+    if (window.innerWidth > 640) {
+      const cursor = document.getElementById('cursor');
+      if (cursor) {
+        cursor.classList.add('active');
+        document.body.style.cursor = 'none';
+
+        let mx = -100, my = -100;
+        let cx = -100, cy = -100;
+
+        function updateCursor() {
+          cx += (mx - cx) * 0.2;
+          cy += (my - cy) * 0.2;
+          cursor.style.left = cx + 'px';
+          cursor.style.top = cy + 'px';
+          requestAnimationFrame(updateCursor);
+        }
+
+        document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+        document.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        document.addEventListener('mouseenter', () => cursor.classList.add('active'));
+
+        function bindHover(el) {
+          el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+          el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        }
+        document.querySelectorAll('a, .article-card, .space-nav a, .space-header').forEach(bindHover);
+
+        updateCursor();
+      }
+    } else {
+      document.body.style.cursor = 'auto';
+    }
+
+    let activeCard = null;
+    let listBasePath = '';        // path of the list page itself, e.g. '/articlespace'
+    let currentArticles = [];
+    let currentSlugs = [];
+    let articlesLoadPromise = null;
+
+    function buildArticlePath(slug) {
+      return (listBasePath === '' ? '' : listBasePath) + '/' + slug;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function slugify(title) {
+      return (title || 'Untitled')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    // Slugs are <slugified-title>-<id>. Embedding the real article ID
+    // means the permalink is anchored to something that can never
+    // collide or drift — no more relying on two separate requests
+    // (the one that generated the link, and the one that later visits
+    // it) re-deriving an identical, stably-ordered article list to
+    // figure out "the 2nd article named X". A duplicate title, a
+    // newly published article, or a same-timestamp ordering tie can
+    // no longer break the link.
+    function articleSlug(article) {
+      return slugify(article.title) + '-' + article.id;
+    }
+
+    function slugToId(slug) {
+      const m = /-(\d+)$/.exec(slug || '');
+      return m ? parseInt(m[1], 10) : null;
+    }
+
+    function measureHeight(contentDiv, text) {
+      const clone = contentDiv.cloneNode(false);
+      clone.style.position = 'absolute';
+      clone.style.visibility = 'hidden';
+      clone.style.maxHeight = 'none';
+      clone.style.width = contentDiv.clientWidth + 'px';
+      clone.textContent = text;
+      contentDiv.parentNode.appendChild(clone);
+      const h = clone.scrollHeight;
+      clone.remove();
+      return h;
+    }
+
+    function previewMarkup(previewText, remain) {
+      let html = escapeHtml(previewText);
+      if (remain > 0) html += '<span class="char-remain">' + remain + ' characters remain</span>';
+      return html;
+    }
+
+    function pathWithoutLastSegment() {
+      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
+      return segments.slice(0, -1).join('/');
+    }
+
+    function currentLastSegment() {
+      const segments = window.location.pathname.replace(/\/+$/, '').split('/');
+      return segments[segments.length - 1];
+    }
+
+    // Fetches the full article list once, in the background if needed.
+    // Used to populate the list view, and to resolve client-side
+    // navigation (back button / popstate) after landing on a permalink.
+    function ensureArticlesLoaded() {
+      if (articlesLoadPromise) return articlesLoadPromise;
+      articlesLoadPromise = fetch('/api/articles')
+        .then(res => res.ok ? res.json() : [])
+        .then(articles => {
+          currentArticles = articles || [];
+          currentSlugs = currentArticles.map(a => articleSlug(a));
+        })
+        .catch(err => {
+          console.error('Error loading articles:', err);
+          currentArticles = [];
+          currentSlugs = [];
+        });
+      return articlesLoadPromise;
+    }
+
+    // ---------- LIST VIEW ----------
+    // basePath: optional explicit base path for building article links.
+    // Needed because when we land on a permalink URL (/articlespace/some-slug),
+    // the list must still generate links relative to /articlespace, not
+    // relative to /articlespace/some-slug.
+    function renderList(basePath) {
+      listBasePath = (basePath !== undefined) ? basePath : (window.location.pathname.replace(/\/+$/, '') || '');
+      const container = document.getElementById('articles-container');
+
+      if (!currentArticles.length) {
+        container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
+        return;
+      }
+
+      container.innerHTML = currentArticles.map((a, index) => {
+        const content = a.content || '';
+        const title = a.title || 'Untitled';
+        const author = a.author || 'Anonymous';
+        const date = new Date(a.created_at).toLocaleDateString();
+        const slug = currentSlugs[index];
+
+        const previewText = content.length > 200 ? content.slice(0, 200) : content;
+        const fullText = content;
+        const charRemain = content.length > 200 ? content.length - 200 : 0;
+
+        return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
+          '<div class="card-inner">' +
+            '<div class="title-row">' +
+              '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
+              '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+            '</div>' +
+            '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
+            '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      document.querySelectorAll('.article-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+          if (e.target.closest('.copy-link-btn')) return;
+          if (e.target.closest('a.title')) e.preventDefault();
+          toggleCard(this);
+        });
+      });
+
+      bindCopyButtons();
+    }
+
+    async function showListView() {
+      const container = document.getElementById('articles-container');
+      container.innerHTML = '<div class="empty-articles">loading articles...</div>';
+      await ensureArticlesLoaded();
+      renderList();
+    }
+
+    function bindCopyButtons() {
+      document.querySelectorAll('.copy-link-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const slug = this.dataset.share;
+          const url = window.location.origin + buildArticlePath(slug);
+          navigator.clipboard.writeText(url).then(() => {
+            const original = this.innerHTML;
+            this.innerHTML = CHECK_ICON;
+            this.classList.add('copied');
+            setTimeout(() => {
+              this.innerHTML = original;
+              this.classList.remove('copied');
+            }, 1200);
+          }).catch(() => {});
+        });
+      });
+    }
+
+    function expandCard(card) {
+      const contentDiv = card.querySelector('.content');
+      const titleDiv = card.querySelector('.title');
+      const fullText = contentDiv.dataset.full;
+
+      const startHeight = contentDiv.getBoundingClientRect().height;
+      contentDiv.style.transition = 'none';
+      contentDiv.style.maxHeight = startHeight + 'px';
+      void contentDiv.offsetHeight;
+
+      contentDiv.classList.remove('preview');
+      contentDiv.classList.add('full');
+      contentDiv.textContent = fullText;
+
+      const endHeight = contentDiv.scrollHeight;
+      requestAnimationFrame(() => {
+        contentDiv.style.transition = 'max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+        contentDiv.style.maxHeight = endHeight + 'px';
+      });
+
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          contentDiv.style.maxHeight = 'none';
+          contentDiv.removeEventListener('transitionend', onEnd);
+        }
+      };
+      contentDiv.addEventListener('transitionend', onEnd);
+
+      titleDiv.classList.add('pulse-active');
+      card.classList.add('expanded');
+
+      if (activeCard && activeCard !== card) collapseCard(activeCard);
+      activeCard = card;
+    }
+
+    function collapseCard(card) {
+      const contentDiv = card.querySelector('.content');
+      const titleDiv = card.querySelector('.title');
+      const previewText = contentDiv.dataset.preview;
+      const remain = parseInt(contentDiv.dataset.remain, 10);
+
+      const startHeight = contentDiv.scrollHeight;
+      contentDiv.style.transition = 'none';
+      contentDiv.style.maxHeight = startHeight + 'px';
+      void contentDiv.offsetHeight;
+
+      const endHeight = measureHeight(contentDiv, previewText + (remain > 0 ? ' ' + remain + ' characters remain' : ''));
+
+      requestAnimationFrame(() => {
+        contentDiv.style.transition = 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        contentDiv.style.maxHeight = endHeight + 'px';
+      });
+
+      const onEnd = (e) => {
+        if (e.propertyName === 'max-height') {
+          contentDiv.classList.remove('full');
+          contentDiv.classList.add('preview');
+          contentDiv.innerHTML = previewMarkup(previewText, remain);
+          contentDiv.style.maxHeight = 'none';
+          contentDiv.removeEventListener('transitionend', onEnd);
+        }
+      };
+      contentDiv.addEventListener('transitionend', onEnd);
+
+      titleDiv.classList.remove('pulse-active');
+      card.classList.remove('expanded');
+      if (activeCard === card) activeCard = null;
+    }
+
+    function toggleCard(card) {
+      const contentDiv = card.querySelector('.content');
+      const isMinimized = contentDiv.classList.contains('preview');
+      const slug = card.dataset.share;
+
+      if (isMinimized) {
+        expandCard(card);
+        if (history.pushState) history.pushState({ view: 'single', article: slug }, '', buildArticlePath(slug));
+      } else {
+        collapseCard(card);
+        if (history.pushState) history.pushState({ view: 'list' }, '', listBasePath === '' ? '/' : listBasePath);
+      }
+    }
+
+    // Expands the card matching `slugOrId` (if present in the currently
+    // rendered list) and smoothly scrolls it into view, however far
+    // down the list it is. Returns false if it wasn't found.
+    // Matches on the exact current slug first, then falls back to the
+    // ID embedded in the slug — so a permalink still resolves even if
+    // an article's title (and therefore its slug text) was edited
+    // after the link was shared.
+    function expandAndScrollToSlug(slugOrId) {
+      let idx = currentSlugs.indexOf(slugOrId);
+      if (idx === -1) {
+        const id = slugToId(slugOrId);
+        if (id !== null) idx = currentArticles.findIndex(a => a.id === id);
+      }
+      if (idx === -1) return false;
+      const card = document.querySelector('.article-card[data-article-index="' + idx + '"]');
+      if (!card) return false;
+
+      expandCard(card);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // The card's final height (and thus its true centered position)
+      // isn't known until the expand transition finishes, so re-center
+      // once it settles.
+      setTimeout(function() {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 480);
+      return true;
+    }
+
+    // Shown when a permalink's slug doesn't match any current article
+    // (e.g. it was deleted) — the user still gets the live, real list
+    // instead of a dead end.
+    function showNotFoundBanner() {
+      const container = document.getElementById('articles-container');
+      const banner = document.createElement('div');
+      banner.className = 'empty-articles';
+      banner.style.padding = '16px 0';
+      banner.style.fontSize = '14px';
+      banner.textContent = 'That article link could not be found — showing all articles.';
+      container.prepend(banner);
+    }
+
+    // ---------- ROUTER (used for back/forward navigation) ----------
+    // A permalink URL always renders the full list (with the matching
+    // card expanded and scrolled into view) rather than an isolated
+    // single-article page, so visitors always land on the real, live site.
+    async function route() {
+      await ensureArticlesLoaded();
+      const lastSegment = currentLastSegment();
+      const id = slugToId(lastSegment);
+      const matches = id !== null && currentArticles.some(a => a.id === id);
+      if (matches) {
+        renderList(pathWithoutLastSegment());
+        expandAndScrollToSlug(lastSegment);
+      } else {
+        renderList(window.location.pathname.replace(/\/+$/, '') || '');
+      }
+    }
+
+    // ---------- BOOTSTRAP ----------
+    // window.__ARTICLE__ is set by the server (in [[path]].js) only when
+    // this page was requested as an /articlespace/:slug permalink. When
+    // an article was found, the server has ALREADY rendered the expanded
+    // card's actual markup into #articles-container (see handleArticlePermalink) —
+    // it's on the page the moment the browser paints, full-size and
+    // front-and-center, with no JS-driven expand/scroll step needed. All
+    // the client has to do here is wire up the interactive bits (copy
+    // link button) and set listBasePath so it points "back" correctly.
+    //
+    // If no article matched (deleted link, bad slug), the server leaves
+    // window.__ARTICLE__ as null and doesn't touch the container — in
+    // that case we fall back to the normal full list plus a banner.
+    if (typeof window.__ARTICLE__ !== 'undefined') {
+      if (window.__ARTICLE__) {
+        listBasePath = pathWithoutLastSegment();
+        bindCopyButtons();
+      } else {
+        ensureArticlesLoaded().then(function() {
+          renderList(window.location.pathname.replace(/\/articlespace\/[^\/]+\/?$/, '/articlespace') || '');
+          showNotFoundBanner();
+        });
+      }
+    } else {
+      showListView();
+    }
+
+    window.addEventListener('popstate', function() {
+      route();
+    });
+
+  })();
+</script>
+</body>
+</html>
