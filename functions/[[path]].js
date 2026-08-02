@@ -4,23 +4,28 @@ export async function onRequest(context) {
   const path = url.pathname;
 
   // ============================================
-  // ARTICLE PERMALINKS - /articlespace/:slug
-  // Handled first, directly in the catch-all, so there's
-  // no dependency on Cloudflare picking a more specific
-  // function route over this one.
-  //
-  // NOTE: this file must live at exactly
-  //   functions/[[path]].js
-  // Cloudflare Pages' catch-all syntax is [[name]].js (double
-  // brackets closing before the extension). A misnamed file
-  // (e.g. "[[path.js]]") will not be recognized as a route at
-  // all, and every request here — including /articlespace/:slug
-  // permalinks — will silently fall through to your project's
-  // default static handling instead of running this function.
+  // ARTICLE PERMALINKS - /articlespace?a=:slug
   // ============================================
-  const articleSlugMatch = path.match(/^\/articlespace\/([^\/]+)\/?$/);
-  if (articleSlugMatch) {
-    return handleArticlePermalink(articleSlugMatch[1], request, env, next);
+  // Query-string based on purpose: /articlespace/:slug (a path segment)
+  // was being collapsed/redirected by the platform's static-asset
+  // canonicalization for the "articlespace" directory before this
+  // function ever got a chance to run. Query strings are never
+  // considered part of that path-canonicalization decision, so
+  // /articlespace?a=slug and /articlespace are treated as the exact
+  // same resource by everything upstream of this function — there's
+  // no sub-path left for anything to "helpfully" redirect away.
+  //
+  // If this path is NOT /articlespace, or there's no ?a= param, we
+  // don't touch it — next() lets it fall through to normal static
+  // handling exactly like before (e.g. plain /articlespace list view).
+  const isArticlespacePage = path === '/articlespace' || path === '/articlespace/';
+  if (isArticlespacePage) {
+    const slug = url.searchParams.get('a');
+    if (slug) {
+      return handleArticlePermalink(slug, request, env, next);
+    }
+    // No ?a= param: normal list view, just serve the static shell as-is.
+    return next();
   }
 
   // ============================================
@@ -30,9 +35,9 @@ export async function onRequest(context) {
   if (!path.startsWith('/api/')) {
     return next();
   }
-  
+
   console.log('API Request:', path, request.method);
-  
+
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -49,8 +54,8 @@ export async function onRequest(context) {
   // TEST - /api/test
   // ============================================
   if (path === '/api/test') {
-    return new Response(JSON.stringify({ 
-      status: 'OK', 
+    return new Response(JSON.stringify({
+      status: 'OK',
       message: 'API is working!'
     }), { headers });
   }
@@ -62,36 +67,36 @@ export async function onRequest(context) {
     try {
       const body = await request.json();
       const { username, password } = body;
-      
+
       if (!username || username.length < 3) {
         return new Response(JSON.stringify({ error: 'Username too short' }), { status: 400, headers });
       }
       if (!password || password.length < 8) {
         return new Response(JSON.stringify({ error: 'Password too short' }), { status: 400, headers });
       }
-      
+
       const existing = await env.DB.prepare('SELECT username FROM users WHERE username = ?').bind(username).first();
       if (existing) {
         return new Response(JSON.stringify({ error: 'Username taken' }), { status: 409, headers });
       }
-      
+
       const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
       const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-      
+
       await env.DB.prepare(
         'INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, ?)'
       ).bind(username, hashHex, 'user', new Date().toISOString()).run();
-      
+
       const sessionId = crypto.randomUUID();
       await env.DB.prepare(
         'INSERT INTO sessions (session_id, username, expires_at) VALUES (?, ?, ?)'
       ).bind(sessionId, username, new Date(Date.now() + 7*24*60*60*1000).toISOString()).run();
-      
+
       const cookie = `session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7*24*60*60}`;
       headers['Set-Cookie'] = cookie;
-      
+
       return new Response(JSON.stringify({ success: true, username }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -104,29 +109,29 @@ export async function onRequest(context) {
     try {
       const body = await request.json();
       const { username, password } = body;
-      
+
       const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
       if (!user) {
         return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers });
       }
-      
+
       const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
       const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-      
+
       if (user.password_hash !== hashHex) {
         return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers });
       }
-      
+
       const sessionId = crypto.randomUUID();
       await env.DB.prepare(
         'INSERT INTO sessions (session_id, username, expires_at) VALUES (?, ?, ?)'
       ).bind(sessionId, username, new Date(Date.now() + 7*24*60*60*1000).toISOString()).run();
-      
+
       const cookie = `session=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7*24*60*60}`;
       headers['Set-Cookie'] = cookie;
-      
+
       return new Response(JSON.stringify({ success: true, username, role: user.role }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -139,19 +144,19 @@ export async function onRequest(context) {
     try {
       const cookie = request.headers.get('Cookie') || '';
       const sessionId = cookie.match(/session=([^;]+)/)?.[1];
-      
+
       if (!sessionId) {
         return new Response(JSON.stringify({ authenticated: false }), { headers });
       }
-      
+
       const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
       if (!session || new Date(session.expires_at) < new Date()) {
         return new Response(JSON.stringify({ authenticated: false }), { headers });
       }
-      
+
       const user = await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
       return new Response(JSON.stringify({ authenticated: true, user }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ authenticated: false }), { headers });
     }
@@ -164,14 +169,14 @@ export async function onRequest(context) {
     try {
       const cookie = request.headers.get('Cookie') || '';
       const sessionId = cookie.match(/session=([^;]+)/)?.[1];
-      
+
       if (sessionId) {
         await env.DB.prepare('DELETE FROM sessions WHERE session_id = ?').bind(sessionId).run();
       }
-      
+
       headers['Set-Cookie'] = 'session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
       return new Response(JSON.stringify({ success: true }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -200,20 +205,20 @@ export async function onRequest(context) {
       if (!user || user.role !== 'sysadmin') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
       }
-      
+
       const body = await request.json();
       const { title, content } = body;
-      
+
       if (!title || !content) {
         return new Response(JSON.stringify({ error: 'Title and content required' }), { status: 400, headers });
       }
-      
+
       const result = await env.DB.prepare(
         'INSERT INTO articles (title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
       ).bind(title, content, user.username, new Date().toISOString(), new Date().toISOString()).run();
-      
+
       return new Response(JSON.stringify({ success: true, id: result.meta.last_row_id }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -245,21 +250,21 @@ export async function onRequest(context) {
       if (!user || user.role !== 'sysadmin') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
       }
-      
+
       const id = parseInt(articleIdMatch[1]);
       const body = await request.json();
       const { title, content } = body;
-      
+
       if (!title || !content) {
         return new Response(JSON.stringify({ error: 'Title and content required' }), { status: 400, headers });
       }
-      
+
       await env.DB.prepare(
         'UPDATE articles SET title = ?, content = ?, updated_at = ? WHERE id = ?'
       ).bind(title, content, new Date().toISOString(), id).run();
-      
+
       return new Response(JSON.stringify({ success: true }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -274,12 +279,12 @@ export async function onRequest(context) {
       if (!user || user.role !== 'sysadmin') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
       }
-      
+
       const id = parseInt(articleIdMatch[1]);
       await env.DB.prepare('DELETE FROM articles WHERE id = ?').bind(id).run();
-      
+
       return new Response(JSON.stringify({ success: true }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -294,10 +299,10 @@ export async function onRequest(context) {
       if (!user || user.role !== 'sysadmin') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
       }
-      
+
       const users = await env.DB.prepare('SELECT username, role FROM users ORDER BY username').all();
       return new Response(JSON.stringify(users.results || []), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -313,12 +318,12 @@ export async function onRequest(context) {
       if (!user || user.role !== 'sysadmin') {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers });
       }
-      
+
       const username = grantMatch[1];
       await env.DB.prepare('UPDATE users SET role = ? WHERE username = ?').bind('sysadmin', username).run();
-      
+
       return new Response(JSON.stringify({ success: true }), { headers });
-      
+
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
     }
@@ -327,7 +332,7 @@ export async function onRequest(context) {
   // ============================================
   // 404 - Return JSON
   // ============================================
-  return new Response(JSON.stringify({ 
+  return new Response(JSON.stringify({
     error: 'Not found',
     path: path,
     method: request.method
@@ -336,30 +341,25 @@ export async function onRequest(context) {
 
 // ============================================
 // Article permalink handler
-// GET /articlespace/:slug — serves the articlespace/index.html
+// GET /articlespace?a=:slug — serves the articlespace/index.html
 // shell with:
-//   1. og:/twitter: meta tags rewritten to match the real
-//      article, so link-preview bots (Discord, Twitter, etc.)
-//      see real content instead of the generic homepage.
+//   1. og:/twitter: meta tags rewritten to match the real article.
 //   2. The resolved article embedded directly as JSON in a
-//      <script> tag, so the client never has to re-derive
-//      which article this URL refers to — it just reads what
-//      the server already decided. This is the piece that
-//      makes the permalink authoritative instead of a guess.
+//      <script> tag, so the client never has to re-derive which
+//      article this URL refers to.
 //
-// Slugs are <slugified-title>-<id>. We resolve the ID straight
-// out of the slug and look the article up by primary key —
-// a single deterministic query, with no dependency on the
-// article list's sort order matching between when a link was
-// copied and when it's later visited (which is what breaks
-// permalinks under an index/dupe-count based scheme whenever
-// titles collide or new articles get published in between).
+// Slugs are <slugified-title>-<id>. We resolve the ID straight out
+// of the slug and look the article up by primary key — a single
+// deterministic query, no dependency on list ordering.
+//
+// Deliberately uses a query string (?a=slug) rather than a path
+// segment (/articlespace/slug): a path segment under the
+// "articlespace" static directory was getting canonicalized/redirected
+// by the platform's static-asset resolution before this function ever
+// ran. Query strings sit outside that decision entirely, so this
+// request is treated as the same resource as plain /articlespace —
+// nothing upstream has a reason to rewrite it.
 // ============================================
-function url_articlespaceBase(request) {
-  const segments = new URL(request.url).pathname.replace(/\/+$/, '').split('/');
-  const base = segments.slice(0, -1).join('/');
-  return base === '' ? '/' : base;
-}
 
 const COPY_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 
@@ -374,8 +374,7 @@ function escHtml(s) {
 // Renders the same markup structure the client uses for an expanded
 // .article-card — but as real HTML in the initial response, so a
 // visitor sees the full article immediately, centered near the top
-// of the viewport, with zero dependency on JS running, finding the
-// right card in a list, and scrolling to it after the fact.
+// of the viewport, with zero dependency on JS running.
 function renderHeroMarkup(article, slug, backHref, selfHref) {
   const title = escHtml(article.title || 'Untitled');
   const author = escHtml(article.author || 'Anonymous');
@@ -401,10 +400,7 @@ function renderHeroMarkup(article, slug, backHref, selfHref) {
 
 async function handleArticlePermalink(slug, request, env, next) {
   try {
-    // Fetch the shell from articlespace/index.html rather than
-    // articlespace.html — the site now serves that page from a
-    // directory-style path, and env.ASSETS.fetch needs the exact
-    // static asset path to resolve it.
+    // Fetch the shell from articlespace/index.html.
     const shellRequest = new Request(new URL('/articlespace/index.html', request.url), request);
     const shellResponse = await env.ASSETS.fetch(shellRequest);
 
@@ -427,11 +423,8 @@ async function handleArticlePermalink(slug, request, env, next) {
       }
     }
 
-    // Embed the resolved article (or null) as JSON too, so the client
-    // knows whether the server found something (used only to decide
-    // whether to fall back to the full list — see articlespace.html).
-    // Escaping every '<' prevents the JSON payload from ever being able
-    // to break out of the <script> tag.
+    // Embed the resolved article (or null) as JSON, so the client
+    // knows whether the server found something.
     const articleData = article ? {
       id: article.id,
       title: article.title,
@@ -450,10 +443,6 @@ async function handleArticlePermalink(slug, request, env, next) {
       : dataScript + html;
 
     if (!article) {
-      // No matching article — still serve the shell (now telling the
-      // client explicitly "checked, nothing here" via window.__ARTICLE__
-      // = null) so it can show a clear not-found state rather than
-      // silently falling back to the general list.
       return new Response(html, {
         status: 404,
         headers: { 'content-type': 'text/html;charset=UTF-8' },
@@ -461,12 +450,9 @@ async function handleArticlePermalink(slug, request, env, next) {
     }
 
     // Server-render the expanded card directly into the container that
-    // ships in the initial HTML, replacing the "loading articles..."
-    // placeholder. This is the actual fix: the maximized view is no
-    // longer something JS has to go find and toggle after the page
-    // loads — it's just what the page IS, from the first paint.
-    const backHref = url_articlespaceBase(request);
-    const selfHref = backHref + '/' + slug;
+    // ships in the initial HTML.
+    const backHref = '/articlespace';
+    const selfHref = '/articlespace?a=' + encodeURIComponent(slug);
     const heroHtml = renderHeroMarkup(article, slug, backHref, selfHref);
     html = html.replace(
       /<div id="articles-container" class="articles-container">[\s\S]*?<\/div>\s*<\/div>/,
@@ -517,14 +503,14 @@ async function getSessionUser(request, env) {
   try {
     const cookie = request.headers.get('Cookie') || '';
     const sessionId = cookie.match(/session=([^;]+)/)?.[1];
-    
+
     if (!sessionId) return null;
-    
+
     const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
     if (!session || new Date(session.expires_at) < new Date()) return null;
-    
+
     return await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
-    
+
   } catch (err) {
     return null;
   }
