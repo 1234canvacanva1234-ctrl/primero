@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#ff3b7c">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="SoraSys : Initialization">
-  <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">v
+  <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,7 +25,40 @@
       min-height: 100vh;
       padding: 20px;
       cursor: none;
+      position: relative;
+      overflow-x: hidden;
     }
+
+    /* ---------- ambient background glow ---------- */
+    .ambient-glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.16;
+    }
+    .ambient-glow.g1 {
+      width: 420px; height: 420px;
+      background: #ff3b7c;
+      top: -140px; left: -120px;
+      animation: drift1 15s ease-in-out infinite;
+    }
+    .ambient-glow.g2 {
+      width: 380px; height: 380px;
+      background: #6b8e9b;
+      bottom: -150px; right: -110px;
+      animation: drift2 17s ease-in-out infinite;
+    }
+    @keyframes drift1 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(50px, 34px); }
+    }
+    @keyframes drift2 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-36px, -28px); }
+    }
+
     #cursor {
       position: fixed;
       width: 8px;
@@ -59,6 +92,17 @@
       border: 1px solid rgba(107, 142, 155, 0.12);
       border-radius: 3px;
       backdrop-filter: blur(2px);
+      position: relative;
+      z-index: 1;
+    }
+    .init-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 14%;
+      right: 14%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 59, 124, 0.45), transparent);
     }
     .init-title {
       font-family: 'Cinzel', serif;
@@ -82,6 +126,7 @@
       opacity: 0.8;
     }
     .init-tabs {
+      position: relative;
       display: flex;
       gap: 0;
       margin-bottom: 28px;
@@ -97,8 +142,8 @@
       text-transform: uppercase;
       color: #4a6673;
       cursor: pointer;
-      transition: all 0.3s ease;
-      border-bottom: 2px solid transparent;
+      transition: color 0.3s ease;
+      border-bottom: none;
       background: none;
       border-top: none;
       border-left: none;
@@ -106,15 +151,27 @@
     }
     .init-tab.active {
       color: #ff3b7c;
-      border-bottom-color: #ff3b7c;
     }
     .init-tab:hover { color: #6b8e9b; }
+    .tab-indicator {
+      position: absolute;
+      bottom: -1px;
+      height: 2px;
+      background: #ff3b7c;
+      box-shadow: 0 0 8px rgba(255, 59, 124, 0.6);
+      transition: left 0.35s cubic-bezier(0.65, 0, 0.35, 1), width 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+    }
     .init-form {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
     .init-form.hidden { display: none; }
+    .init-form.form-enter { animation: form-fade-in 0.35s ease; }
+    @keyframes form-fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .form-group {
       display: flex;
       flex-direction: column;
@@ -126,6 +183,9 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       color: #4a6673;
+    }
+    .form-group label .required-mark {
+      color: #ff3b7c;
     }
     .form-group input {
       background: rgba(11, 17, 20, 0.6);
@@ -147,6 +207,102 @@
       font-style: italic;
       font-size: 13px;
     }
+    .form-group textarea {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      line-height: 1.55;
+      border-radius: 2px;
+      transition: border-color 0.3s ease;
+      outline: none;
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+    }
+    .form-group textarea:focus {
+      border-color: #ff3b7c;
+    }
+    .form-group textarea::placeholder {
+      color: #4a6673;
+      font-style: italic;
+      font-size: 13px;
+    }
+    .char-count {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: #4a6673;
+      text-align: right;
+    }
+    .char-count.warn { color: #ff3b7c; }
+    .field-hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 11.5px;
+      color: #4a6673;
+    }
+
+    /* ---------- avatar setup row (signup only) ---------- */
+    .avatar-setup {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .avatar-setup .form-group { flex: 1; min-width: 0; }
+
+    .author-avatar-wrap {
+      width: 60px;
+      height: 60px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .author-avatar-ring {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #ff3b7c, #ff9bc0, #6b8e9b, #ff3b7c);
+      animation: ring-rotate 9s linear infinite, ring-pulse 4.5s ease-in-out infinite;
+    }
+    .author-avatar,
+    .author-avatar-fallback {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    .author-avatar {
+      object-fit: cover;
+      display: none;
+      background: rgba(11, 17, 20, 0.6);
+    }
+    .author-avatar-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      color: #4a6673;
+      background: rgba(11, 17, 20, 0.75);
+    }
+    @keyframes ring-rotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes ring-pulse {
+      0%, 100% {
+        opacity: 0.55;
+        box-shadow: 0 0 12px rgba(255, 59, 124, 0.2);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 18px rgba(107, 142, 155, 0.35);
+      }
+    }
+
     .init-btn {
       font-family: 'Cinzel', serif;
       font-size: 11px;
@@ -258,10 +414,13 @@
       .init-title { font-size: 24px; letter-spacing: 4px; }
       body { padding: 12px; cursor: auto; }
       .signed-in-state .actions { flex-direction: column; align-items: center; }
+      .ambient-glow { display: none; }
     }
   </style>
 </head>
 <body>
+<div class="ambient-glow g1"></div>
+<div class="ambient-glow g2"></div>
 <div id="cursor"></div>
 <div class="init-container">
   <div class="init-title">Initialization</div>
@@ -273,6 +432,7 @@
     <div class="sub">You are already signed in.</div>
     <div class="actions">
       <a href="/control-panel" class="panel-btn primary">⌘ Control Panel</a>
+      <a href="/profile-config" class="panel-btn">◐ Profile</a>
       <a href="/articlespace" class="panel-btn">📄 Articles</a>
       <button id="signout-from-init" class="panel-btn">↯ Sign Out</button>
     </div>
@@ -283,6 +443,7 @@
     <div class="init-tabs">
       <button class="init-tab active" data-tab="signin">Sign In</button>
       <button class="init-tab" data-tab="signup">Sign Up</button>
+      <div class="tab-indicator" id="tab-indicator"></div>
     </div>
 
     <!-- Sign In Form -->
@@ -313,6 +474,25 @@
         <label>Confirm Token</label>
         <input type="password" id="signup-confirm" placeholder="confirm your token" required>
       </div>
+
+      <div class="avatar-setup">
+        <div class="author-avatar-wrap">
+          <div class="author-avatar-ring"></div>
+          <img class="author-avatar" id="signup-avatar-img" alt="avatar preview">
+          <div class="author-avatar-fallback" id="signup-avatar-fallback">?</div>
+        </div>
+        <div class="form-group">
+          <label>Profile Image URL <span class="required-mark">*</span></label>
+          <input type="url" id="signup-avatar-url" placeholder="https://example.com/your-image.jpg" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Personal Description <span class="required-mark">*</span></label>
+        <textarea id="signup-bio" maxlength="1000" placeholder="Tell the network a little about yourself..." required></textarea>
+        <div class="char-count" id="signup-bio-count">0 / 1000</div>
+      </div>
+
       <button type="submit" class="init-btn">Establish Identity</button>
       <div id="signup-message" class="message"></div>
     </form>
@@ -355,7 +535,7 @@
         cursor.classList.add('active');
       });
       
-      const interactiveElements = document.querySelectorAll('button, input, a, .init-tab, .init-btn, .back-link, .panel-btn');
+      const interactiveElements = document.querySelectorAll('button, input, textarea, a, .init-tab, .init-btn, .back-link, .panel-btn');
       interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
           cursor.classList.add('hover');
@@ -377,8 +557,22 @@
     const signoutBtn = document.getElementById('signout-from-init');
 
     const tabs = document.querySelectorAll('.init-tab');
+    const tabIndicator = document.getElementById('tab-indicator');
     const signinForm = document.getElementById('signin-form');
     const signupForm = document.getElementById('signup-form');
+
+    // ============================================
+    // Sliding tab indicator
+    // ============================================
+    function moveIndicatorTo(tab) {
+      tabIndicator.style.left = tab.offsetLeft + 'px';
+      tabIndicator.style.width = tab.offsetWidth + 'px';
+    }
+    // Position on load (and again after fonts/layout settle)
+    requestAnimationFrame(() => moveIndicatorTo(document.querySelector('.init-tab.active')));
+    window.addEventListener('resize', () => {
+      moveIndicatorTo(document.querySelector('.init-tab.active'));
+    });
 
     // ============================================
     // Check if user is already signed in
@@ -429,18 +623,58 @@
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        if (tab.dataset.tab === 'signin') {
-          signinForm.classList.remove('hidden');
-          signupForm.classList.add('hidden');
-        } else {
-          signinForm.classList.add('hidden');
-          signupForm.classList.remove('hidden');
-        }
+        moveIndicatorTo(tab);
+
+        const showForm = tab.dataset.tab === 'signin' ? signinForm : signupForm;
+        const hideForm = tab.dataset.tab === 'signin' ? signupForm : signinForm;
+
+        hideForm.classList.add('hidden');
+        showForm.classList.remove('hidden');
+        showForm.classList.remove('form-enter');
+        void showForm.offsetWidth; // restart animation
+        showForm.classList.add('form-enter');
+
         document.querySelectorAll('.message').forEach(m => {
           m.textContent = '';
           m.className = 'message';
         });
       });
+    });
+
+    // ============================================
+    // Signup avatar live preview
+    // ============================================
+    const signupAvatarUrl = document.getElementById('signup-avatar-url');
+    const signupAvatarImg = document.getElementById('signup-avatar-img');
+    const signupAvatarFallback = document.getElementById('signup-avatar-fallback');
+
+    signupAvatarUrl.addEventListener('input', () => {
+      const url = signupAvatarUrl.value.trim();
+      if (!url) {
+        signupAvatarImg.style.display = 'none';
+        signupAvatarFallback.style.display = 'flex';
+        return;
+      }
+      signupAvatarImg.onload = () => {
+        signupAvatarImg.style.display = 'block';
+        signupAvatarFallback.style.display = 'none';
+      };
+      signupAvatarImg.onerror = () => {
+        signupAvatarImg.style.display = 'none';
+        signupAvatarFallback.style.display = 'flex';
+      };
+      signupAvatarImg.src = url;
+    });
+
+    // ============================================
+    // Signup bio character count
+    // ============================================
+    const signupBio = document.getElementById('signup-bio');
+    const signupBioCount = document.getElementById('signup-bio-count');
+    signupBio.addEventListener('input', () => {
+      const len = signupBio.value.length;
+      signupBioCount.textContent = len + ' / 1000';
+      signupBioCount.classList.toggle('warn', len > 900);
     });
 
     // ============================================
@@ -451,6 +685,8 @@
       const username = document.getElementById('signup-username').value.trim();
       const password = document.getElementById('signup-password').value;
       const confirm = document.getElementById('signup-confirm').value;
+      const avatar_url = signupAvatarUrl.value.trim();
+      const bio = signupBio.value.trim();
       const msg = document.getElementById('signup-message');
       const btn = e.target.querySelector('.init-btn');
       
@@ -474,6 +710,26 @@
       }
       if (password !== confirm) {
         msg.textContent = 'Tokens do not match.';
+        msg.className = 'message error';
+        return;
+      }
+      if (!avatar_url) {
+        msg.textContent = 'A profile image URL is required.';
+        msg.className = 'message error';
+        return;
+      }
+      if (!/^https?:\/\/.+/i.test(avatar_url)) {
+        msg.textContent = 'Image URL must start with http:// or https://';
+        msg.className = 'message error';
+        return;
+      }
+      if (!bio) {
+        msg.textContent = 'A personal description is required.';
+        msg.className = 'message error';
+        return;
+      }
+      if (bio.length < 10) {
+        msg.textContent = 'Description should be at least 10 characters.';
         msg.className = 'message error';
         return;
       }
@@ -507,8 +763,26 @@
           btn.disabled = false;
           return;
         }
+
+        // Account created and session cookie is now set — immediately
+        // attach the required profile picture and description.
+        let profileWarning = '';
+        try {
+          const profRes = await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ avatar_url, bio })
+          });
+          if (!profRes.ok) {
+            profileWarning = ' (profile details could not be saved — add them from the Profile page)';
+          }
+        } catch (profileErr) {
+          console.error('Profile save error:', profileErr);
+          profileWarning = ' (profile details could not be saved — add them from the Profile page)';
+        }
         
-        msg.textContent = 'Identity established!';
+        msg.textContent = 'Identity established!' + profileWarning;
         msg.className = 'message success';
         btn.disabled = false;
         
@@ -516,13 +790,21 @@
         document.getElementById('signup-username').value = '';
         document.getElementById('signup-password').value = '';
         document.getElementById('signup-confirm').value = '';
+        signupAvatarUrl.value = '';
+        signupBio.value = '';
+        signupAvatarImg.style.display = 'none';
+        signupAvatarFallback.style.display = 'flex';
+        signupBioCount.textContent = '0 / 1000';
+        signupBioCount.classList.remove('warn');
         
         // Check auth status to show signed-in state
         setTimeout(() => {
           checkAuthStatus();
           // Switch to sign in tab
           tabs.forEach(t => t.classList.remove('active'));
-          document.querySelector('[data-tab="signin"]').classList.add('active');
+          const signinTab = document.querySelector('[data-tab="signin"]');
+          signinTab.classList.add('active');
+          moveIndicatorTo(signinTab);
           signinForm.classList.remove('hidden');
           signupForm.classList.add('hidden');
         }, 1000);
