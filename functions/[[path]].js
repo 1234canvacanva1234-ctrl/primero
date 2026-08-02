@@ -5,9 +5,6 @@ export async function onRequest(context) {
 
   // ============================================
   // ARTICLE PERMALINKS - /articlespace/:slug
-  // (URL path stays /articlespace/:slug — only the underlying
-  // static asset folder is renamed to _articlespace, see
-  // handleArticlePermalink below.)
   // Handled first, directly in the catch-all, so there's
   // no dependency on Cloudflare picking a more specific
   // function route over this one.
@@ -339,7 +336,7 @@ export async function onRequest(context) {
 
 // ============================================
 // Article permalink handler
-// GET /articlespace/:slug — serves the _articlespace/index.html
+// GET /articlespace/:slug — serves the articlespace/index.html
 // shell with:
 //   1. og:/twitter: meta tags rewritten to match the real
 //      article, so link-preview bots (Discord, Twitter, etc.)
@@ -349,15 +346,6 @@ export async function onRequest(context) {
 //      which article this URL refers to — it just reads what
 //      the server already decided. This is the piece that
 //      makes the permalink authoritative instead of a guess.
-//
-// NOTE: the public URL path is still /articlespace/:slug (see the
-// articleSlugMatch regex in onRequest above) — only the underlying
-// static asset folder that the shell HTML is fetched from has been
-// renamed to _articlespace (leading underscore keeps Cloudflare
-// Pages from serving it as a directory listing / direct static
-// route of its own). If you rename the on-disk folder back to
-// "articlespace", update the env.ASSETS.fetch path below to match,
-// or this handler will 404 while still matching the route.
 //
 // Slugs are <slugified-title>-<id>. We resolve the ID straight
 // out of the slug and look the article up by primary key —
@@ -413,11 +401,11 @@ function renderHeroMarkup(article, slug, backHref, selfHref) {
 
 async function handleArticlePermalink(slug, request, env, next) {
   try {
-    // Fetch the shell from _articlespace/index.html rather than
-    // articlespace/index.html — the static asset folder has been
-    // renamed to _articlespace, and env.ASSETS.fetch needs the
-    // exact static asset path to resolve it.
-    const shellRequest = new Request(new URL('/_articlespace/index.html', request.url), request);
+    // Fetch the shell from articlespace/index.html rather than
+    // articlespace.html — the site now serves that page from a
+    // directory-style path, and env.ASSETS.fetch needs the exact
+    // static asset path to resolve it.
+    const shellRequest = new Request(new URL('/articlespace/index.html', request.url), request);
     const shellResponse = await env.ASSETS.fetch(shellRequest);
 
     if (!shellResponse.ok) {
