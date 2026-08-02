@@ -74,18 +74,6 @@
       flex-direction: column;
       gap: 12px;
     }
-    .back-to-all {
-      display: inline-block;
-      font-family: 'Cinzel', serif;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #4a6673;
-      text-decoration: none;
-      margin-bottom: 18px;
-      transition: color 0.3s ease;
-    }
-    .back-to-all:hover { color: #ff3b7c; }
     .article-card {
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.1);
@@ -204,28 +192,6 @@
       color: #4a6673;
       padding: 60px 0;
     }
-    /* Permalink hero: the server renders the expanded article directly
-       into this wrapper, front-and-center on first paint — no waiting
-       on JS to find and expand a card buried in the full list. */
-    .permalink-hero {
-      display: flex;
-      justify-content: center;
-      padding-top: 8vh;
-    }
-    .permalink-card-wrap {
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .permalink-card-wrap > .back-to-all {
-      align-self: flex-start;
-      margin-bottom: 0;
-    }
-    @media (max-width: 640px) {
-      .permalink-hero { padding-top: 4vh; }
-    }
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
@@ -289,20 +255,17 @@
     }
 
     let activeCard = null;
-    let listBasePath = '';        // path of the list page itself, e.g. '/articlespace'
     let currentArticles = [];
     let currentSlugs = [];
-    let articlesLoadPromise = null;
 
-    // Article identity now travels as a ?a= query param rather than a
-    // path segment — path segments under this directory were getting
-    // canonicalized/redirected by the platform's static-asset handling
-    // before any app code ran. Query strings aren't part of that
-    // decision, so /articlespace?a=slug is treated as the same
-    // resource as plain /articlespace.
+    // Article identity now lives entirely in the URL fragment (#slug).
+    // Fragments are never transmitted to the server as part of the
+    // HTTP request — the browser resolves them purely client-side.
+    // That means there's no path or query shape for any server-side
+    // routing/redirect layer to ever see or act on: every request to
+    // this page, permalink or not, is the exact same plain request.
     function buildArticlePath(slug) {
-      const base = listBasePath || '/articlespace';
-      return base + '?a=' + encodeURIComponent(slug);
+      return '#' + encodeURIComponent(slug);
     }
 
     function escapeHtml(text) {
@@ -331,6 +294,12 @@
       return m ? parseInt(m[1], 10) : null;
     }
 
+    function currentHashSlug() {
+      const h = window.location.hash || '';
+      if (!h || h === '#') return null;
+      return decodeURIComponent(h.slice(1));
+    }
+
     function measureHeight(contentDiv, text) {
       const clone = contentDiv.cloneNode(false);
       clone.style.position = 'absolute';
@@ -350,35 +319,8 @@
       return html;
     }
 
-    // Reads the ?a= slug from the current URL, if present.
-    function currentSlugParam() {
-      return new URLSearchParams(window.location.search).get('a');
-    }
-
-    function basePathWithoutQuery() {
-      return window.location.pathname.replace(/\/+$/, '') || '';
-    }
-
-    // Fetches the full article list once, in the background if needed.
-    function ensureArticlesLoaded() {
-      if (articlesLoadPromise) return articlesLoadPromise;
-      articlesLoadPromise = fetch('/api/articles')
-        .then(res => res.ok ? res.json() : [])
-        .then(articles => {
-          currentArticles = articles || [];
-          currentSlugs = currentArticles.map(a => articleSlug(a));
-        })
-        .catch(err => {
-          console.error('Error loading articles:', err);
-          currentArticles = [];
-          currentSlugs = [];
-        });
-      return articlesLoadPromise;
-    }
-
     // ---------- LIST VIEW ----------
-    function renderList(basePath) {
-      listBasePath = (basePath !== undefined) ? basePath : basePathWithoutQuery();
+    function renderList() {
       const container = document.getElementById('articles-container');
 
       if (!currentArticles.length) {
@@ -420,10 +362,17 @@
       bindCopyButtons();
     }
 
-    async function showListView() {
+    async function loadArticles() {
       const container = document.getElementById('articles-container');
       container.innerHTML = '<div class="empty-articles">loading articles...</div>';
-      await ensureArticlesLoaded();
+      try {
+        const res = await fetch('/api/articles');
+        currentArticles = res.ok ? (await res.json() || []) : [];
+      } catch (err) {
+        console.error('Error loading articles:', err);
+        currentArticles = [];
+      }
+      currentSlugs = currentArticles.map(a => articleSlug(a));
       renderList();
     }
 
@@ -432,7 +381,7 @@
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
           const slug = this.dataset.share;
-          const url = window.location.origin + buildArticlePath(slug);
+          const url = window.location.origin + window.location.pathname + buildArticlePath(slug);
           navigator.clipboard.writeText(url).then(() => {
             const original = this.innerHTML;
             this.innerHTML = CHECK_ICON;
@@ -522,10 +471,10 @@
 
       if (isMinimized) {
         expandCard(card);
-        if (history.pushState) history.pushState({ view: 'single', article: slug }, '', buildArticlePath(slug));
+        if (history.pushState) history.pushState({ article: slug }, '', buildArticlePath(slug));
       } else {
         collapseCard(card);
-        if (history.pushState) history.pushState({ view: 'list' }, '', listBasePath === '' ? '/' : listBasePath);
+        if (history.pushState) history.pushState({}, '', window.location.pathname);
       }
     }
 
@@ -561,51 +510,33 @@
       container.prepend(banner);
     }
 
-    // ---------- ROUTER (used for back/forward navigation) ----------
-    // A permalink URL (?a=slug) always renders the full list (with the
-    // matching card expanded and scrolled into view) rather than an
-    // isolated single-article page.
-    async function route() {
-      await ensureArticlesLoaded();
-      const slug = currentSlugParam();
-      const id = slugToId(slug);
-      const matches = slug !== null && id !== null && currentArticles.some(a => a.id === id);
-      renderList(basePathWithoutQuery());
-      if (matches) {
-        expandAndScrollToSlug(slug);
-      }
+    // Resolves whatever's currently in the hash against the loaded
+    // article list — used both on first load and on hash/popstate
+    // changes (back/forward, clicking another card's link, etc).
+    function resolveHash() {
+      const slug = currentHashSlug();
+      if (!slug) return;
+      const found = expandAndScrollToSlug(slug);
+      if (!found) showNotFoundBanner();
     }
 
     // ---------- BOOTSTRAP ----------
-    // window.__ARTICLE__ is set by the server (in [[path]].js) only
-    // when this page was requested as /articlespace?a=slug. When an
-    // article was found, the server has ALREADY rendered the expanded
-    // card's actual markup into #articles-container — it's on the page
-    // the moment the browser paints, full-size and front-and-center.
-    // All the client has to do here is wire up the interactive bits
-    // (copy link button) and set listBasePath so it points "back"
-    // correctly.
-    //
-    // If no article matched (deleted link, bad slug), the server
-    // leaves window.__ARTICLE__ as null and doesn't touch the
-    // container — in that case we fall back to the normal full list
-    // plus a banner.
-    if (typeof window.__ARTICLE__ !== 'undefined') {
-      listBasePath = basePathWithoutQuery();
-      if (window.__ARTICLE__) {
-        bindCopyButtons();
-      } else {
-        ensureArticlesLoaded().then(function() {
-          renderList(basePathWithoutQuery());
-          showNotFoundBanner();
-        });
-      }
-    } else {
-      showListView();
-    }
+    loadArticles().then(function() {
+      resolveHash();
+    });
+
+    window.addEventListener('hashchange', function() {
+      resolveHash();
+    });
 
     window.addEventListener('popstate', function() {
-      route();
+      // If navigating back past a hash, popstate fires without a
+      // hashchange in some browsers — re-check either way.
+      if (!currentHashSlug() && activeCard) {
+        collapseCard(activeCard);
+      } else {
+        resolveHash();
+      }
     });
 
   })();
