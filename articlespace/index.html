@@ -220,17 +220,17 @@
        in both the collapsed and expanded states of the card, since
        it lives outside the part that animates. */
     .author-card {
-      flex: 0 0 168px;
-      width: 168px;
+      flex: 0 0 208px;
+      width: 208px;
       margin-left: 18px;
-      padding: 14px 14px;
+      padding: 18px 16px;
       background: linear-gradient(165deg, rgba(107, 142, 155, 0.05), rgba(11, 17, 20, 0.34));
       border: 1px solid rgba(107, 142, 155, 0.1);
       border-radius: 3px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       transition: border-color 0.3s ease, background 0.3s ease;
     }
     .article-card:hover .author-card {
@@ -240,18 +240,32 @@
       border-color: rgba(255, 59, 124, 0.25);
       background: linear-gradient(165deg, rgba(255, 59, 124, 0.04), rgba(11, 17, 20, 0.4));
     }
+
+    /* Wikipedia-infobox-scaled portrait with a slowly rotating,
+       colour-fluctuating gradient frame — the same pink/teal
+       fluctuation the rest of the UI already uses for emphasis
+       (title pulse, focus glow), just applied as a ring instead. */
     .author-avatar-wrap {
-      width: 46px;
-      height: 46px;
+      width: 128px;
+      height: 128px;
       position: relative;
       flex-shrink: 0;
     }
+    .author-avatar-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #ff3b7c, #ff9bc0, #6b8e9b, #ff3b7c);
+      animation: ring-rotate 9s linear infinite, ring-pulse 4.5s ease-in-out infinite;
+    }
     .author-avatar,
     .author-avatar-fallback {
-      width: 46px;
-      height: 46px;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      border: 1px solid rgba(107, 142, 155, 0.2);
+      z-index: 1;
     }
     .author-avatar {
       object-fit: cover;
@@ -263,16 +277,30 @@
       align-items: center;
       justify-content: center;
       font-family: 'Cinzel', serif;
-      font-size: 16px;
+      font-size: 38px;
       color: #4a6673;
-      background: rgba(11, 17, 20, 0.6);
+      background: rgba(11, 17, 20, 0.75);
     }
+    @keyframes ring-rotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes ring-pulse {
+      0%, 100% {
+        opacity: 0.55;
+        box-shadow: 0 0 14px rgba(255, 59, 124, 0.2);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 22px rgba(107, 142, 155, 0.35);
+      }
+    }
+
     .author-card-text {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 4px;
+      gap: 5px;
     }
     .author-card-label {
       font-family: 'Fira Code', monospace;
@@ -284,7 +312,7 @@
     }
     .author-name {
       font-family: 'Cinzel', serif;
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: 1px;
       color: #6b8e9b;
     }
@@ -292,11 +320,11 @@
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-weight: 300;
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 12.5px;
+      line-height: 1.55;
       color: #7f95a0;
       display: -webkit-box;
-      -webkit-line-clamp: 5;
+      -webkit-line-clamp: 6;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -320,6 +348,9 @@
       }
       .author-card-text { align-items: flex-start; text-align: left; }
       .author-bio { -webkit-line-clamp: 2; }
+      .author-avatar-wrap { width: 64px; height: 64px; }
+      .author-avatar-ring { inset: -4px; }
+      .author-avatar-fallback { font-size: 22px; }
     }
   </style>
 </head>
@@ -478,6 +509,7 @@
 
       return '<div class="author-card">' +
         '<div class="author-avatar-wrap">' +
+          '<div class="author-avatar-ring"></div>' +
           '<img class="author-avatar" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(username) + '" ' +
             'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
           '<div class="author-avatar-fallback">' + escapeHtml(initial) + '</div>' +
