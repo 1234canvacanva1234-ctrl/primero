@@ -107,7 +107,20 @@
     }
     .article-card .card-inner {
       padding: 16px 20px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
     }
+
+    /* ---------- main text column ---------- */
+    .article-card .card-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .article-card.has-author-panel .card-main {
+      padding-right: 18px;
+    }
+
     .title-row {
       display: flex;
       align-items: center;
@@ -199,13 +212,114 @@
       color: #4a6673;
       padding: 60px 0;
     }
+
+    /* ---------- author subcard ---------- */
+    /* A quiet "marginalia" panel, in the spirit of an old journal's
+       contributor note — set apart from the main text by a soft
+       tonal shift and a thin rule, rather than a loud box. Visible
+       in both the collapsed and expanded states of the card, since
+       it lives outside the part that animates. */
+    .author-card {
+      flex: 0 0 168px;
+      width: 168px;
+      margin-left: 18px;
+      padding: 14px 14px;
+      background: linear-gradient(165deg, rgba(107, 142, 155, 0.05), rgba(11, 17, 20, 0.34));
+      border: 1px solid rgba(107, 142, 155, 0.1);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .article-card:hover .author-card {
+      border-color: rgba(255, 59, 124, 0.16);
+    }
+    .article-card.expanded .author-card {
+      border-color: rgba(255, 59, 124, 0.25);
+      background: linear-gradient(165deg, rgba(255, 59, 124, 0.04), rgba(11, 17, 20, 0.4));
+    }
+    .author-avatar-wrap {
+      width: 46px;
+      height: 46px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .author-avatar,
+    .author-avatar-fallback {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid rgba(107, 142, 155, 0.2);
+    }
+    .author-avatar {
+      object-fit: cover;
+      display: block;
+      background: rgba(11, 17, 20, 0.6);
+    }
+    .author-avatar-fallback {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      color: #4a6673;
+      background: rgba(11, 17, 20, 0.6);
+    }
+    .author-card-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 4px;
+    }
+    .author-card-label {
+      font-family: 'Fira Code', monospace;
+      font-size: 7px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #ff3b7c;
+      opacity: 0.65;
+    }
+    .author-name {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: #6b8e9b;
+    }
+    .author-bio {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #7f95a0;
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
     @media (max-width: 640px) {
       .space-header { flex-direction: column; gap: 12px; text-align: center; }
       .space-nav a { margin: 0 8px; }
-      .article-card .card-inner { padding: 14px 16px; }
+      .article-card .card-inner { padding: 14px 16px; flex-direction: column; }
       .article-card .title { font-size: 15px; }
       .copy-link-btn { opacity: 0.55; }
       body { padding: 16px; cursor: auto; }
+
+      .article-card.has-author-panel .card-main { padding-right: 0; }
+      .author-card {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        margin-left: 0;
+        margin-top: 14px;
+      }
+      .author-card-text { align-items: flex-start; text-align: left; }
+      .author-bio { -webkit-line-clamp: 2; }
     }
   </style>
 </head>
@@ -264,6 +378,7 @@
     let activeCard = null;
     let currentArticles = [];
     let currentSlugs = [];
+    let authorProfiles = {}; // username -> { username, role, avatar_url, bio }
 
     // Article identity now lives entirely in the URL fragment (#slug).
     // Fragments are never transmitted to the server as part of the
@@ -326,6 +441,55 @@
       return html;
     }
 
+    // ---------- AUTHOR PROFILES ----------
+    // Pulls the public profile (avatar_url / bio) for every distinct
+    // author in the current article list. Missing or failed lookups
+    // simply leave that author absent from the map, which is enough
+    // for renderList() to fall back to the plain, panel-less layout.
+    async function fetchAuthorProfiles(articles) {
+      const usernames = [...new Set(articles.map(a => a.author).filter(Boolean))];
+      const map = {};
+      await Promise.all(usernames.map(async (username) => {
+        try {
+          const res = await fetch('/api/users/' + encodeURIComponent(username) + '/profile');
+          if (!res.ok) return;
+          const data = await res.json();
+          map[username] = data;
+        } catch (err) {
+          // silently skip — article still renders without the panel
+        }
+      }));
+      return map;
+    }
+
+    function hasAuthorPanel(username) {
+      const p = authorProfiles[username];
+      if (!p) return false;
+      const avatar = (p.avatar_url || '').trim();
+      const bio = (p.bio || '').trim();
+      return Boolean(avatar && bio);
+    }
+
+    function authorCardMarkup(username) {
+      const p = authorProfiles[username] || {};
+      const avatarUrl = (p.avatar_url || '').trim();
+      const bio = (p.bio || '').trim();
+      const initial = (username || '?').charAt(0).toUpperCase();
+
+      return '<div class="author-card">' +
+        '<div class="author-avatar-wrap">' +
+          '<img class="author-avatar" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(username) + '" ' +
+            'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
+          '<div class="author-avatar-fallback">' + escapeHtml(initial) + '</div>' +
+        '</div>' +
+        '<div class="author-card-text">' +
+          '<div class="author-card-label">Contributor</div>' +
+          '<div class="author-name">' + escapeHtml(username) + '</div>' +
+          '<div class="author-bio">' + escapeHtml(bio) + '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
     // ---------- LIST VIEW ----------
     function renderList() {
       const container = document.getElementById('articles-container');
@@ -341,19 +505,23 @@
         const author = a.author || 'Anonymous';
         const date = new Date(a.created_at).toLocaleDateString();
         const slug = currentSlugs[index];
+        const showAuthorPanel = hasAuthorPanel(author);
 
         const previewText = content.length > 200 ? content.slice(0, 200) : content;
         const fullText = content;
         const charRemain = content.length > 200 ? content.length - 200 : 0;
 
-        return '<div class="article-card" data-article-index="' + index + '" data-share="' + slug + '">' +
+        return '<div class="article-card' + (showAuthorPanel ? ' has-author-panel' : '') + '" data-article-index="' + index + '" data-share="' + slug + '">' +
           '<div class="card-inner">' +
-            '<div class="title-row">' +
-              '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
-              '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+            '<div class="card-main">' +
+              '<div class="title-row">' +
+                '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
+                '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+              '</div>' +
+              '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
+              '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
             '</div>' +
-            '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
-            '<div class="content preview" data-full="' + escapeHtml(fullText) + '" data-preview="' + escapeHtml(previewText) + '" data-remain="' + charRemain + '">' + previewMarkup(previewText, charRemain) + '</div>' +
+            (showAuthorPanel ? authorCardMarkup(author) : '') +
           '</div>' +
         '</div>';
       }).join('');
@@ -362,6 +530,7 @@
         card.addEventListener('click', function(e) {
           if (e.target.closest('.copy-link-btn')) return;
           if (e.target.closest('a.title')) e.preventDefault();
+          if (e.target.closest('.author-card')) return;
           toggleCard(this);
         });
       });
@@ -380,6 +549,7 @@
         currentArticles = [];
       }
       currentSlugs = currentArticles.map(a => articleSlug(a));
+      authorProfiles = await fetchAuthorProfiles(currentArticles);
       renderList();
     }
 
