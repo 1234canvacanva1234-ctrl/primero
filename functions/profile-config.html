@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>SoraSys : Profile Configuration</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SoraSys : Profile Configuration">
+  <meta property="og:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
+  <meta name="theme-color" content="#ff3b7c">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SoraSys : Profile Configuration">
+  <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b1114;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      padding: 24px;
+      min-height: 100vh;
+      cursor: none;
+    }
+    #cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #ff3b7c;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(255, 59, 124, 0.25);
+      display: none;
+      transition: transform 0.08s ease, background 0.2s ease;
+    }
+    #cursor.active { display: block; }
+    #cursor.hover {
+      transform: translate(-50%, -50%) scale(2.8);
+      background: rgba(255, 59, 124, 0.25);
+      box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
+    }
+    @media (max-width: 640px) {
+      #cursor { display: none !important; }
+      body { cursor: auto; }
+    }
+    .panel-header {
+      max-width: 900px;
+      margin: 0 auto 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      padding-bottom: 16px;
+    }
+    .panel-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+    }
+    .panel-title span { color: #ff3b7c; }
+    .panel-actions { display: flex; gap: 12px; align-items: center; }
+    .panel-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    .panel-btn:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .panel-btn.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .panel-btn.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+
+    .panel-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
+      .panel-actions { justify-content: center; flex-wrap: wrap; }
+      body { padding: 16px; cursor: auto; }
+    }
+
+    .panel-section {
+      background: rgba(20, 30, 35, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.12);
+      border-radius: 3px;
+      padding: 24px;
+      backdrop-filter: blur(2px);
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+      margin-bottom: 16px;
+    }
+    .section-title span { color: #ff3b7c; }
+
+    /* Avatar preview column */
+    .avatar-preview-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .avatar-preview {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      object-fit: cover;
+      display: block;
+    }
+    .avatar-fallback {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 42px;
+      color: #4a6673;
+    }
+    .avatar-username {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #bcccd6;
+      text-align: center;
+    }
+    .avatar-role {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: #4a6673;
+      text-align: center;
+    }
+    .avatar-role.sysadmin { color: #ff3b7c; }
+
+    /* Form */
+    .editor-area { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-family: 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+    }
+    .form-group .hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: #4a6673;
+    }
+    .editor-area input[type="text"],
+    .editor-area input[type="url"] {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      border-radius: 2px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.3s ease;
+    }
+    .editor-area input:focus { border-color: #ff3b7c; }
+    .editor-area textarea {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 12px;
+      color: #bcccd6;
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      border-radius: 2px;
+      outline: none;
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.6;
+      width: 100%;
+      transition: border-color 0.3s ease;
+    }
+    .editor-area textarea:focus { border-color: #ff3b7c; }
+    .char-count {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: #4a6673;
+      text-align: right;
+    }
+    .char-count.warn { color: #ff3b7c; }
+
+    .editor-actions { display: flex; gap: 12px; }
+    .editor-actions button {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      background: transparent;
+      color: #4a6673;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .editor-actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-actions button.primary {
+      background: #ff3b7c;
+      color: #0b1114;
+      border-color: #ff3b7c;
+    }
+    .editor-actions button.primary:hover {
+      background: #ff5c8f;
+      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    }
+    .editor-actions button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .message {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: #6b8e9b;
+      min-height: 20px;
+    }
+    .message.error { color: #ff3b7c; }
+    .message.success { color: #6b8e9b; }
+
+    .access-denied {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .access-denied .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .access-denied h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #6b8e9b;
+      margin-bottom: 8px;
+    }
+    .access-denied p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: #4a6673;
+      margin-bottom: 20px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+
+<div class="panel-header">
+  <div class="panel-title">◈ <span>Profile</span> Configuration</div>
+  <div class="panel-actions">
+    <a href="/control-panel" class="panel-btn">Control Panel</a>
+    <a href="/articlespace" class="panel-btn">Articles</a>
+    <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+  </div>
+</div>
+
+<!-- Access Denied (not signed in) -->
+<div id="access-denied" class="access-denied hidden">
+  <div class="icon">⛔</div>
+  <h2>Sign In Required</h2>
+  <p>You must establish your presence before configuring a profile.</p>
+  <a href="/initialization" class="panel-btn primary">↩ Go to Initialization</a>
+</div>
+
+<!-- Main Content -->
+<div id="panel-content" class="hidden">
+  <div class="panel-grid">
+
+    <!-- Avatar preview -->
+    <div class="panel-section">
+      <div class="section-title">◐ <span>Avatar</span> Preview</div>
+      <div class="avatar-preview-wrap">
+        <img id="avatar-img" class="avatar-preview hidden" alt="avatar preview">
+        <div id="avatar-fallback" class="avatar-fallback">?</div>
+        <div class="avatar-username" id="preview-username">username</div>
+        <div class="avatar-role" id="preview-role"></div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="panel-section">
+      <div class="section-title">✎ <span>Edit</span> Details</div>
+      <div class="editor-area">
+        <div class="form-group">
+          <label>Profile Image URL</label>
+          <input type="url" id="avatar-url" placeholder="https://example.com/your-image.jpg">
+          <div class="hint">Paste a direct link to an image. Leave blank to use the default icon.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Personal Description</label>
+          <textarea id="bio" maxlength="1000" placeholder="Tell the network a little about yourself..."></textarea>
+          <div class="char-count" id="bio-count">0 / 1000</div>
+        </div>
+
+        <div class="editor-actions">
+          <button id="save-btn" class="primary">Save Profile</button>
+          <button id="reset-btn">Reset</button>
+        </div>
+        <div id="editor-message" class="message"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function() {
+    if (window.innerWidth > 640) {
+      const cursor = document.getElementById('cursor');
+      cursor.classList.add('active');
+      document.body.style.cursor = 'none';
+      let mx = -100, my = -100, cx = -100, cy = -100;
+      const update = () => {
+        cx += (mx - cx) * 0.2;
+        cy += (my - cy) * 0.2;
+        cursor.style.left = cx + 'px';
+        cursor.style.top = cy + 'px';
+        requestAnimationFrame(update);
+      };
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+      document.querySelectorAll('button, a, input, textarea').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+      });
+      update();
+    }
+
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const bioInput = document.getElementById('bio');
+    const bioCount = document.getElementById('bio-count');
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarFallback = document.getElementById('avatar-fallback');
+    const previewUsername = document.getElementById('preview-username');
+    const previewRole = document.getElementById('preview-role');
+    const saveBtn = document.getElementById('save-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const msg = document.getElementById('editor-message');
+
+    let originalProfile = { avatar_url: '', bio: '' };
+
+    function setMessage(text, type) {
+      msg.textContent = text;
+      msg.className = 'message' + (type ? ' ' + type : '');
+    }
+
+    function updateAvatarPreview() {
+      const url = avatarUrlInput.value.trim();
+      if (!url) {
+        avatarImg.classList.add('hidden');
+        avatarFallback.classList.remove('hidden');
+        return;
+      }
+      avatarImg.src = url;
+      avatarImg.onload = () => {
+        avatarImg.classList.remove('hidden');
+        avatarFallback.classList.add('hidden');
+      };
+      avatarImg.onerror = () => {
+        avatarImg.classList.add('hidden');
+        avatarFallback.classList.remove('hidden');
+      };
+    }
+
+    function updateBioCount() {
+      const len = bioInput.value.length;
+      bioCount.textContent = len + ' / 1000';
+      bioCount.classList.toggle('warn', len > 900);
+    }
+
+    avatarUrlInput.addEventListener('input', updateAvatarPreview);
+    bioInput.addEventListener('input', updateBioCount);
+
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const statusData = await res.json();
+
+        if (!statusData.authenticated) {
+          document.getElementById('access-denied').classList.remove('hidden');
+          document.getElementById('panel-content').classList.add('hidden');
+          return;
+        }
+
+        previewUsername.textContent = statusData.user.username;
+        avatarFallback.textContent = statusData.user.username.charAt(0).toUpperCase();
+        previewRole.textContent = statusData.user.role;
+        previewRole.className = 'avatar-role ' + statusData.user.role;
+
+        const profRes = await fetch('/api/profile');
+        if (!profRes.ok) throw new Error('Failed to load profile');
+        const profile = await profRes.json();
+
+        originalProfile = { avatar_url: profile.avatar_url || '', bio: profile.bio || '' };
+        avatarUrlInput.value = originalProfile.avatar_url;
+        bioInput.value = originalProfile.bio;
+        updateAvatarPreview();
+        updateBioCount();
+
+        document.getElementById('panel-content').classList.remove('hidden');
+        document.getElementById('access-denied').classList.add('hidden');
+
+      } catch (err) {
+        console.error('Load profile error:', err);
+        setMessage('Failed to load profile.', 'error');
+      }
+    }
+
+    saveBtn.addEventListener('click', async () => {
+      const avatar_url = avatarUrlInput.value.trim();
+      const bio = bioInput.value.trim();
+
+      if (avatar_url && !/^https?:\/\/.+/i.test(avatar_url)) {
+        setMessage('Image URL must start with http:// or https://', 'error');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      setMessage('Saving...', '');
+
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ avatar_url, bio })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.error || 'Failed to save profile.', 'error');
+          saveBtn.disabled = false;
+          return;
+        }
+
+        originalProfile = { avatar_url, bio };
+        setMessage('Profile saved.', 'success');
+        saveBtn.disabled = false;
+
+      } catch (err) {
+        console.error('Save profile error:', err);
+        setMessage('Network error: ' + err.message, 'error');
+        saveBtn.disabled = false;
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      avatarUrlInput.value = originalProfile.avatar_url;
+      bioInput.value = originalProfile.bio;
+      updateAvatarPreview();
+      updateBioCount();
+      setMessage('Changes reverted.', '');
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth/signout', { method: 'POST' });
+        window.location.href = '/';
+      } catch (err) {
+        window.location.href = '/';
+      }
+    });
+
+    loadProfile();
+  })();
+</script>
+</body>
+</html>
