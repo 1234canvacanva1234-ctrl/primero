@@ -32,11 +32,177 @@
       overscroll-behavior: none;
       cursor: none;
     }
+
+    /* ============================================
+       SITE NAV — sticky header, doubles as the
+       "mini directory" bar most sites carry up top,
+       plus the account/auth area.
+       ============================================ */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 22px;
+      background: rgba(11, 17, 20, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(107, 142, 155, 0.1);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+    }
+    .nav-logo img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-logo .word {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #bcccd6;
+      transition: color 0.3s ease;
+    }
+    .nav-logo .word .highlight { color: #ff3b7c; }
+    .nav-logo:hover .word { color: #ff5c8f; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
+      justify-content: center;
+    }
+    .nav-links a {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #4a6673;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: #ff3b7c; }
+
+    .nav-auth {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .signin-btn {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #bcccd6;
+      background: transparent;
+      border: 1px solid rgba(107, 142, 155, 0.22);
+      padding: 7px 16px;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .signin-btn:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .nav-icon-link {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      border-radius: 50%;
+      color: #4a6673;
+      text-decoration: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .nav-icon-link:hover {
+      border-color: #ff3b7c;
+      color: #ff3b7c;
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 12px 4px 4px;
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      border-radius: 30px;
+      background: rgba(20, 30, 35, 0.5);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+    .user-chip:hover {
+      border-color: #ff3b7c;
+      background: rgba(20, 30, 35, 0.75);
+    }
+    .user-chip-avatar-wrap,
+    .user-chip-fallback {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: block;
+    }
+    .user-chip-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+    .user-chip-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      color: #4a6673;
+      background: rgba(11, 17, 20, 0.7);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+    }
+    .user-chip span.uname {
+      font-family: 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: #bcccd6;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ============================================
+       HERO — trimmed down for efficiency; the nav
+       now carries the persistent Discord/account
+       access, so the hero can stay lean.
+       ============================================ */
     .hero {
       position: relative;
       width: 100%;
-      height: 30vh;
-      min-height: 200px;
+      height: 24vh;
+      min-height: 170px;
       overflow: hidden;
     }
     .hero img {
@@ -53,7 +219,7 @@
     }
     .hero-content {
       position: absolute;
-      bottom: 16px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
@@ -65,8 +231,8 @@
     .hero-title {
       font-family: 'Cinzel', serif;
       font-weight: 600;
-      font-size: clamp(28px, 5vw, 44px);
-      letter-spacing: clamp(6px, 1.5vw, 14px);
+      font-size: clamp(26px, 4.5vw, 40px);
+      letter-spacing: clamp(5px, 1.5vw, 12px);
       text-transform: uppercase;
       color: #6b8e9b;
       text-shadow: 0 0 12px rgba(107,142,155,0.3);
@@ -82,71 +248,8 @@
       margin-top: 2px;
       opacity: 0.8;
     }
-    .server-badge {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(11, 17, 20, 0.6);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      padding: 6px 16px 6px 6px;
-      border-radius: 40px;
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-    }
-    .server-badge:hover {
-      border-color: #ff3b7c;
-      background: rgba(11, 17, 20, 0.8);
-      box-shadow: 0 4px 28px rgba(255, 59, 124, 0.08);
-      transform: translateY(-2px);
-    }
-    .server-badge:active {
-      transform: scale(0.96);
-    }
-    .server-badge img {
-      width: 34px;
-      height: 34px;
-      border-radius: 30px;
-      object-fit: cover;
-      border: 1px solid rgba(255,255,255,0.08);
-      display: block;
-      transition: transform 0.3s ease;
-    }
-    .server-badge:hover img {
-      transform: scale(1.05);
-    }
-    .server-badge span {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 2px;
-      color: #bcccd6;
-      text-transform: uppercase;
-      font-weight: 400;
-      opacity: 0.8;
-      transition: color 0.3s ease;
-    }
-    .server-badge:hover span {
-      color: #ff3b7c;
-    }
-    .server-badge .highlight {
-      color: #ff3b7c;
-      font-weight: 600;
-      letter-spacing: 3px;
-      transition: color 0.3s ease;
-    }
-    .server-badge:hover .highlight {
-      color: #ff5c8f;
-    }
     .discord-btn-container {
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .discord-btn {
       display: inline-block;
@@ -175,18 +278,18 @@
       transform: scale(0.96);
       background: #ff5c8f;
     }
-    .back { display: none; }
+
     .statement {
       max-width: 750px;
-      margin: 24px auto 12px;
+      margin: 20px auto 8px;
       padding: 0 24px;
       text-align: center;
     }
     .statement-text {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      font-size: clamp(17px, 2vw, 22px);
-      line-height: 1.5;
+      font-size: clamp(16px, 1.9vw, 21px);
+      line-height: 1.45;
       color: #6b8e9b;
       font-weight: 300;
     }
@@ -194,19 +297,53 @@
       color: #ff3b7c;
       font-weight: 400;
     }
+
+    /* ============================================
+       DIRECTORY — the card grid, now under an
+       explicit section header like a real site
+       directory/index would carry.
+       ============================================ */
+    .directory-header {
+      max-width: 1100px;
+      margin: 28px auto 0;
+      padding: 0 24px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(107, 142, 155, 0.1);
+      padding-bottom: 10px;
+      scroll-margin-top: 68px;
+    }
+    .directory-label {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b8e9b;
+    }
+    .directory-label .mark { color: #ff3b7c; }
+    .directory-sub {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #4a6673;
+    }
+
     .cards {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 20px 24px 60px;
+      padding: 18px 24px 56px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      gap: 22px;
     }
     .card {
       position: relative;
       background: rgba(20, 30, 35, 0.7);
       border: 1px solid rgba(107, 142, 155, 0.12);
-      border-radius: 3px;
+      border-radius: 4px;
       overflow: hidden;
       text-decoration: none;
       color: inherit;
@@ -228,7 +365,7 @@
     }
     .card-img {
       width: 100%;
-      height: 200px;
+      height: 190px;
       overflow: hidden;
     }
     .card-img img {
@@ -243,7 +380,7 @@
       transform: scale(1.04);
     }
     .card-body {
-      padding: 18px 20px 22px;
+      padding: 16px 20px 20px;
     }
     .card-name {
       font-family: 'Cinzel', serif;
@@ -291,7 +428,7 @@
     }
     .foot {
       text-align: center;
-      padding: 12px 0 32px;
+      padding: 10px 0 30px;
     }
     .foot-line {
       font-family: 'Cormorant Garamond', serif;
@@ -383,19 +520,30 @@
         cursor: auto;
       }
       #cursor { display: none !important; }
+
+      .site-nav {
+        padding: 9px 14px;
+        gap: 8px;
+      }
+      .nav-links { display: none; }
+      .nav-logo .word { font-size: 11px; letter-spacing: 2px; }
+      .nav-logo img { width: 24px; height: 24px; }
+      .user-chip span.uname { display: none; }
+      .signin-btn { padding: 6px 13px; font-size: 8px; }
+
       .hero {
-        height: 24vh;
-        min-height: 150px;
+        height: 22vh;
+        min-height: 140px;
         border-radius: 0;
         margin: 0;
       }
       .hero-content {
-        bottom: 40px;
+        bottom: 36px;
         width: 92%;
         padding: 0 4px;
       }
       .hero-title {
-        font-size: clamp(34px, 8vw, 44px);
+        font-size: clamp(32px, 8vw, 42px);
         letter-spacing: 5px;
       }
       .hero-sub {
@@ -404,7 +552,7 @@
         margin-top: 2px;
       }
       .discord-btn-container {
-        margin-top: 14px;
+        margin-top: 12px;
       }
       .discord-btn {
         padding: 10px 24px;
@@ -418,26 +566,6 @@
         -webkit-backdrop-filter: blur(4px);
         border: 1px solid rgba(255,255,255,0.05);
       }
-      .server-badge {
-        top: 14px;
-        left: 14px;
-        padding: 6px 16px 6px 6px;
-        gap: 10px;
-        border-radius: 30px;
-        background: rgba(11, 17, 20, 0.75);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(107,142,155,0.12);
-      }
-      .server-badge img {
-        width: 34px;
-        height: 34px;
-        border-radius: 24px;
-      }
-      .server-badge span {
-        font-size: 11px;
-        letter-spacing: 1.5px;
-      }
       .statement {
         margin: 0px auto 8px;
         padding: 0 18px;
@@ -445,6 +573,11 @@
       .statement-text {
         font-size: 17px;
         line-height: 1.5;
+      }
+      .directory-header {
+        margin: 20px auto 0;
+        padding: 0 18px;
+        padding-bottom: 8px;
       }
       .cards {
         grid-template-columns: 1fr;
@@ -514,7 +647,7 @@
 
     @media (max-width: 400px) {
       .hero-title { 
-        font-size: clamp(30px, 7vw, 34px); 
+        font-size: clamp(28px, 7vw, 32px); 
         letter-spacing: 3px; 
       }
       .hero-sub { font-size: 11px; }
@@ -524,9 +657,6 @@
         min-width: 120px; 
         letter-spacing: 2px;
       }
-      .server-badge { top: 10px; left: 10px; padding: 4px 12px 4px 4px; }
-      .server-badge img { width: 30px; height: 30px; }
-      .server-badge span { font-size: 9px; }
       .card-img { height: 130px; }
     }
 
@@ -539,12 +669,23 @@
 
 <div id="cursor"></div>
 
-<a href="https://discord.gg/sorasys" class="server-badge"> 
-  <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="server icon" /> 
-  <span><span class="highlight">✦</span> SoraSys</span> 
-</a>
-
-<a href="https://discord.gg/sorasys" class="back">← Join Discord</a>
+<!-- ============================================
+     SITE NAV — logo, directory links, account area
+     ============================================ -->
+<nav class="site-nav">
+  <a href="/" class="nav-logo">
+    <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
+    <span class="word"><span class="highlight">✦</span> SoraSys</span>
+  </a>
+  <div class="nav-links">
+    <a href="#directory">Directory</a>
+    <a href="/articlespace">Articles</a>
+    <a href="https://discord.gg/sorasys">Discord ↗</a>
+  </div>
+  <div class="nav-auth" id="nav-auth-area">
+    <a href="/initialization" class="signin-btn">Sign In</a>
+  </div>
+</nav>
 
 <div class="hero"> 
   <div class="hero-overlay"></div> 
@@ -561,6 +702,11 @@
   <p class="statement-text"> 
     SoraSys (iteration CHORDATA; 38k+) is currently the sole discord network for productive exchange encompassing a multitude of topics from the sciences to religion, with approximately a million monthly messages. It is the sole network of such a size to provide a platform for <strong>UNCONSTRAINED</strong> substance. 
   </p> 
+</div>
+
+<div class="directory-header" id="directory">
+  <div class="directory-label">◈ <span class="mark">Directory</span></div>
+  <div class="directory-sub">Primary Channels</div>
 </div>
 
 <div class="cards"> 
@@ -625,19 +771,89 @@
     document.addEventListener('mouseleave', () => {
       cursor.classList.remove('active');
     });
-    
-    const interactiveElements = document.querySelectorAll('a, .card, .discord-btn, .server-badge, .music-btn, .hero, .statement');
-    interactiveElements.forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        cursor.classList.add('hover');
+
+    function bindHoverables() {
+      const interactiveElements = document.querySelectorAll('a, .card, .discord-btn, .music-btn, .hero, .statement, .nav-icon-link, .signin-btn, .user-chip, .nav-links a');
+      interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
       });
-      el.addEventListener('mouseleave', () => {
-        cursor.classList.remove('hover');
-      });
-    });
+    }
+    bindHoverables();
+    // re-bind after the auth area swaps its markup in
+    window.addEventListener('sorasys:nav-auth-ready', bindHoverables);
     
     updateCursor();
   })();
+
+  // ============================================
+  // ACCOUNT AREA — mirrors the same auth check used
+  // on control-panel / initialization, so the nav
+  // reads as a normal signed-in site header once
+  // a session cookie is present.
+  // ============================================
+  (function() {
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function avatarMarkup(avatarUrl, username) {
+      const initial = escapeHtml((username || '?').charAt(0).toUpperCase());
+      if (!avatarUrl) {
+        return '<span class="user-chip-fallback">' + initial + '</span>';
+      }
+      return '<span class="user-chip-avatar-wrap">' +
+        '<img class="user-chip-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+          'onerror="this.outerHTML=\'<span class=&quot;user-chip-fallback&quot;>' + initial + '<\/span>\';">' +
+      '</span>';
+    }
+
+    async function initAuthNav() {
+      const authArea = document.getElementById('nav-auth-area');
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+
+        if (data.authenticated && data.user) {
+          let avatarUrl = '';
+          try {
+            const profRes = await fetch('/api/profile');
+            if (profRes.ok) {
+              const prof = await profRes.json();
+              avatarUrl = (prof.avatar_url || '').trim();
+            }
+          } catch (e) { /* fall back to initials */ }
+
+          authArea.innerHTML =
+            '<a href="/control-panel" class="nav-icon-link" title="Control Panel">⌘</a>' +
+            '<a href="/profile-config" class="user-chip" title="Profile">' +
+              avatarMarkup(avatarUrl, data.user.username) +
+              '<span class="uname">' + escapeHtml(data.user.username) + '</span>' +
+            '</a>' +
+            '<button id="nav-signout" class="nav-icon-link" type="button" title="Sign Out">↯</button>';
+
+          document.getElementById('nav-signout').addEventListener('click', async () => {
+            try {
+              await fetch('/api/auth/signout', { method: 'POST' });
+            } catch (e) { /* ignore */ }
+            window.location.reload();
+          });
+        } else {
+          authArea.innerHTML = '<a href="/initialization" class="signin-btn">Sign In</a>';
+        }
+      } catch (err) {
+        console.error('Auth nav error:', err);
+        authArea.innerHTML = '<a href="/initialization" class="signin-btn">Sign In</a>';
+      }
+      window.dispatchEvent(new Event('sorasys:nav-auth-ready'));
+    }
+
+    initAuthNav();
+  })();
+
   window.addEventListener("load", async () => {
     try {
       const response = await fetch("/ping", {
