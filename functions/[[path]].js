@@ -150,7 +150,9 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ authenticated: false }), { headers });
       }
 
-      const user = await env.DB.prepare('SELECT username, role FROM users WHERE username = ?').bind(session.username).first();
+      // NOTE: now also returns avatar_url / bio so any page (nav avatars, etc.)
+      // can use them straight off the status check without a second request.
+      const user = await env.DB.prepare('SELECT username, role, avatar_url, bio FROM users WHERE username = ?').bind(session.username).first();
       return new Response(JSON.stringify({ authenticated: true, user }), { headers });
 
     } catch (err) {
@@ -172,6 +174,86 @@ export async function onRequest(context) {
 
       headers['Set-Cookie'] = 'session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
       return new Response(JSON.stringify({ success: true }), { headers });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // PROFILE - GET /api/profile  (own profile, requires auth)
+  // ============================================
+  if (path === '/api/profile' && request.method === 'GET') {
+    try {
+      const user = await getSessionUser(request, env);
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+      }
+
+      const profile = await env.DB.prepare(
+        'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
+      ).bind(user.username).first();
+
+      return new Response(JSON.stringify(profile), { headers });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // PROFILE - PUT /api/profile  (update own avatar_url / bio)
+  // ============================================
+  if (path === '/api/profile' && request.method === 'PUT') {
+    try {
+      const user = await getSessionUser(request, env);
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+      }
+
+      const body = await request.json();
+      let avatar_url = (body.avatar_url || '').trim();
+      let bio = (body.bio || '').trim();
+
+      if (avatar_url.length > 500) {
+        return new Response(JSON.stringify({ error: 'Image URL is too long (max 500 characters)' }), { status: 400, headers });
+      }
+      if (avatar_url && !/^https?:\/\/.+/i.test(avatar_url)) {
+        return new Response(JSON.stringify({ error: 'Image URL must start with http:// or https://' }), { status: 400, headers });
+      }
+      if (bio.length > 1000) {
+        return new Response(JSON.stringify({ error: 'Description is too long (max 1000 characters)' }), { status: 400, headers });
+      }
+
+      await env.DB.prepare(
+        'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
+      ).bind(avatar_url, bio, user.username).run();
+
+      return new Response(JSON.stringify({ success: true, avatar_url, bio }), { headers });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    }
+  }
+
+  // ============================================
+  // PUBLIC PROFILE - GET /api/users/:username/profile
+  // (no auth required — lets you show an author's avatar/bio
+  // next to their articles, on a byline page, etc.)
+  // ============================================
+  const publicProfileMatch = path.match(/^\/api\/users\/([^\/]+)\/profile$/);
+  if (publicProfileMatch && request.method === 'GET') {
+    try {
+      const username = publicProfileMatch[1];
+      const profile = await env.DB.prepare(
+        'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
+      ).bind(username).first();
+
+      if (!profile) {
+        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
+      }
+
+      return new Response(JSON.stringify(profile), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
