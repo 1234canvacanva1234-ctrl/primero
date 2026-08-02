@@ -4,29 +4,25 @@ export async function onRequest(context) {
   const path = url.pathname;
 
   // ============================================
-  // ARTICLE PERMALINKS - /articlespace?a=:slug
-  // ============================================
-  // Query-string based on purpose: /articlespace/:slug (a path segment)
-  // was being collapsed/redirected by the platform's static-asset
-  // canonicalization for the "articlespace" directory before this
-  // function ever got a chance to run. Query strings are never
-  // considered part of that path-canonicalization decision, so
-  // /articlespace?a=slug and /articlespace are treated as the exact
-  // same resource by everything upstream of this function — there's
-  // no sub-path left for anything to "helpfully" redirect away.
+  // NOTE: Article permalinks now use a URL fragment (#slug), e.g.
+  // /articlespace#my-article-title-12. Fragments are never sent to
+  // the server as part of the HTTP request — the browser strips them
+  // before making the request and only re-applies them client-side
+  // after the page loads. That means there is nothing for this
+  // function (or any Cloudflare routing/redirect layer) to see or act
+  // on for the slug at all — every /articlespace request, permalink
+  // or not, is just a plain request for the list page. All permalink
+  // resolution (finding the article, expanding it, scrolling to it)
+  // happens entirely in articlespace/index.html's client-side JS by
+  // reading window.location.hash on load.
   //
-  // If this path is NOT /articlespace, or there's no ?a= param, we
-  // don't touch it — next() lets it fall through to normal static
-  // handling exactly like before (e.g. plain /articlespace list view).
-  const isArticlespacePage = path === '/articlespace' || path === '/articlespace/';
-  if (isArticlespacePage) {
-    const slug = url.searchParams.get('a');
-    if (slug) {
-      return handleArticlePermalink(slug, request, env, next);
-    }
-    // No ?a= param: normal list view, just serve the static shell as-is.
-    return next();
-  }
+  // Tradeoff: since the server never sees the slug, it can't render
+  // article-specific og:/twitter: meta tags for link-preview bots —
+  // shared links show the generic Articlespace preview instead of a
+  // per-article one. Everything else (opening the link, expanding the
+  // right article, scrolling to it, copy-link, back/forward) works
+  // the same as before.
+  // ============================================
 
   // ============================================
   // IMPORTANT: ONLY handle /api/* routes
@@ -337,163 +333,6 @@ export async function onRequest(context) {
     path: path,
     method: request.method
   }), { status: 404, headers });
-}
-
-// ============================================
-// Article permalink handler
-// GET /articlespace?a=:slug — serves the articlespace/index.html
-// shell with:
-//   1. og:/twitter: meta tags rewritten to match the real article.
-//   2. The resolved article embedded directly as JSON in a
-//      <script> tag, so the client never has to re-derive which
-//      article this URL refers to.
-//
-// Slugs are <slugified-title>-<id>. We resolve the ID straight out
-// of the slug and look the article up by primary key — a single
-// deterministic query, no dependency on list ordering.
-//
-// Deliberately uses a query string (?a=slug) rather than a path
-// segment (/articlespace/slug): a path segment under the
-// "articlespace" static directory was getting canonicalized/redirected
-// by the platform's static-asset resolution before this function ever
-// ran. Query strings sit outside that decision entirely, so this
-// request is treated as the same resource as plain /articlespace —
-// nothing upstream has a reason to rewrite it.
-// ============================================
-
-const COPY_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-// Renders the same markup structure the client uses for an expanded
-// .article-card — but as real HTML in the initial response, so a
-// visitor sees the full article immediately, centered near the top
-// of the viewport, with zero dependency on JS running.
-function renderHeroMarkup(article, slug, backHref, selfHref) {
-  const title = escHtml(article.title || 'Untitled');
-  const author = escHtml(article.author || 'Anonymous');
-  const date = escHtml(new Date(article.created_at).toLocaleDateString());
-  const content = escHtml(article.content || '');
-
-  return '<div class="permalink-hero">' +
-    '<div class="permalink-card-wrap">' +
-      '<a class="back-to-all" href="' + escHtml(backHref) + '">↩ All articles</a>' +
-      '<div class="article-card expanded" data-article-index="0" data-share="' + escHtml(slug) + '">' +
-        '<div class="card-inner">' +
-          '<div class="title-row">' +
-            '<a class="title" href="' + escHtml(selfHref) + '">' + title + '</a>' +
-            '<button class="copy-link-btn" type="button" data-share="' + escHtml(slug) + '" aria-label="Copy link to this article">' + COPY_ICON_SVG + '</button>' +
-          '</div>' +
-          '<div class="meta">' + date + ' · ' + author + '</div>' +
-          '<div class="content full">' + content + '</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
-}
-
-async function handleArticlePermalink(slug, request, env, next) {
-  try {
-    // Fetch the shell from articlespace/index.html.
-    const shellRequest = new Request(new URL('/articlespace/index.html', request.url), request);
-    const shellResponse = await env.ASSETS.fetch(shellRequest);
-
-    if (!shellResponse.ok) {
-      return shellResponse;
-    }
-
-    let html = await shellResponse.text();
-    let article = null;
-
-    const idMatch = /-(\d+)$/.exec(slug);
-    if (idMatch) {
-      const id = parseInt(idMatch[1], 10);
-      try {
-        article = await env.DB.prepare(
-          'SELECT id, title, content, author, created_at FROM articles WHERE id = ?'
-        ).bind(id).first();
-      } catch (err) {
-        console.error('Permalink DB lookup failed:', err);
-      }
-    }
-
-    // Embed the resolved article (or null) as JSON, so the client
-    // knows whether the server found something.
-    const articleData = article ? {
-      id: article.id,
-      title: article.title,
-      content: article.content,
-      author: article.author,
-      created_at: article.created_at,
-      slug: slug
-    } : null;
-
-    const dataScript = '<script>window.__ARTICLE__ = ' +
-      JSON.stringify(articleData).replace(/</g, '\\u003c') +
-      ';</script>';
-
-    html = html.includes('</head>')
-      ? html.replace('</head>', dataScript + '</head>')
-      : dataScript + html;
-
-    if (!article) {
-      return new Response(html, {
-        status: 404,
-        headers: { 'content-type': 'text/html;charset=UTF-8' },
-      });
-    }
-
-    // Server-render the expanded card directly into the container that
-    // ships in the initial HTML.
-    const backHref = '/articlespace';
-    const selfHref = '/articlespace?a=' + encodeURIComponent(slug);
-    const heroHtml = renderHeroMarkup(article, slug, backHref, selfHref);
-    html = html.replace(
-      /<div id="articles-container" class="articles-container">[\s\S]*?<\/div>\s*<\/div>/,
-      '<div id="articles-container" class="articles-container">' + heroHtml + '</div>'
-    );
-
-    const title = article.title || 'Untitled';
-    const rawDesc = (article.content || '').replace(/\s+/g, ' ').trim();
-    const desc = rawDesc.length > 200 ? rawDesc.slice(0, 200) + '…' : rawDesc;
-
-    const esc = (s) => String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    const pageTitle = esc(title) + ' · SoraSys Articlespace';
-    const ogTitle = esc(title);
-    const ogDesc = esc(desc || 'Read this article on SoraSys Articlespace.');
-    const ogUrl = esc(request.url);
-
-    html = html
-      .replace(/<title>.*?<\/title>/s, `<title>${pageTitle}</title>`)
-      .replace(/<meta property="og:url" content=".*?">/, `<meta property="og:url" content="${ogUrl}">`)
-      .replace(/<meta property="og:title" content=".*?">/, `<meta property="og:title" content="${ogTitle}">`)
-      .replace(/<meta property="og:description" content=".*?">/, `<meta property="og:description" content="${ogDesc}">`)
-      .replace(/<meta name="twitter:title" content=".*?">/, `<meta name="twitter:title" content="${ogTitle}">`)
-      .replace(/<meta name="twitter:description" content=".*?">/, `<meta name="twitter:description" content="${ogDesc}">`);
-
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'content-type': 'text/html;charset=UTF-8',
-        'cache-control': 'public, max-age=60',
-      },
-    });
-
-  } catch (err) {
-    console.error('Article permalink handler failed:', err);
-    return next();
-  }
 }
 
 // ============================================
