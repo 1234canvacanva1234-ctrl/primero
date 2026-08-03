@@ -76,7 +76,7 @@
       100% { background-position: 0% 50%; opacity: 0.3; }
     }
 
-    /* ---------- fluctuating hot-pink frame, used on every profile picture ---------- */
+    /* ---------- fluctuating hot-pink frame, used on author profile pictures ---------- */
     @keyframes frame-rotate { to { filter: hue-rotate(360deg); } }
     @keyframes frame-pulse {
       0%, 100% { opacity: 0.6; box-shadow: 0 0 12px rgba(255,59,124,0.22); }
@@ -98,8 +98,8 @@
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      gap: 24px;
-      padding: 16px 28px;
+      gap: 28px;
+      padding: 18px 30px;
       background: rgba(11, 17, 20, 0.72);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -108,21 +108,21 @@
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
       text-decoration: none;
       color: inherit;
       flex-shrink: 0;
       justify-self: start;
     }
     .nav-logo img {
-      width: 30px; height: 30px;
-      border-radius: 7px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
       object-fit: cover;
       border: 1px solid var(--line);
     }
     .nav-logo .word {
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 15px;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--steel);
@@ -134,13 +134,13 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 26px;
+      gap: 30px;
       justify-self: center;
     }
     .nav-link {
       position: relative;
       font-family: 'Cinzel', serif;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 2px;
       text-transform: uppercase;
       color: var(--dim);
@@ -167,14 +167,14 @@
 
     .panel-toggle {
       display: none;
-      width: 38px; height: 38px;
-      border-radius: 9px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
       border: 1px solid var(--line);
       background: var(--panel);
       color: var(--ink);
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
       flex-shrink: 0;
       justify-self: end;
@@ -186,7 +186,7 @@
       position: fixed;
       top: 0; right: 0;
       height: 100vh;
-      width: 280px;
+      width: 300px;
       z-index: 300;
       background: rgba(15, 22, 25, 0.86);
       backdrop-filter: blur(18px);
@@ -201,15 +201,15 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding: 24px 20px;
+      padding: 26px 22px;
       overflow-y: auto;
     }
     .side-account {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 13px;
-      border-radius: 9px;
+      padding: 14px;
+      border-radius: 10px;
       background: rgba(30, 42, 47, 0.5);
       border: 1px solid var(--line);
       text-decoration: none;
@@ -217,15 +217,15 @@
       transition: all 0.3s ease;
     }
     .side-account:hover { border-color: var(--pulse); background: rgba(30, 42, 47, 0.8); }
-    .side-account.signed-in { align-items: flex-start; padding: 16px; gap: 14px; }
+    .side-account.signed-in { align-items: flex-start; padding: 18px; gap: 16px; }
     .side-account.signed-in .side-avatar-wrap,
     .side-account.signed-in .side-avatar,
     .side-account.signed-in .side-avatar-fallback {
-      width: 60px; height: 60px; font-size: 21px;
+      width: 68px; height: 68px; font-size: 24px; border-radius: 10px;
     }
-    .side-avatar-wrap { width: 38px; height: 38px; position: relative; flex-shrink: 0; }
+    .side-avatar-wrap { width: 42px; height: 42px; position: relative; flex-shrink: 0; }
     .side-avatar, .side-avatar-fallback {
-      width: 38px; height: 38px;
+      width: 42px; height: 42px;
       border-radius: 8px;
       position: relative;
       z-index: 1;
@@ -235,7 +235,7 @@
     .side-avatar-fallback {
       display: flex; align-items: center; justify-content: center;
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 15px;
       color: var(--steel);
       background: rgba(4,6,7,0.7);
       border: 1px solid var(--line);
@@ -250,7 +250,7 @@
     }
     .side-account-username {
       font-family: 'Cinzel', serif;
-      font-size: 13px;
+      font-size: 14px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
       color: var(--ink);
@@ -267,10 +267,10 @@
     .side-account-bio {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      font-size: 12px;
+      font-size: 12.5px;
       line-height: 1.45;
       color: var(--steel);
-      margin-top: 7px;
+      margin-top: 8px;
     }
     .side-label {
       font-family: 'Fira Code', monospace;
@@ -278,17 +278,17 @@
       letter-spacing: 2.5px;
       text-transform: uppercase;
       color: var(--dim);
-      margin: 20px 4px 9px;
+      margin: 22px 4px 10px;
     }
-    .side-links { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .side-links { display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .side-link {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 14px 15px;
-      border-radius: 9px;
+      padding: 15px 16px;
+      border-radius: 10px;
       border: 1px solid transparent;
       background: rgba(30, 42, 47, 0.28);
       text-decoration: none;
@@ -307,7 +307,7 @@
     .side-link:hover { border-color: var(--pulse); transform: translateX(-3px); }
     .side-link-title {
       font-family: 'Cinzel', serif;
-      font-size: 11.5px;
+      font-size: 12px;
       letter-spacing: 2px;
       text-transform: uppercase;
       display: block;
@@ -322,14 +322,14 @@
       display: block;
       position: relative; z-index: 1;
     }
-    .side-link-arrow { position: relative; z-index: 1; font-size: 12px; color: var(--dim); transition: all 0.3s ease; }
+    .side-link-arrow { position: relative; z-index: 1; font-size: 13px; color: var(--dim); transition: all 0.3s ease; }
     .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.locked { cursor: not-allowed; }
     .side-link.locked::before { display: none; }
     .side-link.locked:hover { border-color: transparent; transform: none; }
     .side-link.locked .side-link-arrow { color: var(--dim); }
 
-    .side-foot { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
       font-family: 'Fira Code', monospace;
       font-size: 8px;
@@ -338,7 +338,7 @@
       text-align: center;
     }
 
-    .page { margin-right: 280px; }
+    .page { margin-right: 300px; }
 
     #cursor {
       position: fixed;
@@ -361,8 +361,8 @@
 
     .space-header {
       max-width: 900px;
-      margin: 34px auto 26px;
-      padding: 0 24px 16px;
+      margin: 22px auto 18px;
+      padding: 0 24px 12px;
       border-bottom: 1px solid var(--line);
     }
     .space-eyebrow {
@@ -387,7 +387,7 @@
     .articles-container {
       max-width: 900px;
       margin: 0 auto;
-      padding: 0 24px 60px;
+      padding: 0 24px 40px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -560,8 +560,8 @@
     }
 
     @media (max-width: 1100px) {
-      .nav-links { gap: 16px; }
-      .nav-link { font-size: 9px; letter-spacing: 1.5px; }
+      .nav-links { gap: 18px; }
+      .nav-link { font-size: 10px; letter-spacing: 1.5px; }
     }
 
     @media (max-width: 900px) {
@@ -588,7 +588,7 @@
         transition: opacity 0.35s ease;
       }
       .panel-backdrop.open { opacity: 1; pointer-events: auto; }
-      .side-panel-inner { padding: 18px 16px 26px; }
+      .side-panel-inner { padding: 20px 18px 28px; }
       .side-panel::before {
         content: '';
         display: block;
@@ -604,19 +604,32 @@
       #cursor { display: none !important; }
       .site-nav { padding: 10px 14px; }
       .nav-logo .word { font-size: 11px; letter-spacing: 2px; }
-      .nav-logo img { width: 24px; height: 24px; }
-      .space-header { margin: 22px auto 18px; padding: 0 16px 12px; }
+      .nav-logo img { width: 25px; height: 25px; }
+      .space-header { margin: 18px auto 14px; padding: 0 16px 10px; }
       .space-title { font-size: 19px; letter-spacing: 3px; }
-      .articles-container { padding: 0 16px 40px; }
+      .articles-container { padding: 0 16px 32px; }
       .article-card .card-inner { padding: 14px 16px; flex-direction: column; }
       .article-card .title { font-size: 15px; }
       .copy-link-btn { opacity: 0.55; }
       .article-card.has-author-panel .card-main { padding-right: 0; }
-      .author-card { width: 100%; flex-direction: row; align-items: center; text-align: left; margin-left: 0; margin-top: 14px; }
-      .author-card-text { align-items: flex-start; text-align: left; }
-      .author-bio { -webkit-line-clamp: 2; }
-      .author-avatar-wrap { width: 60px; height: 60px; }
-      .author-avatar-fallback { font-size: 20px; }
+      .author-card {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        margin-left: 0;
+        margin-top: 12px;
+        padding: 10px 12px;
+        gap: 10px;
+      }
+      .author-card-text { align-items: flex-start; text-align: left; gap: 2px; }
+      .author-bio { -webkit-line-clamp: 2; font-size: 11.5px; }
+      .author-name { font-size: 11px; }
+      .author-card-label { font-size: 6.5px; }
+      .author-avatar-wrap { width: 44px; height: 44px; }
+      .author-avatar-fallback { font-size: 16px; }
+      .author-avatar-wrap .avatar-frame { inset: -3px; border-radius: 8px; }
+      .author-avatar, .author-card .author-avatar-fallback { border-radius: 8px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -820,7 +833,6 @@
           const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
           if (avatarUrl) {
             avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<div class="avatar-frame"></div>' +
               '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
                 'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
             '</span>';
