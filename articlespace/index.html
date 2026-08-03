@@ -974,16 +974,13 @@
         '</div>';
       }).join('');
 
-      // A card only gets the "continue reading" hint if its preview
-      // is actually being clipped — measured after layout, so it
-      // reflects whatever the card can elegantly fit, not a fixed
-      // character count.
+
       document.querySelectorAll('.article-card').forEach(card => {
         const contentDiv = card.querySelector('.content');
         if (contentDiv.scrollHeight - contentDiv.clientHeight > 4) {
           const hint = document.createElement('span');
           hint.className = 'read-more-hint';
-          hint.textContent = 'continue reading ↓';
+          hint.textContent = 'maximize to continue ↓';
           contentDiv.insertAdjacentElement('afterend', hint);
         }
       });
