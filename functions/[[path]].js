@@ -25,16 +25,11 @@ export async function onRequest(context) {
   // ============================================
 
   // ============================================
-  // ROUTING
-  // /api/*        -> JSON API (unchanged, see below)
-  // everything else -> if it's an HTML navigation, resolve auth
-  //                    server-side and inject the sidebar state
-  //                    before the response ever reaches the browser.
-  //                    Non-HTML static assets (css/js/images/fonts)
-  //                    pass straight through untouched, no DB hit.
+  // IMPORTANT: ONLY handle /api/* routes
+  // Everything else passes through to static files
   // ============================================
   if (!path.startsWith('/api/')) {
-    return handlePageRequest(context);
+    return next();
   }
 
   console.log('API Request:', path, request.method);
@@ -423,71 +418,7 @@ export async function onRequest(context) {
 }
 
 // ============================================
-// PAGE (non-/api) REQUEST HANDLING
-//
-// Deliberately minimal. The previous version tried to rewrite too
-// much (nav-link unlocking, attribute iteration, element replacement)
-// and a bug in that extra logic corrupted the whole page. This
-// version only ever touches two things — the avatar src and the
-// name text — and every step is wrapped so that any failure at all
-// (bad selector match, DB error, HTMLRewriter throwing) just returns
-// the original, untouched static page instead of a broken one.
-//
-// ASSUMPTION: sidebar markup has id="side-avatar-slot" (an <img>)
-// and id="side-account-name" (text). If those ids don't exist in
-// your actual HTML, this simply does nothing — page renders exactly
-// as the static file defines it, same as before any of this.
-// ============================================
-
-async function handlePageRequest(context) {
-  const { request, env, next } = context;
-  const url = new URL(request.url);
-  const path = url.pathname;
-
-  const response = await next();
-
-  // Only ever attempt this for actual HTML documents.
-  const contentType = response.headers.get('Content-Type') || '';
-  if (!contentType.includes('text/html')) {
-    return response;
-  }
-
-  try {
-    const user = await getSessionUserFull(request, env);
-    if (!user) {
-      return response;
-    }
-
-    const avatarUrl = (user.avatar_url && user.avatar_url.trim())
-      ? user.avatar_url
-      : 'https://i.imgur.com/NGyCK6G.png';
-
-    const rewriter = new HTMLRewriter()
-      .on('#side-avatar-slot', {
-        element(el) {
-          if (el.tagName === 'img') {
-            el.setAttribute('src', avatarUrl);
-          }
-        }
-      })
-      .on('#side-account-name', {
-        element(el) {
-          el.setInnerContent(user.username);
-        }
-      });
-
-    return rewriter.transform(response);
-
-  } catch (err) {
-    // Any failure at all (DB error, bad selector, etc.) -> serve the
-    // original static page untouched. Never let this break a page load.
-    console.log('Sidebar injection skipped:', err.message);
-    return response;
-  }
-}
-
-// ============================================
-// Helper functions
+// Helper function
 // ============================================
 async function getSessionUser(request, env) {
   try {
@@ -504,20 +435,4 @@ async function getSessionUser(request, env) {
   } catch (err) {
     return null;
   }
-}
-
-// Same as getSessionUser, but also pulls avatar_url/bio, needed for
-// the server-side sidebar injection in handlePageRequest.
-async function getSessionUserFull(request, env) {
-  const cookie = request.headers.get('Cookie') || '';
-  const sessionId = cookie.match(/session=([^;]+)/)?.[1];
-
-  if (!sessionId) return null;
-
-  const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
-  if (!session || new Date(session.expires_at) < new Date()) return null;
-
-  return await env.DB.prepare(
-    'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
-  ).bind(session.username).first();
 }
