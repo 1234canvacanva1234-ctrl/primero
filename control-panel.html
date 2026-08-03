@@ -2,31 +2,341 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>SoraSys : Control Panel</title>
   <meta property="og:type" content="website">
   <meta property="og:title" content="SoraSys : Control Panel">
   <meta property="og:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
-  <meta name="theme-color" content="#ff3b7c">
+  <meta name="theme-color" content="#0b1114">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="SoraSys : Control Panel">
   <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    :root {
+      --void: #0b1114;
+      --panel: rgba(20, 30, 35, 0.7);
+      --panel-solid: rgba(18, 26, 30, 0.92);
+      --line: rgba(107, 142, 155, 0.12);
+      --steel: #6b8e9b;
+      --ink: #bcccd6;
+      --dim: #4a6673;
+      --pulse: #ff3b7c;
+      --pulse-soft: #ff9bc0;
+    }
+    .site-nav, .side-panel {
+      --steel: #c2beb4;
+      --line: rgba(162, 160, 152, 0.14);
+    }
     body {
-      background: #0b1114;
-      color: #bcccd6;
+      background: var(--void);
+      color: var(--ink);
       font-family: 'Crimson Text', serif;
-      padding: 24px;
       min-height: 100vh;
       cursor: none;
+      overflow-x: hidden;
+      position: relative;
     }
+
+    /* ---------- ambient backdrop (shared with articlespace) ---------- */
+    .nebula {
+      position: fixed;
+      inset: -20%;
+      z-index: -2;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 40% 30% at 20% 15%, rgba(107,142,155,0.10), transparent 60%),
+        radial-gradient(ellipse 36% 30% at 85% 75%, rgba(255,59,124,0.08), transparent 60%),
+        radial-gradient(ellipse 46% 36% at 55% 95%, rgba(107,142,155,0.07), transparent 60%);
+      animation: driftNebula 50s ease-in-out infinite alternate;
+      filter: blur(2px);
+    }
+    @keyframes driftNebula {
+      0%   { transform: translate(0%, 0%) scale(1); }
+      50%  { transform: translate(-2%, 2%) scale(1.03); }
+      100% { transform: translate(2%, -2%) scale(1.05); }
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 80% 65% at 50% 30%, transparent 45%, rgba(4,6,7,0.55) 100%);
+    }
+
+    .thread {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(90deg, transparent 0%, var(--steel) 18%, var(--pulse) 50%, var(--steel) 82%, transparent 100%);
+      background-size: 240% 100%;
+      animation: threadFlow 9s ease-in-out infinite;
+      opacity: 0.5;
+    }
+    @keyframes threadFlow {
+      0%   { background-position: 0% 50%; opacity: 0.3; }
+      50%  { background-position: 100% 50%; opacity: 0.65; }
+      100% { background-position: 0% 50%; opacity: 0.3; }
+    }
+
+    /* ---------- top bar ---------- */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 28px;
+      padding: 18px 30px;
+      background: rgba(11, 17, 20, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+      justify-self: start;
+    }
+    .nav-logo img {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--line);
+    }
+    .nav-logo .word {
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--steel);
+      transition: color 0.3s ease;
+      display: inline-block;
+      margin-right: -3px;
+    }
+    .nav-logo .word .highlight { color: var(--pulse); }
+    .nav-logo:hover .word { color: var(--ink); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      justify-self: center;
+    }
+    .nav-link {
+      position: relative;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      padding: 4px 1px;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 100%;
+      bottom: 0;
+      height: 1px;
+      background: var(--pulse);
+      transition: right 0.3s ease;
+    }
+    .nav-link:hover { color: var(--ink); }
+    .nav-link:hover::after { right: 0; }
+    .nav-link.current { color: var(--pulse); }
+    .nav-link.current::after { right: 0; }
+    .nav-link.locked { color: var(--dim); cursor: not-allowed; }
+    .nav-link.locked::after { display: none; }
+
+    .panel-toggle {
+      display: none;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      flex-shrink: 0;
+      justify-self: end;
+    }
+
+    /* ---------- side panel ---------- */
+    .panel-backdrop { display: none; }
+    .side-panel {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100vh;
+      width: 300px;
+      z-index: 300;
+      background: rgba(15, 22, 25, 0.86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(0);
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .side-panel-inner {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 26px 22px;
+      overflow-y: auto;
+    }
+    .side-account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      background: rgba(30, 42, 47, 0.5);
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+    .side-account:hover { border-color: var(--pulse); background: rgba(30, 42, 47, 0.8); }
+    .side-account.signed-in { align-items: flex-start; padding: 18px; gap: 16px; }
+    .side-account.signed-in .side-avatar-wrap,
+    .side-account.signed-in .side-avatar,
+    .side-account.signed-in .side-avatar-fallback {
+      width: 68px; height: 68px; font-size: 24px; border-radius: 10px;
+    }
+    .side-avatar-wrap { width: 42px; height: 42px; position: relative; flex-shrink: 0; }
+    .side-avatar, .side-avatar-fallback {
+      width: 42px; height: 42px;
+      border-radius: 8px;
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+    .side-avatar { object-fit: cover; border: 1px solid var(--line); }
+    .side-avatar-fallback {
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      color: var(--steel);
+      background: rgba(4,6,7,0.7);
+      border: 1px solid var(--line);
+    }
+    .side-account-text { min-width: 0; padding-top: 1px; }
+    .side-account-cta {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .side-account-username {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--ink);
+      word-break: break-word;
+    }
+    .side-account-role {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pulse);
+      margin-top: 3px;
+    }
+    .side-account-bio {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--steel);
+      margin-top: 8px;
+    }
+    .side-label {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 22px 4px 10px;
+    }
+    .side-links { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .side-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 15px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(30, 42, 47, 0.28);
+      text-decoration: none;
+      color: var(--ink);
+      overflow: hidden;
+      transition: all 0.35s ease;
+    }
+    .side-link::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(255,59,124,0.1), rgba(107,142,155,0.1));
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+    .side-link:hover::before { transform: translateX(0); }
+    .side-link:hover { border-color: var(--pulse); transform: translateX(-3px); }
+    .side-link.current { border-color: rgba(255, 59, 124, 0.35); background: rgba(255, 59, 124, 0.06); }
+    .side-link-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: block;
+      position: relative; z-index: 1;
+    }
+    .side-link-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 11px;
+      color: var(--steel);
+      margin-top: 2px;
+      display: block;
+      position: relative; z-index: 1;
+    }
+    .side-link-arrow { position: relative; z-index: 1; font-size: 13px; color: var(--dim); transition: all 0.3s ease; }
+    .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
+    .side-link.locked { cursor: not-allowed; }
+    .side-link.locked::before { display: none; }
+    .side-link.locked:hover { border-color: transparent; transform: none; }
+    .side-link.locked .side-link-arrow { color: var(--dim); }
+
+    .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .side-foot-sig {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    .page { margin-right: 300px; }
+
     #cursor {
       position: fixed;
-      width: 8px;
-      height: 8px;
-      background: #ff3b7c;
+      width: 8px; height: 8px;
+      background: var(--pulse);
       border-radius: 50%;
       pointer-events: none;
       z-index: 10000;
@@ -35,25 +345,22 @@
       display: none;
       transition: transform 0.08s ease, background 0.2s ease;
     }
-    #cursor.active {
-      display: block;
-    }
+    #cursor.active { display: block; }
     #cursor.hover {
       transform: translate(-50%, -50%) scale(2.8);
       background: rgba(255, 59, 124, 0.25);
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
-    @media (max-width: 640px) { 
-      #cursor { display: none !important; }
-      body { cursor: auto; }
-    }
+
+    /* ---------- page-specific: control panel ---------- */
+    .panel-wrap { padding: 22px 24px 48px; }
     .panel-header {
       max-width: 1100px;
-      margin: 0 auto 32px;
+      margin: 0 auto 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(107, 142, 155, 0.12);
+      border-bottom: 1px solid var(--line);
       padding-bottom: 16px;
     }
     .panel-title {
@@ -62,9 +369,9 @@
       font-size: 20px;
       letter-spacing: 4px;
       text-transform: uppercase;
-      color: #6b8e9b;
+      color: var(--steel);
     }
-    .panel-title span { color: #ff3b7c; }
+    .panel-title span { color: var(--pulse); }
     .panel-actions {
       display: flex;
       gap: 12px;
@@ -77,21 +384,21 @@
       text-transform: uppercase;
       padding: 8px 18px;
       background: transparent;
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      color: #4a6673;
+      border: 1px solid var(--line);
+      color: var(--dim);
       border-radius: 2px;
       cursor: pointer;
       transition: all 0.3s ease;
       text-decoration: none;
     }
     .panel-btn:hover {
-      border-color: #ff3b7c;
-      color: #ff3b7c;
+      border-color: var(--pulse);
+      color: var(--pulse);
     }
     .panel-btn.primary {
-      background: #ff3b7c;
-      color: #0b1114;
-      border-color: #ff3b7c;
+      background: var(--pulse);
+      color: var(--void);
+      border-color: var(--pulse);
     }
     .panel-btn.primary:hover {
       background: #ff5c8f;
@@ -105,8 +412,8 @@
       gap: 24px;
     }
     .panel-section {
-      background: rgba(20, 30, 35, 0.7);
-      border: 1px solid rgba(107, 142, 155, 0.12);
+      background: var(--panel);
+      border: 1px solid var(--line);
       border-radius: 3px;
       padding: 24px;
       backdrop-filter: blur(2px);
@@ -117,10 +424,10 @@
       font-size: 12px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #6b8e9b;
+      color: var(--steel);
       margin-bottom: 16px;
     }
-    .section-title span { color: #ff3b7c; }
+    .section-title span { color: var(--pulse); }
     .article-list {
       display: flex;
       flex-direction: column;
@@ -140,13 +447,13 @@
     .article-item .name {
       font-family: 'Crimson Text', serif;
       font-size: 14px;
-      color: #bcccd6;
+      color: var(--ink);
     }
     .article-item .meta {
       font-family: 'Fira Code', monospace;
       font-size: 7px;
       letter-spacing: 1px;
-      color: #4a6673;
+      color: var(--dim);
     }
     .article-item .actions {
       display: flex;
@@ -155,7 +462,7 @@
     .article-item .actions button {
       background: none;
       border: 1px solid rgba(107, 142, 155, 0.1);
-      color: #4a6673;
+      color: var(--dim);
       padding: 4px 10px;
       font-family: 'Fira Code', monospace;
       font-size: 7px;
@@ -165,10 +472,10 @@
       border-radius: 2px;
     }
     .article-item .actions button:hover {
-      border-color: #ff3b7c;
-      color: #ff3b7c;
+      border-color: var(--pulse);
+      color: var(--pulse);
     }
-    .article-item .actions button.delete:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .article-item .actions button.delete:hover { border-color: var(--pulse); color: var(--pulse); }
     .article-item .actions button.delete.disabled {
       opacity: 0.3;
       cursor: not-allowed;
@@ -176,7 +483,7 @@
     }
     .article-item .actions button.delete.disabled:hover {
       border-color: rgba(107, 142, 155, 0.05);
-      color: #4a6673;
+      color: var(--dim);
     }
     .editor-area {
       display: flex;
@@ -187,18 +494,18 @@
       background: rgba(11, 17, 20, 0.6);
       border: 1px solid rgba(107, 142, 155, 0.15);
       padding: 10px 12px;
-      color: #bcccd6;
+      color: var(--ink);
       font-family: 'Crimson Text', serif;
       font-size: 15px;
       border-radius: 2px;
       outline: none;
     }
-    .editor-area input:focus { border-color: #ff3b7c; }
+    .editor-area input:focus { border-color: var(--pulse); }
     .editor-area textarea {
       background: rgba(11, 17, 20, 0.6);
       border: 1px solid rgba(107, 142, 155, 0.15);
       padding: 12px;
-      color: #bcccd6;
+      color: var(--ink);
       font-family: 'Crimson Text', serif;
       font-size: 14px;
       border-radius: 2px;
@@ -207,7 +514,7 @@
       resize: vertical;
       line-height: 1.6;
     }
-    .editor-area textarea:focus { border-color: #ff3b7c; }
+    .editor-area textarea:focus { border-color: var(--pulse); }
     .editor-actions {
       display: flex;
       gap: 12px;
@@ -220,16 +527,16 @@
       padding: 10px 24px;
       border: 1px solid rgba(107, 142, 155, 0.15);
       background: transparent;
-      color: #4a6673;
+      color: var(--dim);
       border-radius: 2px;
       cursor: pointer;
       transition: all 0.3s ease;
     }
-    .editor-actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
+    .editor-actions button:hover { border-color: var(--pulse); color: var(--pulse); }
     .editor-actions button.primary {
-      background: #ff3b7c;
-      color: #0b1114;
-      border-color: #ff3b7c;
+      background: var(--pulse);
+      color: var(--void);
+      border-color: var(--pulse);
     }
     .editor-actions button.primary:hover {
       background: #ff5c8f;
@@ -238,7 +545,7 @@
     .empty-state {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      color: #4a6673;
+      color: var(--dim);
       text-align: center;
       padding: 24px 0;
       font-size: 14px;
@@ -260,19 +567,19 @@
     .user-item .name {
       font-family: 'Crimson Text', serif;
       font-size: 13px;
-      color: #bcccd6;
+      color: var(--ink);
     }
     .user-item .role {
       font-family: 'Fira Code', monospace;
       font-size: 7px;
       letter-spacing: 1px;
-      color: #4a6673;
+      color: var(--dim);
     }
-    .user-item .role.sysadmin { color: #ff3b7c; }
+    .user-item .role.sysadmin { color: var(--pulse); }
     .user-item .actions button {
       background: none;
       border: 1px solid rgba(107, 142, 155, 0.1);
-      color: #4a6673;
+      color: var(--dim);
       padding: 4px 10px;
       font-family: 'Fira Code', monospace;
       font-size: 7px;
@@ -281,8 +588,8 @@
       transition: all 0.3s ease;
       border-radius: 2px;
     }
-    .user-item .actions button:hover { border-color: #ff3b7c; color: #ff3b7c; }
-    .user-item .actions button.grant:hover { border-color: #6b8e9b; color: #6b8e9b; }
+    .user-item .actions button:hover { border-color: var(--pulse); color: var(--pulse); }
+    .user-item .actions button.grant:hover { border-color: var(--steel); color: var(--steel); }
     
     .access-denied {
       text-align: center;
@@ -299,105 +606,352 @@
       font-family: 'Cinzel', serif;
       font-size: 18px;
       letter-spacing: 3px;
-      color: #6b8e9b;
+      color: var(--steel);
       margin-bottom: 8px;
     }
     .access-denied p {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 16px;
-      color: #4a6673;
+      color: var(--dim);
       margin-bottom: 20px;
     }
     .access-denied .panel-btn {
       display: inline-block;
     }
     .hidden { display: none; }
-    
+
+    @media (max-width: 1100px) {
+      .nav-links { gap: 18px; }
+      .nav-link { font-size: 10px; letter-spacing: 1.5px; }
+    }
+
+    @media (max-width: 900px) {
+      .page { margin-right: 0; }
+      .side-panel {
+        top: auto; bottom: 0; right: 0; left: 0;
+        height: auto; max-height: 82vh; width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--line);
+        border-radius: 16px 16px 0 0;
+        transform: translateY(105%);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+      }
+      .side-panel.open { transform: translateY(0); }
+      .panel-toggle { display: flex; }
+      .nav-links { display: none; }
+      .panel-backdrop {
+        display: block;
+        position: fixed; inset: 0;
+        z-index: 290;
+        background: rgba(4,6,7,0.6);
+        backdrop-filter: blur(2px);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.35s ease;
+      }
+      .panel-backdrop.open { opacity: 1; pointer-events: auto; }
+      .side-panel-inner { padding: 20px 18px 28px; }
+      .side-panel::before {
+        content: '';
+        display: block;
+        width: 40px; height: 4px;
+        border-radius: 4px;
+        background: var(--line);
+        margin: 0 auto 14px;
+      }
+    }
+
     @media (max-width: 768px) {
       .panel-grid { grid-template-columns: 1fr; }
       .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
       .panel-actions { justify-content: center; flex-wrap: wrap; }
-      body { padding: 16px; cursor: auto; }
+    }
+
+    @media (max-width: 640px) {
+      body { cursor: auto; }
+      #cursor { display: none !important; }
+      .site-nav { padding: 10px 14px; }
+      .nav-logo .word { font-size: 11px; letter-spacing: 2px; }
+      .nav-logo img { width: 25px; height: 25px; }
+      .panel-wrap { padding: 16px 16px 32px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .nebula, .thread { animation: none !important; }
     }
   </style>
 </head>
 <body>
+<div class="nebula"></div>
+<div class="vignette"></div>
 <div id="cursor"></div>
-<div class="panel-header">
-  <div class="panel-title">⌘ <span>Control</span> Panel</div>
-  <div class="panel-actions">
-    <a href="/articlespace" class="panel-btn">View Articles</a>
-    <a href="/initialization" class="panel-btn">Account</a>
-    <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+<div class="panel-backdrop" id="panel-backdrop"></div>
+
+<aside class="side-panel" id="side-panel">
+  <div class="side-panel-inner">
+    <a href="/initialization" class="side-account" id="side-account">
+      <span class="side-avatar-fallback" id="side-avatar-slot">?</span>
+      <div class="side-account-text">
+        <div class="side-account-cta" id="side-account-name">Sign In</div>
+        <div class="side-account-role" id="side-account-role" style="display:none;"></div>
+        <div class="side-account-bio" id="side-account-bio" style="display:none;"></div>
+      </div>
+    </a>
+
+    <div class="side-label">◈ Navigate</div>
+    <nav class="side-links">
+      <a href="/articlespace" class="side-link">
+        <span class="side-link-main">
+          <span class="side-link-title">Articlespace</span>
+          <span class="side-link-sub">writings from the network</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+      <a href="/initialization" class="side-link">
+        <span class="side-link-main">
+          <span class="side-link-title">Initialization</span>
+          <span class="side-link-sub">sign in / create access</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
+        <span class="side-link-main">
+          <span class="side-link-title">Profile Configuration</span>
+          <span class="side-link-sub">sign in required</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+      <a href="/control-panel" class="side-link current locked" data-gate="sysadmin" aria-disabled="true">
+        <span class="side-link-main">
+          <span class="side-link-title">Control Panel</span>
+          <span class="side-link-sub">sysadmin only</span>
+        </span>
+        <span class="side-link-arrow">→</span>
+      </a>
+    </nav>
+
+    <div class="side-foot">
+      <div class="thread"></div>
+      <div class="side-foot-sig" style="margin-top:12px;">sorasys.net</div>
+    </div>
   </div>
-</div>
+</aside>
 
-<!-- Access Denied Message (shown when not admin) -->
-<div id="access-denied" class="access-denied hidden">
-  <div class="icon">⛔</div>
-  <h2>Access Restricted</h2>
-  <p>This area requires sysadmin privileges. If you believe you should have access, please contact an administrator.</p>
-  <a href="/" class="panel-btn">↩ Return Home</a>
-</div>
+<div class="page">
 
-<!-- Main Panel Content -->
-<div id="panel-content">
-  <div class="panel-grid">
-    <!-- Editor Section -->
-    <div class="panel-section full">
-      <div class="section-title">✎ <span>Article</span> Editor</div>
-      <div class="editor-area">
-        <input type="text" id="article-title" placeholder="Article Title">
-        <textarea id="article-content" placeholder="Write your article here..."></textarea>
-        <div class="editor-actions">
-          <button id="publish-btn" class="primary">Publish</button>
-          <button id="cancel-edit-btn">Cancel</button>
+  <nav class="site-nav">
+    <a href="/" class="nav-logo">
+      <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
+      <span class="word"><span class="highlight">✦</span> SoraSys</span>
+    </a>
+    <div class="nav-links">
+      <a href="/articlespace" class="nav-link">Articlespace</a>
+      <a href="/initialization" class="nav-link">Initialization</a>
+      <a href="/profile-config" class="nav-link locked" data-gate="auth" aria-disabled="true">Profile Config</a>
+      <a href="/control-panel" class="nav-link current locked" data-gate="sysadmin" aria-disabled="true">Control Panel</a>
+    </div>
+    <button class="panel-toggle" id="panel-toggle" type="button" aria-label="Open menu">☰</button>
+  </nav>
+
+  <div class="panel-wrap">
+    <div class="panel-header">
+      <div class="panel-title">⌘ <span>Control</span> Panel</div>
+      <div class="panel-actions">
+        <a href="/articlespace" class="panel-btn">View Articles</a>
+        <a href="/initialization" class="panel-btn">Account</a>
+        <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Access Denied Message (shown when not admin) -->
+    <div id="access-denied" class="access-denied hidden">
+      <div class="icon">⛔</div>
+      <h2>Access Restricted</h2>
+      <p>This area requires sysadmin privileges. If you believe you should have access, please contact an administrator.</p>
+      <a href="/" class="panel-btn">↩ Return Home</a>
+    </div>
+
+    <!-- Main Panel Content -->
+    <div id="panel-content">
+      <div class="panel-grid">
+        <!-- Editor Section -->
+        <div class="panel-section full">
+          <div class="section-title">✎ <span>Article</span> Editor</div>
+          <div class="editor-area">
+            <input type="text" id="article-title" placeholder="Article Title">
+            <textarea id="article-content" placeholder="Write your article here..."></textarea>
+            <div class="editor-actions">
+              <button id="publish-btn" class="primary">Publish</button>
+              <button id="cancel-edit-btn">Cancel</button>
+            </div>
+            <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:var(--steel);min-height:20px;"></div>
+          </div>
         </div>
-        <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:#6b8e9b;min-height:20px;"></div>
-      </div>
-    </div>
 
-    <!-- Articles List -->
-    <div class="panel-section">
-      <div class="section-title">📄 <span>Your</span> Articles</div>
-      <div id="articles-list" class="article-list">
-        <div class="empty-state">loading articles...</div>
-      </div>
-    </div>
+        <!-- Articles List -->
+        <div class="panel-section">
+          <div class="section-title">📄 <span>Your</span> Articles</div>
+          <div id="articles-list" class="article-list">
+            <div class="empty-state">loading articles...</div>
+          </div>
+        </div>
 
-    <!-- User Management (sysadmin only) -->
-    <div class="panel-section" id="user-management">
-      <div class="section-title">👥 <span>User</span> Management</div>
-      <div id="users-list" class="user-list">
-        <div class="empty-state">loading users...</div>
+        <!-- User Management (sysadmin only) -->
+        <div class="panel-section" id="user-management">
+          <div class="section-title">👥 <span>User</span> Management</div>
+          <div id="users-list" class="user-list">
+            <div class="empty-state">loading users...</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
   (function() {
+    // ---------- custom cursor (desktop only) ----------
+    let cursor, bindHoverables;
     if (window.innerWidth > 640) {
-      const cursor = document.getElementById('cursor');
-      cursor.classList.add('active');
-      document.body.style.cursor = 'none';
-      let mx = -100, my = -100, cx = -100, cy = -100;
-      const update = () => {
-        cx += (mx - cx) * 0.2;
-        cy += (my - cy) * 0.2;
-        cursor.style.left = cx + 'px';
-        cursor.style.top = cy + 'px';
-        requestAnimationFrame(update);
-      };
-      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-      document.querySelectorAll('button, a, input, textarea').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-      });
-      update();
+      cursor = document.getElementById('cursor');
+      if (cursor) {
+        cursor.classList.add('active');
+        document.body.style.cursor = 'none';
+        let mx = -100, my = -100, cx = -100, cy = -100;
+        function updateCursor() {
+          cx += (mx - cx) * 0.2;
+          cy += (my - cy) * 0.2;
+          cursor.style.left = cx + 'px';
+          cursor.style.top = cy + 'px';
+          requestAnimationFrame(updateCursor);
+        }
+        document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+        document.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        document.addEventListener('mouseenter', () => cursor.classList.add('active'));
+        bindHoverables = function() {
+          document.querySelectorAll('a, button, input, textarea, .side-link, .side-account, .panel-toggle')
+            .forEach(el => {
+              el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+              el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+            });
+        };
+        bindHoverables();
+        updateCursor();
+      }
+    } else {
+      document.body.style.cursor = 'auto';
+    }
+    window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
+
+    // ---------- side panel (mobile slide-up) ----------
+    (function() {
+      const panel = document.getElementById('side-panel');
+      const toggle = document.getElementById('panel-toggle');
+      const backdrop = document.getElementById('panel-backdrop');
+      if (!panel || !toggle || !backdrop) return;
+      function open() { panel.classList.add('open'); backdrop.classList.add('open'); }
+      function close() { panel.classList.remove('open'); backdrop.classList.remove('open'); }
+      toggle.addEventListener('click', () => panel.classList.contains('open') ? close() : open());
+      backdrop.addEventListener('click', close);
+    })();
+
+    // ---------- account area: sidebar + top bar auth state ----------
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
+    function unlockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.remove('locked');
+        el.removeAttribute('aria-disabled');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    async function initAuthNav() {
+      const accountLink = document.getElementById('side-account');
+      const avatarSlot = document.getElementById('side-avatar-slot');
+      const nameSlot = document.getElementById('side-account-name');
+      const roleSlot = document.getElementById('side-account-role');
+      const bioSlot = document.getElementById('side-account-bio');
+
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+
+        if (data.authenticated && data.user) {
+          accountLink.setAttribute('href', '/profile-config');
+          accountLink.classList.add('signed-in');
+          nameSlot.textContent = data.user.username;
+          nameSlot.classList.remove('side-account-cta');
+          nameSlot.classList.add('side-account-username');
+
+          if (data.user.role) {
+            roleSlot.style.display = 'block';
+            roleSlot.textContent = data.user.role;
+          }
+
+          unlockGate('auth', 'avatar, bio, presence');
+
+          let avatarUrl = '';
+          let bio = '';
+          try {
+            const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
+            if (profRes.ok) {
+              const prof = await profRes.json();
+              avatarUrl = (prof.avatar_url || '').trim();
+              bio = (prof.bio || '').trim();
+            }
+          } catch (e) { /* fall back to initials, no bio */ }
+
+          if (bio && bioSlot) {
+            bioSlot.style.display = 'block';
+            bioSlot.textContent = bio;
+          }
+
+          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+          if (avatarUrl) {
+            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
+              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+            '</span>';
+          } else {
+            avatarSlot.textContent = initial;
+          }
+
+          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        } else {
+          accountLink.setAttribute('href', '/initialization');
+          accountLink.classList.remove('signed-in');
+          nameSlot.textContent = 'Sign In';
+        }
+      } catch (err) {
+        console.error('Auth nav error:', err);
+        accountLink.setAttribute('href', '/initialization');
+        nameSlot.textContent = 'Sign In';
+      }
+      if (bindHoverables) bindHoverables();
+    }
+
+    document.querySelectorAll('.locked').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        if (this.classList.contains('locked')) e.preventDefault();
+      });
+    });
+
+    initAuthNav();
+  })();
+</script>
+
+<script>
+  (function() {
     const API = {
       auth: {
         signout: () => fetch('/api/auth/signout', { method: 'POST' })
@@ -491,7 +1045,7 @@
             
             try {
               msg.textContent = 'Loading article...';
-              msg.style.color = '#6b8e9b';
+              msg.style.color = 'var(--steel)';
               
               const article = await API.articles.get(id);
               document.getElementById('article-title').value = article.title;
@@ -500,11 +1054,11 @@
               document.getElementById('publish-btn').textContent = 'Update';
               
               msg.textContent = 'Editing: ' + article.title;
-              msg.style.color = '#6b8e9b';
+              msg.style.color = 'var(--steel)';
             } catch (err) {
               console.error('Edit error:', err);
               msg.textContent = 'Failed to load article for editing.';
-              msg.style.color = '#ff3b7c';
+              msg.style.color = 'var(--pulse)';
             }
           });
         });
@@ -543,6 +1097,8 @@
             }
           });
         });
+
+        if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
         console.error('Failed to load articles:', err);
         document.getElementById('articles-list').innerHTML = '<div class="empty-state">failed to load articles</div>';
@@ -582,6 +1138,8 @@
             }
           });
         });
+
+        if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
         console.error('Failed to load users:', err);
         document.getElementById('users-list').innerHTML = '<div class="empty-state">failed to load users</div>';
@@ -603,7 +1161,7 @@
       
       if (!title || !content) {
         msg.textContent = 'Title and content are required.';
-        msg.style.color = '#ff3b7c';
+        msg.style.color = 'var(--pulse)';
         return;
       }
       
@@ -611,13 +1169,13 @@
         if (editingArticleId) {
           await API.articles.update(editingArticleId, { title, content });
           msg.textContent = 'Article updated!';
-          msg.style.color = '#6b8e9b';
+          msg.style.color = 'var(--steel)';
           editingArticleId = null;
           document.getElementById('publish-btn').textContent = 'Publish';
         } else {
           await API.articles.create({ title, content });
           msg.textContent = 'Article published!';
-          msg.style.color = '#6b8e9b';
+          msg.style.color = 'var(--steel)';
         }
         document.getElementById('article-title').value = '';
         document.getElementById('article-content').value = '';
@@ -625,7 +1183,7 @@
         setTimeout(() => { msg.textContent = ''; }, 3000);
       } catch (err) {
         msg.textContent = 'Failed to save article: ' + err.message;
-        msg.style.color = '#ff3b7c';
+        msg.style.color = 'var(--pulse)';
         console.error('Save article error:', err);
       }
     });
