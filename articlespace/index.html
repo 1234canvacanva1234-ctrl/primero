@@ -419,11 +419,15 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.1), 0 2px 10px rgba(0, 0, 0, 0.35);
     }
-    .article-card .card-inner { padding: 16px 20px; display: flex; align-items: stretch; gap: 0; }
+    /* align-items: flex-start (not stretch) so the preview column and
+       the author subcard each size to their own content — neither is
+       forced to grow to match the other's height, which is what was
+       leaving blank space beneath a short column. */
+    .article-card .card-inner { padding: 16px 20px; display: flex; align-items: flex-start; gap: 0; }
     .article-card .card-main { flex: 1 1 auto; min-width: 0; }
     .article-card.has-author-panel .card-main { padding-right: 18px; }
 
-    .title-row { display: flex; align-items: center; gap: 8px; }
+    .title-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; row-gap: 4px; }
     .article-card .title {
       font-family: 'Cinzel', serif;
       font-size: 16px;
@@ -447,19 +451,23 @@
       transform: translateY(1px);
       transition: opacity 0.25s ease, color 0.25s ease;
       flex-shrink: 0;
+      margin-left: auto;
     }
     .article-card:hover .copy-link-btn, .article-card.expanded .copy-link-btn { opacity: 0.55; }
     .copy-link-btn:hover { opacity: 1 !important; color: var(--pulse); }
     .copy-link-btn.copied { opacity: 1 !important; color: #4ade80; }
     .copy-link-btn svg { width: 13px; height: 13px; display: block; }
 
+    /* Meta now lives inline beside the title (see title-row) instead
+       of on its own line, so the block spacing that used to separate
+       title / meta / content collapses down to a single small gap
+       before the content itself. */
     .article-card .meta {
       font-family: 'Fira Code', monospace;
-      font-size: 8px;
-      letter-spacing: 1.5px;
+      font-size: 10.5px;
+      letter-spacing: 1.25px;
       color: var(--dim);
-      margin-top: 4px;
-      margin-bottom: 10px;
+      white-space: nowrap;
       transition: color 0.3s ease;
     }
     .article-card.expanded .meta { color: rgba(255, 59, 124, 0.65); }
@@ -471,11 +479,15 @@
       color: var(--ink);
       white-space: pre-wrap;
       word-wrap: break-word;
+      margin-top: 8px;
     }
     /* Preview state clamps to however many lines the card can hold
-       elegantly (this scales with card width / viewport instead of
-       a fixed character count) and lets the browser supply the
-       ellipsis on the last visible line. */
+       elegantly. The 5-line value here is only the fallback for
+       cards with no author subcard; when a subcard is present, JS
+       (syncPreviewHeights) raises this per-card to match the
+       subcard's own natural height, so the preview reads as far as
+       it elegantly can instead of stopping short with blank space
+       beneath it. */
     .article-card .content.preview {
       display: -webkit-box;
       -webkit-box-orient: vertical;
@@ -621,6 +633,7 @@
       .articles-container { padding: 0 16px 32px; }
       .article-card .card-inner { padding: 14px 16px; flex-direction: column; }
       .article-card .title { font-size: 15px; }
+      .article-card .meta { font-size: 9px; white-space: normal; }
       .copy-link-btn { opacity: 0.55; }
       .article-card.has-author-panel .card-main { padding-right: 0; }
       .author-card {
@@ -793,6 +806,27 @@
       return div.innerHTML;
     }
 
+    // Builds the "〔 Communicated via @user ❖ SoraSys Articlespace
+    // MM.DD.YYYY CE 〕" meta phrase shown beside the title, in place
+    // of the old "date · author" line.
+    function formatMeta(article, author) {
+      const d = new Date(article.created_at);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return '〔 Communicated via @' + escapeHtml(author) + ' ❖ SoraSys Articlespace ' +
+        mm + '.' + dd + '.' + yyyy + ' CE 〕';
+    }
+
+    function debounce(fn, wait) {
+      let t;
+      return function() {
+        clearTimeout(t);
+        const args = arguments;
+        t = setTimeout(() => fn.apply(null, args), wait);
+      };
+    }
+
     function unlockGate(gate, subText) {
       document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
         el.classList.remove('locked');
@@ -943,6 +977,30 @@
       '</div>';
     }
 
+    // Matches each preview column's clamp to the natural height of its
+    // author subcard (when one exists), so the excerpt reads as far as
+    // it elegantly can instead of stopping at a fixed line count while
+    // the subcard beside it is taller — and so neither column carries
+    // dead blank space now that align-items is flex-start.
+    function syncPreviewHeights() {
+      if (window.innerWidth <= 640) return; // subcard sits below, stacked — no matching needed
+      document.querySelectorAll('.article-card.has-author-panel').forEach(function(card) {
+        const contentDiv = card.querySelector('.content');
+        const authorCard = card.querySelector('.author-card');
+        if (!contentDiv || !authorCard) return;
+        if (contentDiv.dataset.expanded === '1') return; // leave expanded cards alone
+
+        const authorHeight = authorCard.getBoundingClientRect().height;
+        const cs = window.getComputedStyle(contentDiv);
+        let lineHeight = parseFloat(cs.lineHeight);
+        if (!lineHeight || isNaN(lineHeight)) {
+          lineHeight = (parseFloat(cs.fontSize) || 15) * 1.65;
+        }
+        const lines = Math.max(4, Math.round(authorHeight / lineHeight));
+        contentDiv.style.webkitLineClamp = String(lines);
+      });
+    }
+
     // ---------- list view ----------
     function renderList() {
       const container = document.getElementById('articles-container');
@@ -955,18 +1013,18 @@
         const content = a.content || '';
         const title = a.title || 'Untitled';
         const author = a.author || 'Anonymous';
-        const date = new Date(a.created_at).toLocaleDateString();
         const slug = currentSlugs[index];
         const showAuthorPanel = hasAuthorPanel(author);
+        const metaText = formatMeta(a, author);
 
         return '<div class="article-card' + (showAuthorPanel ? ' has-author-panel' : '') + '" data-article-index="' + index + '" data-share="' + slug + '">' +
           '<div class="card-inner">' +
             '<div class="card-main">' +
               '<div class="title-row">' +
                 '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
+                '<span class="meta">' + metaText + '</span>' +
                 '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
               '</div>' +
-              '<div class="meta">' + date + ' · ' + escapeHtml(author) + '</div>' +
               '<div class="content preview" data-expanded="0">' + escapeHtml(content) + '</div>' +
             '</div>' +
             (showAuthorPanel ? authorCardMarkup(author) : '') +
@@ -974,6 +1032,7 @@
         '</div>';
       }).join('');
 
+      syncPreviewHeights();
 
       document.querySelectorAll('.article-card').forEach(card => {
         const contentDiv = card.querySelector('.content');
@@ -1167,6 +1226,9 @@
         resolveHash();
       }
     });
+    window.addEventListener('resize', debounce(function() {
+      syncPreviewHeights();
+    }, 150));
   })();
 </script>
 </body>
