@@ -25,11 +25,16 @@ export async function onRequest(context) {
   // ============================================
 
   // ============================================
-  // IMPORTANT: ONLY handle /api/* routes
-  // Everything else passes through to static files
+  // ROUTING
+  // /api/*        -> JSON API (unchanged, see below)
+  // everything else -> if it's an HTML navigation, resolve auth
+  //                    server-side and inject the sidebar state
+  //                    before the response ever reaches the browser.
+  //                    Non-HTML static assets (css/js/images/fonts)
+  //                    pass straight through untouched, no DB hit.
   // ============================================
   if (!path.startsWith('/api/')) {
-    return next();
+    return handlePageRequest(context);
   }
 
   console.log('API Request:', path, request.method);
@@ -418,7 +423,165 @@ export async function onRequest(context) {
 }
 
 // ============================================
-// Helper function
+// PAGE (non-/api) REQUEST HANDLING
+//
+// Goal: for HTML navigations only, resolve the session server-side
+// and rewrite the sidebar's auth block *before* the response leaves
+// the edge, so the browser never paints "Sign In" for a signed-in
+// user and then swaps it a moment later.
+//
+// Uses HTMLRewriter (streaming, no full-buffer needed) instead of a
+// string replace, so it works regardless of exact file formatting
+// and doesn't require loading the whole HTML doc into memory.
+//
+// ASSUMPTION (please confirm / adjust if wrong): the sidebar markup
+// uses these ids, matching what you showed earlier:
+//   #side-avatar-slot   -> <img>  (src = avatar)
+//   #side-account-name  -> text   ("Sign In" or username)
+//   #side-account-role  -> text, currently hidden via inline style
+//   #side-account-bio   -> text, currently hidden via inline style
+//   #side-account        -> the <a href="/initialization"> wrapper
+// If your real ids/classes differ, the rewriter below just won't
+// match anything and the page will silently fall back to the
+// client-side JS swap (i.e. same as before, not broken) — so it's
+// safe to test, but send me the real file if it doesn't take effect
+// and I'll fix the selectors.
+// ============================================
+
+const FALLBACK_AVATAR = 'https://i.imgur.com/NGyCK6G.png';
+
+async function handlePageRequest(context) {
+  const { request, env, next } = context;
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // Only bother for likely HTML navigations: GET/HEAD requests with
+  // no file extension (clean routes like /articlespace) or an
+  // explicit .html extension. Everything else (styles, scripts,
+  // images, fonts, json, etc.) passes straight through with zero
+  // extra latency and zero DB hit.
+  const isLikelyHtml =
+    (request.method === 'GET' || request.method === 'HEAD') &&
+    (path === '/' || /\.html$/i.test(path) || !/\.[a-zA-Z0-9]+$/.test(path));
+
+  if (!isLikelyHtml) {
+    return next();
+  }
+
+  const response = await next();
+
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!contentType.includes('text/html')) {
+    return response;
+  }
+
+  let user = null;
+  try {
+    user = await getSessionUserFull(request, env);
+  } catch (err) {
+    // If the session/DB lookup fails for any reason, fail open to
+    // the default signed-out markup already baked into the static
+    // file — never block or break page delivery over an auth check.
+    console.log('Session lookup failed for page request:', err.message);
+    return response;
+  }
+
+  // No session -> the static HTML's default "Sign In" state is
+  // already correct. Nothing to rewrite.
+  if (!user) {
+    return response;
+  }
+
+  const avatarUrl = user.avatar_url && user.avatar_url.trim()
+    ? user.avatar_url
+    : FALLBACK_AVATAR;
+  const roleLabel = user.role === 'sysadmin' ? 'sysadmin' : 'member';
+  const bioText = user.bio && user.bio.trim() ? user.bio : '';
+
+  const rewriter = new HTMLRewriter()
+    // Swap the fallback/placeholder avatar for the real one.
+    .on('#side-avatar-slot', {
+      element(el) {
+        if (el.tagName === 'img') {
+          el.setAttribute('src', avatarUrl);
+          el.setAttribute('alt', user.username);
+        } else {
+          // In case the static markup still uses a <span> fallback
+          // instead of an <img>, replace it with a real image so
+          // the signed-in avatar renders without a client-side swap.
+          el.replace(
+            `<img src="${escapeAttr(avatarUrl)}" alt="${escapeAttr(user.username)}" class="side-avatar side-avatar-fallback" id="side-avatar-slot" />`,
+            { html: true }
+          );
+        }
+      }
+    })
+    // Username / CTA line
+    .on('#side-account-name', {
+      element(el) {
+        el.setInnerContent(user.username, { html: false });
+      }
+    })
+    // Role line — unhide and fill in
+    .on('#side-account-role', {
+      element(el) {
+        el.removeAttribute('style');
+        el.setInnerContent(roleLabel, { html: false });
+      }
+    })
+    // Bio line — unhide and fill in (only if there is a bio; otherwise
+    // leave it hidden so an empty bio doesn't show a blank line)
+    .on('#side-account-bio', {
+      element(el) {
+        if (bioText) {
+          el.removeAttribute('style');
+          el.setInnerContent(bioText, { html: false });
+        }
+      }
+    })
+    // Point the whole account block at the profile page instead of
+    // the sign-in page, since the user is already signed in.
+    .on('#side-account', {
+      element(el) {
+        el.setAttribute('href', '/profile-config');
+      }
+    })
+    // Unlock the "Profile Configuration" nav link for any signed-in user.
+    .on('a[data-gate="auth"]', {
+      element(el) {
+        el.removeAttribute('aria-disabled');
+        el.attributes.forEach(([name]) => {
+          if (name === 'class') {
+            const cls = el.getAttribute('class') || '';
+            el.setAttribute('class', cls.replace(/\blocked\b/g, '').trim());
+          }
+        });
+      }
+    })
+    // Unlock the sysadmin-only "Control Panel" link only for sysadmins.
+    .on('a[data-gate="sysadmin"]', {
+      element(el) {
+        if (user.role === 'sysadmin') {
+          el.removeAttribute('aria-disabled');
+          const cls = el.getAttribute('class') || '';
+          el.setAttribute('class', cls.replace(/\blocked\b/g, '').trim());
+        }
+      }
+    });
+
+  return rewriter.transform(response);
+}
+
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ============================================
+// Helper functions
 // ============================================
 async function getSessionUser(request, env) {
   try {
@@ -435,4 +598,20 @@ async function getSessionUser(request, env) {
   } catch (err) {
     return null;
   }
+}
+
+// Same as getSessionUser, but also pulls avatar_url/bio, needed for
+// the server-side sidebar injection in handlePageRequest.
+async function getSessionUserFull(request, env) {
+  const cookie = request.headers.get('Cookie') || '';
+  const sessionId = cookie.match(/session=([^;]+)/)?.[1];
+
+  if (!sessionId) return null;
+
+  const session = await env.DB.prepare('SELECT * FROM sessions WHERE session_id = ?').bind(sessionId).first();
+  if (!session || new Date(session.expires_at) < new Date()) return null;
+
+  return await env.DB.prepare(
+    'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
+  ).bind(session.username).first();
 }
