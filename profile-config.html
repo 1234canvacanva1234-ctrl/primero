@@ -728,9 +728,7 @@
     <div class="panel-header">
       <div class="panel-title">◈ <span>Profile</span> Configuration</div>
       <div class="panel-actions">
-        <a href="/control-panel" class="panel-btn">Control Panel</a>
-        <a href="/articlespace" class="panel-btn">Articles</a>
-        <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+        <button id="logout-btn" class="panel-btn">✖ Disconnect</button>
       </div>
     </div>
 
@@ -762,20 +760,20 @@
           <div class="section-title">✎ <span>Edit</span> Details</div>
           <div class="editor-area">
             <div class="form-group">
-              <label>Profile Image URL</label>
+              <label>picture-url</label>
               <input type="url" id="avatar-url" placeholder="https://example.com/your-image.jpg">
-              <div class="hint">Paste a direct link to an image. Leave blank to use the default icon.</div>
+              <div class="hint">paste one simply : a profile picture provides visual data essential to communicating your identity</div>
             </div>
 
             <div class="form-group">
               <label>Personal Description</label>
-              <textarea id="bio" maxlength="1000" placeholder="Tell the network a little about yourself..."></textarea>
+              <textarea id="bio" maxlength="1000" placeholder="an exhaustive or concise description you should enter : preferably the former, but it's your decision"></textarea>
               <div class="char-count" id="bio-count">0 / 1000</div>
             </div>
 
             <div class="editor-actions">
-              <button id="save-btn" class="primary">Save Profile</button>
-              <button id="reset-btn">Reset</button>
+              <button id="save-btn" class="primary">Execute</button>
+              <button id="reset-btn">Reverse</button>
             </div>
             <div id="editor-message" class="message"></div>
           </div>
