@@ -917,12 +917,12 @@
     <a href="/initialization" class="side-account" id="side-account">
       <img
         src="https://i.imgur.com/NGyCK6G.png"
-        alt="Properly Initialize"
+        alt="Anonymous"
         class="side-avatar side-avatar-fallback"
         id="side-avatar-slot"
       />
       <div class="side-account-text">
-        <div class="side-account-cta" id="side-account-name">Properly Initialize</div>
+        <div class="side-account-cta" id="side-account-name">Anonymous</div>
         <div class="side-account-role" id="side-account-role" style="display:none;"></div>
         <div class="side-account-bio" id="side-account-bio" style="display:none;"></div>
       </div>
@@ -1343,12 +1343,12 @@
         } else {
           accountLink.setAttribute('href', '/initialization');
           accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Properly Initialize';
+          nameSlot.textContent = 'Anonymous';
         }
       } catch (err) {
         console.error('Auth nav error:', err);
         accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Properly Initialize';
+        nameSlot.textContent = 'Anonymous';
       }
       window.dispatchEvent(new Event('sorasys:nav-auth-ready'));
     }
