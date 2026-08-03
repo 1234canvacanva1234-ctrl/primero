@@ -428,7 +428,7 @@ export async function onRequest(context) {
 // the profile editor just falls back to these defaults rather than
 // being "stuck" on them.
 const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
-const DEFAULT_BIO = 'i'm an anonymous private bitch and consequently refuse to provide a simple description.';
+const DEFAULT_BIO = "i'm an anonymous private bitch and consequently have not provided a description";
 
 function withProfileDefaults(profile) {
   if (!profile) return profile;
