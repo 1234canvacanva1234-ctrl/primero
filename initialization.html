@@ -753,12 +753,12 @@
     <a href="/initialization" class="side-account" id="side-account">
       <img
         src="https://i.imgur.com/NGyCK6G.png"
-        alt="Initialize"
+        alt="Anonymous"
         class="side-avatar side-avatar-fallback"
         id="side-avatar-slot"
       />
       <div class="side-account-text">
-        <div class="side-account-cta" id="side-account-name">Sign In</div>
+        <div class="side-account-cta" id="side-account-name">Anonymous</div>
         <div class="side-account-role" id="side-account-role" style="display:none;"></div>
         <div class="side-account-bio" id="side-account-bio" style="display:none;"></div>
       </div>
@@ -775,21 +775,21 @@
       <a href="/initialization" class="side-link current">
         <span class="side-link-main">
           <span class="side-link-title">Initialization</span>
-          <span class="side-link-sub">sign in / create access</span>
+          <span class="side-link-sub">acquire access + personalize</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
       <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Profile Configuration</span>
-          <span class="side-link-sub">sign in required</span>
+          <span class="side-link-sub">account session required</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
       <a href="/control-panel" class="side-link locked" data-gate="sysadmin" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Control Panel</span>
-          <span class="side-link-sub">sysadmin only</span>
+          <span class="side-link-sub">designated for sysadmin</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
@@ -1022,12 +1022,12 @@
         } else {
           accountLink.setAttribute('href', '/initialization');
           accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Sign In';
+          nameSlot.textContent = 'Anonymous';
         }
       } catch (err) {
         console.error('Auth nav error:', err);
         accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Sign In';
+        nameSlot.textContent = 'Anonymous';
       }
       if (bindHoverables) bindHoverables();
     }
