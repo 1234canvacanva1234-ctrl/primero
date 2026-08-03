@@ -1343,12 +1343,12 @@
         } else {
           accountLink.setAttribute('href', '/initialization');
           accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Sign In';
+          nameSlot.textContent = 'Properly Initialize';
         }
       } catch (err) {
         console.error('Auth nav error:', err);
         accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Sign In';
+        nameSlot.textContent = 'Properly Initialize';
       }
       window.dispatchEvent(new Event('sorasys:nav-auth-ready'));
     }
