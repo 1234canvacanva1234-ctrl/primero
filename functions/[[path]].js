@@ -425,159 +425,65 @@ export async function onRequest(context) {
 // ============================================
 // PAGE (non-/api) REQUEST HANDLING
 //
-// Goal: for HTML navigations only, resolve the session server-side
-// and rewrite the sidebar's auth block *before* the response leaves
-// the edge, so the browser never paints "Sign In" for a signed-in
-// user and then swaps it a moment later.
+// Deliberately minimal. The previous version tried to rewrite too
+// much (nav-link unlocking, attribute iteration, element replacement)
+// and a bug in that extra logic corrupted the whole page. This
+// version only ever touches two things — the avatar src and the
+// name text — and every step is wrapped so that any failure at all
+// (bad selector match, DB error, HTMLRewriter throwing) just returns
+// the original, untouched static page instead of a broken one.
 //
-// Uses HTMLRewriter (streaming, no full-buffer needed) instead of a
-// string replace, so it works regardless of exact file formatting
-// and doesn't require loading the whole HTML doc into memory.
-//
-// ASSUMPTION (please confirm / adjust if wrong): the sidebar markup
-// uses these ids, matching what you showed earlier:
-//   #side-avatar-slot   -> <img>  (src = avatar)
-//   #side-account-name  -> text   ("Sign In" or username)
-//   #side-account-role  -> text, currently hidden via inline style
-//   #side-account-bio   -> text, currently hidden via inline style
-//   #side-account        -> the <a href="/initialization"> wrapper
-// If your real ids/classes differ, the rewriter below just won't
-// match anything and the page will silently fall back to the
-// client-side JS swap (i.e. same as before, not broken) — so it's
-// safe to test, but send me the real file if it doesn't take effect
-// and I'll fix the selectors.
+// ASSUMPTION: sidebar markup has id="side-avatar-slot" (an <img>)
+// and id="side-account-name" (text). If those ids don't exist in
+// your actual HTML, this simply does nothing — page renders exactly
+// as the static file defines it, same as before any of this.
 // ============================================
-
-const FALLBACK_AVATAR = 'https://i.imgur.com/NGyCK6G.png';
 
 async function handlePageRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // Only bother for likely HTML navigations: GET/HEAD requests with
-  // no file extension (clean routes like /articlespace) or an
-  // explicit .html extension. Everything else (styles, scripts,
-  // images, fonts, json, etc.) passes straight through with zero
-  // extra latency and zero DB hit.
-  const isLikelyHtml =
-    (request.method === 'GET' || request.method === 'HEAD') &&
-    (path === '/' || /\.html$/i.test(path) || !/\.[a-zA-Z0-9]+$/.test(path));
-
-  if (!isLikelyHtml) {
-    return next();
-  }
-
   const response = await next();
 
+  // Only ever attempt this for actual HTML documents.
   const contentType = response.headers.get('Content-Type') || '';
   if (!contentType.includes('text/html')) {
     return response;
   }
 
-  let user = null;
   try {
-    user = await getSessionUserFull(request, env);
-  } catch (err) {
-    // If the session/DB lookup fails for any reason, fail open to
-    // the default signed-out markup already baked into the static
-    // file — never block or break page delivery over an auth check.
-    console.log('Session lookup failed for page request:', err.message);
-    return response;
-  }
+    const user = await getSessionUserFull(request, env);
+    if (!user) {
+      return response;
+    }
 
-  // No session -> the static HTML's default "Sign In" state is
-  // already correct. Nothing to rewrite.
-  if (!user) {
-    return response;
-  }
+    const avatarUrl = (user.avatar_url && user.avatar_url.trim())
+      ? user.avatar_url
+      : 'https://i.imgur.com/NGyCK6G.png';
 
-  const avatarUrl = user.avatar_url && user.avatar_url.trim()
-    ? user.avatar_url
-    : FALLBACK_AVATAR;
-  const roleLabel = user.role === 'sysadmin' ? 'sysadmin' : 'member';
-  const bioText = user.bio && user.bio.trim() ? user.bio : '';
-
-  const rewriter = new HTMLRewriter()
-    // Swap the fallback/placeholder avatar for the real one.
-    .on('#side-avatar-slot', {
-      element(el) {
-        if (el.tagName === 'img') {
-          el.setAttribute('src', avatarUrl);
-          el.setAttribute('alt', user.username);
-        } else {
-          // In case the static markup still uses a <span> fallback
-          // instead of an <img>, replace it with a real image so
-          // the signed-in avatar renders without a client-side swap.
-          el.replace(
-            `<img src="${escapeAttr(avatarUrl)}" alt="${escapeAttr(user.username)}" class="side-avatar side-avatar-fallback" id="side-avatar-slot" />`,
-            { html: true }
-          );
-        }
-      }
-    })
-    // Username / CTA line
-    .on('#side-account-name', {
-      element(el) {
-        el.setInnerContent(user.username, { html: false });
-      }
-    })
-    // Role line — unhide and fill in
-    .on('#side-account-role', {
-      element(el) {
-        el.removeAttribute('style');
-        el.setInnerContent(roleLabel, { html: false });
-      }
-    })
-    // Bio line — unhide and fill in (only if there is a bio; otherwise
-    // leave it hidden so an empty bio doesn't show a blank line)
-    .on('#side-account-bio', {
-      element(el) {
-        if (bioText) {
-          el.removeAttribute('style');
-          el.setInnerContent(bioText, { html: false });
-        }
-      }
-    })
-    // Point the whole account block at the profile page instead of
-    // the sign-in page, since the user is already signed in.
-    .on('#side-account', {
-      element(el) {
-        el.setAttribute('href', '/profile-config');
-      }
-    })
-    // Unlock the "Profile Configuration" nav link for any signed-in user.
-    .on('a[data-gate="auth"]', {
-      element(el) {
-        el.removeAttribute('aria-disabled');
-        el.attributes.forEach(([name]) => {
-          if (name === 'class') {
-            const cls = el.getAttribute('class') || '';
-            el.setAttribute('class', cls.replace(/\blocked\b/g, '').trim());
+    const rewriter = new HTMLRewriter()
+      .on('#side-avatar-slot', {
+        element(el) {
+          if (el.tagName === 'img') {
+            el.setAttribute('src', avatarUrl);
           }
-        });
-      }
-    })
-    // Unlock the sysadmin-only "Control Panel" link only for sysadmins.
-    .on('a[data-gate="sysadmin"]', {
-      element(el) {
-        if (user.role === 'sysadmin') {
-          el.removeAttribute('aria-disabled');
-          const cls = el.getAttribute('class') || '';
-          el.setAttribute('class', cls.replace(/\blocked\b/g, '').trim());
         }
-      }
-    });
+      })
+      .on('#side-account-name', {
+        element(el) {
+          el.setInnerContent(user.username);
+        }
+      });
 
-  return rewriter.transform(response);
-}
+    return rewriter.transform(response);
 
-function escapeAttr(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  } catch (err) {
+    // Any failure at all (DB error, bad selector, etc.) -> serve the
+    // original static page untouched. Never let this break a page load.
+    console.log('Sidebar injection skipped:', err.message);
+    return response;
+  }
 }
 
 // ============================================
