@@ -153,7 +153,7 @@ export async function onRequest(context) {
       // NOTE: now also returns avatar_url / bio so any page (nav avatars, etc.)
       // can use them straight off the status check without a second request.
       const user = await env.DB.prepare('SELECT username, role, avatar_url, bio FROM users WHERE username = ?').bind(session.username).first();
-      return new Response(JSON.stringify({ authenticated: true, user }), { headers });
+      return new Response(JSON.stringify({ authenticated: true, user: withProfileDefaults(user) }), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ authenticated: false }), { headers });
@@ -194,7 +194,7 @@ export async function onRequest(context) {
         'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
       ).bind(user.username).first();
 
-      return new Response(JSON.stringify(profile), { headers });
+      return new Response(JSON.stringify(withProfileDefaults(profile)), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -229,7 +229,10 @@ export async function onRequest(context) {
         'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
       ).bind(avatar_url, bio, user.username).run();
 
-      return new Response(JSON.stringify({ success: true, avatar_url, bio }), { headers });
+      // NOTE: response reflects defaults too, in case the user just cleared
+      // their avatar/bio back to empty (PUT stores the true empty value in
+      // the DB — we only ever apply the fallback at read/render time).
+      return new Response(JSON.stringify(withProfileDefaults({ success: true, avatar_url, bio })), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -253,7 +256,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
       }
 
-      return new Response(JSON.stringify(profile), { headers });
+      return new Response(JSON.stringify(withProfileDefaults(profile)), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -415,6 +418,25 @@ export async function onRequest(context) {
     path: path,
     method: request.method
   }), { status: 404, headers });
+}
+
+// ============================================
+// Profile defaults
+// ============================================
+// Applied at read/render time only — the DB keeps storing whatever the
+// user actually set (including empty string), so clearing a field in
+// the profile editor just falls back to these defaults rather than
+// being "stuck" on them.
+const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
+const DEFAULT_BIO = 'i'm an anonymous private bitch and consequently refuse to provide a simple description.';
+
+function withProfileDefaults(profile) {
+  if (!profile) return profile;
+  return {
+    ...profile,
+    avatar_url: profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url : DEFAULT_AVATAR_URL,
+    bio: profile.bio && profile.bio.trim() ? profile.bio : DEFAULT_BIO
+  };
 }
 
 // ============================================
