@@ -314,6 +314,7 @@
     }
     .side-link:hover::before { transform: translateX(0); }
     .side-link:hover { border-color: var(--pulse); transform: translateX(-3px); }
+    .side-link.current { border-color: rgba(255, 59, 124, 0.35); background: rgba(255, 59, 124, 0.06); }
     .side-link-title {
       font-family: 'Cinzel', serif;
       font-size: 12px;
@@ -666,7 +667,7 @@
 
     <div class="side-label">◈ Navigate</div>
     <nav class="side-links">
-      <a href="/articlespace" class="side-link">
+      <a href="/articlespace" class="side-link current">
         <span class="side-link-main">
           <span class="side-link-title">Articlespace</span>
           <span class="side-link-sub">writings from the network</span>
