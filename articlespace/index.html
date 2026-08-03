@@ -26,6 +26,13 @@
       --pulse: #ff3b7c;
       --pulse-soft: #ff9bc0;
     }
+    /* Nav chrome (top bar + sidebar) borrows the home page's exact
+       tones — scoped so the rest of the page (cards, background)
+       keeps its own palette. */
+    .site-nav, .side-panel {
+      --steel: #c2beb4;
+      --line: rgba(162, 160, 152, 0.14);
+    }
     body {
       background: var(--void);
       color: var(--ink);
@@ -127,8 +134,10 @@
       text-transform: uppercase;
       color: var(--steel);
       transition: color 0.3s ease;
+      display: inline-block;
+      margin-right: -3px;
     }
-    .nav-logo .word span { color: var(--pulse); }
+    .nav-logo .word .highlight { color: var(--pulse); }
     .nav-logo:hover .word { color: var(--ink); }
 
     .nav-links {
@@ -657,10 +666,10 @@
 
     <div class="side-label">◈ Navigate</div>
     <nav class="side-links">
-      <a href="/" class="side-link">
+      <a href="/articlespace" class="side-link">
         <span class="side-link-main">
-          <span class="side-link-title">Home</span>
-          <span class="side-link-sub">back to the network</span>
+          <span class="side-link-title">Articlespace</span>
+          <span class="side-link-sub">writings from the network</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
@@ -676,14 +685,14 @@
           <span class="side-link-title">Profile Configuration</span>
           <span class="side-link-sub">sign in required</span>
         </span>
-        <span class="side-link-arrow">⛔</span>
+        <span class="side-link-arrow">→</span>
       </a>
       <a href="/control-panel" class="side-link locked" data-gate="sysadmin" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Control Panel</span>
           <span class="side-link-sub">sysadmin only</span>
         </span>
-        <span class="side-link-arrow">⛔</span>
+        <span class="side-link-arrow">→</span>
       </a>
     </nav>
 
@@ -699,10 +708,9 @@
   <nav class="site-nav">
     <a href="/" class="nav-logo">
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
-      <span class="word">SoraSys</span>
+      <span class="word"><span class="highlight">✦</span> SoraSys</span>
     </a>
     <div class="nav-links">
-      <a href="/" class="nav-link">Home</a>
       <a href="/articlespace" class="nav-link current">Articlespace</a>
       <a href="/initialization" class="nav-link">Initialization</a>
       <a href="/profile-config" class="nav-link locked" data-gate="auth" aria-disabled="true">Profile Config</a>
