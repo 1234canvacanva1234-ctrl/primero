@@ -762,9 +762,7 @@
     <div class="panel-header">
       <div class="panel-title">⌘ <span>Control</span> Panel</div>
       <div class="panel-actions">
-        <a href="/articlespace" class="panel-btn">View Articles</a>
-        <a href="/initialization" class="panel-btn">Account</a>
-        <button id="logout-btn" class="panel-btn">↯ Sign Out</button>
+        <button id="logout-btn" class="panel-btn">⏻ Disconnect</button>
       </div>
     </div>
 
@@ -781,10 +779,10 @@
       <div class="panel-grid">
         <!-- Editor Section -->
         <div class="panel-section full">
-          <div class="section-title">✎ <span>Article</span> Editor</div>
+          <div class="section-title">꩜ <span>Article</span> Processor</div>
           <div class="editor-area">
-            <input type="text" id="article-title" placeholder="Article Title">
-            <textarea id="article-content" placeholder="Write your article here..."></textarea>
+            <input type="text" id="article-title" placeholder="enter title / subject">
+            <textarea id="article-content" placeholder="insert your immensely valued material in my section..."></textarea>
             <div class="editor-actions">
               <button id="publish-btn" class="primary">Publish</button>
               <button id="cancel-edit-btn">Cancel</button>
@@ -793,19 +791,18 @@
           </div>
         </div>
 
-        <!-- Articles List -->
+
         <div class="panel-section">
-          <div class="section-title">📄 <span>Your</span> Articles</div>
+          <div class="section-title">°𓏲⋆ <span>Directory</span> of Articlespace</div>
           <div id="articles-list" class="article-list">
-            <div class="empty-state">loading articles...</div>
+            <div class="empty-state">regenerating articles...</div>
           </div>
         </div>
 
-        <!-- User Management (sysadmin only) -->
         <div class="panel-section" id="user-management">
-          <div class="section-title">👥 <span>User</span> Management</div>
+          <div class="section-title">♜ <span>User</span> Management</div>
           <div id="users-list" class="user-list">
-            <div class="empty-state">loading users...</div>
+            <div class="empty-state">regenerating users...</div>
           </div>
         </div>
       </div>
@@ -1125,7 +1122,7 @@
               <span class="role ${u.role}">${u.role}</span>
             </div>
             <div class="actions">
-              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${escapeHtml(u.username)}">Grant Admin</button>` : ''}
+              ${u.role !== 'sysadmin' ? `<button class="grant-btn" data-user="${escapeHtml(u.username)}">promote to sysadmin</button>` : ''}
             </div>
           </div>
         `).join('');
@@ -1133,12 +1130,12 @@
         container.querySelectorAll('.grant-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
             const username = btn.dataset.user;
-            if (confirm(`Grant sysadmin to ${username}?`)) {
+            if (confirm(`extend the corresponding permissions to ${username}?`)) {
               try {
                 await API.users.grant(username);
                 loadUsers();
               } catch (err) {
-                alert('Failed to grant admin: ' + err.message);
+                alert('failed: ' + err.message);
               }
             }
           });
@@ -1146,8 +1143,8 @@
 
         if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
-        console.error('Failed to load users:', err);
-        document.getElementById('users-list').innerHTML = '<div class="empty-state">failed to load users</div>';
+        console.error('no accessible users / potential error:', err);
+        document.getElementById('users-list').innerHTML = '<div class="empty-state">no accessible users / potential error</div>';
       }
     }
 
@@ -1158,7 +1155,7 @@
       return div.innerHTML;
     }
 
-    // Publish/Update article
+
     document.getElementById('publish-btn').addEventListener('click', async () => {
       const title = document.getElementById('article-title').value.trim();
       const content = document.getElementById('article-content').value.trim();
