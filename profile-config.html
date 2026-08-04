@@ -1032,15 +1032,18 @@
       });
     });
 
-    function pulseCurrentSideLink() {
-      const link = document.querySelector('.side-link.current');
-      if (!link) return;
-      requestAnimationFrame(() => {
-        link.classList.add('just-arrived');
-        link.addEventListener('animationend', () => link.classList.remove('just-arrived'), { once: true });
+    document.querySelectorAll('.nav-link').forEach(function(navEl) {
+      if (navEl.classList.contains('locked') || navEl.classList.contains('current')) return;
+      navEl.addEventListener('click', function(e) {
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        const href = navEl.getAttribute('href');
+        const targetLink = document.querySelector('.side-link[href="' + href + '"]');
+        if (!targetLink || targetLink.classList.contains('locked')) return;
+        e.preventDefault();
+        targetLink.classList.add('just-arrived');
+        setTimeout(() => { window.location.href = href; }, 360);
       });
-    }
-    pulseCurrentSideLink();
+    });
 
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
