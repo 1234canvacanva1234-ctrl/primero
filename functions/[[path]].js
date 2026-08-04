@@ -34,15 +34,15 @@ export async function onRequest(context) {
       const { username, password } = body;
 
       if (!username || username.length < 3) {
-        return new Response(JSON.stringify({ error: 'Username too short' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'insufficient characters (username)' }), { status: 400, headers });
       }
       if (!password || password.length < 8) {
-        return new Response(JSON.stringify({ error: 'Password too short' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'insufficient characters (token)' }), { status: 400, headers });
       }
 
       const existing = await env.DB.prepare('SELECT username FROM users WHERE username = ?').bind(username).first();
       if (existing) {
-        return new Response(JSON.stringify({ error: 'Username taken' }), { status: 409, headers });
+        return new Response(JSON.stringify({ error: 'username used' }), { status: 409, headers });
       }
 
       const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
@@ -74,7 +74,7 @@ export async function onRequest(context) {
 
       const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
       if (!user) {
-        return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers });
+        return new Response(JSON.stringify({ error: 'invalid data provided' }), { status: 401, headers });
       }
 
       const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
@@ -168,13 +168,13 @@ export async function onRequest(context) {
       let bio = (body.bio || '').trim();
 
       if (avatar_url.length > 500) {
-        return new Response(JSON.stringify({ error: 'Image URL is too long (max 500 characters)' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'excessive characters (max 500 / image url)' }), { status: 400, headers });
       }
       if (avatar_url && !/^https?:\/\/.+/i.test(avatar_url)) {
-        return new Response(JSON.stringify({ error: 'Image URL must start with http:// or https://' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'image url requires http:// or https:// to start' }), { status: 400, headers });
       }
       if (bio.length > 1000) {
-        return new Response(JSON.stringify({ error: 'Description is too long (max 1000 characters)' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'description exceeds permitted characters (max 1000)' }), { status: 400, headers });
       }
 
       await env.DB.prepare(
