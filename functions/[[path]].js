@@ -1,10 +1,26 @@
+const SUBPAGE_FALLBACKS = [
+  { pattern: /^\/article\//, fallback: '/article/' },
+  { pattern: /^\/profile\//, fallback: '/profile/' }
+];
+
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
 
   if (!path.startsWith('/api/')) {
-    return next();
+    const response = await next();
+    if (response.status !== 404) {
+      return response;
+    }
+
+    for (const route of SUBPAGE_FALLBACKS) {
+      if (route.pattern.test(path)) {
+        return Response.redirect(url.origin + route.fallback, 302);
+      }
+    }
+
+    return Response.redirect(url.origin + '/', 302);
   }
 
   console.log('API Request:', path, request.method);
