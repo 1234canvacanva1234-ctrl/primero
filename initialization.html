@@ -41,7 +41,6 @@
       position: relative;
     }
 
-    /* caret + text-selection use the same hot pink accent everywhere */
     ::selection {
       background: var(--pulse);
       color: var(--void);
@@ -50,7 +49,6 @@
       caret-color: var(--pulse);
     }
 
-    /* ---------- ambient backdrop (shared with articlespace) ---------- */
     .nebula {
       position: fixed;
       inset: -20%;
@@ -90,7 +88,6 @@
       100% { background-position: 0% 50%; opacity: 0.3; }
     }
 
-    /* ---------- top bar ---------- */
     .site-nav {
       position: sticky;
       top: 0;
@@ -113,6 +110,7 @@
       color: inherit;
       flex-shrink: 0;
       justify-self: start;
+      white-space: nowrap;
     }
     .nav-logo img {
       width: 34px; height: 34px;
@@ -121,17 +119,25 @@
       border: 1px solid var(--line);
     }
     .nav-logo .word {
+      position: relative;
       font-family: 'Cinzel', serif;
       font-size: 15px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--steel);
-      transition: color 0.3s ease;
-      display: inline-block;
+      color: var(--pulse);
+      transition: text-shadow 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
       margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
-    .nav-logo:hover .word { color: var(--pulse); }
+    .nav-logo .word-text {
+      position: relative;
+    }
+    .nav-logo:hover .word {
+      text-shadow: 0 0 6px rgba(255,255,255,0.55), 0 0 16px rgba(255,59,124,0.5), 0 0 28px rgba(255,59,124,0.3);
+    }
 
     .nav-links {
       display: flex;
@@ -187,9 +193,17 @@
     }
     .nav-link.current::after { right: 14px; }
     .nav-link.locked { color: var(--dim); cursor: not-allowed; }
-    .nav-link.locked::before { display: none; }
-    .nav-link.locked:hover { border-color: transparent; transform: none; box-shadow: none; }
-    .nav-link.locked::after { display: none; }
+    .nav-link.locked:hover,
+    .nav-link.locked:focus-visible {
+      color: var(--ink);
+      border-color: var(--pulse);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 124, 0.15);
+    }
+    .nav-link.locked:hover::before,
+    .nav-link.locked:focus-visible::before { transform: translateX(0); }
+    .nav-link.locked:hover::after,
+    .nav-link.locked:focus-visible::after { right: 14px; }
 
     .panel-toggle {
       display: none;
@@ -206,7 +220,6 @@
       justify-self: end;
     }
 
-    /* ---------- side panel ---------- */
     .panel-backdrop { display: none; }
     .side-panel {
       position: fixed;
@@ -359,9 +372,19 @@
     .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.sim-active .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.locked { cursor: not-allowed; }
-    .side-link.locked::before { display: none; }
-    .side-link.locked:hover { border-color: transparent; transform: none; }
+    .side-link.locked:hover,
+    .side-link.locked:focus-visible {
+      border-color: var(--pulse);
+      transform: translateX(-3px);
+    }
+    .side-link.locked:hover::before,
+    .side-link.locked:focus-visible::before { transform: translateX(0); }
     .side-link.locked .side-link-arrow { color: var(--dim); }
+    .side-link.locked:hover .side-link-arrow,
+    .side-link.locked:focus-visible .side-link-arrow {
+      color: var(--pulse);
+      transform: translateX(3px);
+    }
 
     .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
@@ -393,7 +416,6 @@
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
 
-    /* ---------- page-specific: initialization card ---------- */
     .init-wrap {
       min-height: calc(100vh - 71px);
       display: flex;
@@ -420,7 +442,6 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 59, 124, 0.45), transparent);
     }
-    /* brief pink glow pulse used to punctuate a successful sign-in / sign-up */
     @keyframes success-pulse {
       0%   { box-shadow: 0 0 0 rgba(255, 59, 124, 0); border-color: var(--line); }
       30%  { box-shadow: 0 0 34px rgba(255, 59, 124, 0.32); border-color: rgba(255, 59, 124, 0.5); }
@@ -576,7 +597,6 @@
       color: var(--dim);
     }
 
-    /* ---------- avatar setup row (signup only) ---------- */
     .avatar-setup {
       display: flex;
       align-items: center;
@@ -590,9 +610,6 @@
       position: relative;
       flex-shrink: 0;
     }
-    /* Same rounded-square frame + constant hot-pink outline/glow as the
-       profile-config preview (there: 160px / 26px radius / 2px border),
-       scaled down proportionally for this 60px signup preview. */
     .author-avatar,
     .author-avatar-fallback {
       position: absolute;
@@ -619,8 +636,6 @@
       background: rgba(11, 17, 20, 0.75);
     }
 
-    /* Modernized primary action button — rounded, lifted hover with a
-       pulse glow, shared with the control panel / profile page. */
     .init-btn {
       font-family: 'Cinzel', serif;
       font-size: 11px;
@@ -675,7 +690,6 @@
     }
     .back-link:hover { color: var(--pulse); }
 
-    /* Already signed in state */
     .signed-in-state {
       text-align: center;
       padding: 20px 0;
@@ -702,8 +716,6 @@
       flex-wrap: wrap;
     }
 
-    /* Modernized buttons: rounded, lifted hover with a pulse glow —
-       shared class with the control panel and profile-config pages. */
     .panel-btn {
       font-family: 'Cinzel', serif;
       font-size: 10px;
@@ -872,7 +884,7 @@
   <nav class="site-nav">
     <a href="/" class="nav-logo">
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
-      <span class="word"><span class="highlight">✦</span> SoraSys</span>
+      <span class="word"><span class="highlight">✦</span> <span class="word-text">SoraSys</span></span>
     </a>
     <div class="nav-links">
       <a href="/articlespace" class="nav-link">Articlespace</a>
@@ -888,7 +900,6 @@
       <div class="init-title">Initialization</div>
       <div class="init-sub">establish your presence</div>
 
-
       <div id="signed-in-state" class="signed-in-state hidden">
         <div class="greeting">Salve, <span id="signed-in-username">User</span>!</div>
         <div class="sub">you're literally connected : the page presents no utility to you</div>
@@ -900,7 +911,6 @@
         </div>
       </div>
 
-      <!-- Sign In / Sign Up Forms -->
       <div id="auth-forms">
         <div class="init-tabs">
           <button class="init-tab active" data-tab="signin">Reconnect</button>
@@ -908,7 +918,6 @@
           <div class="tab-indicator" id="tab-indicator"></div>
         </div>
 
-        <!-- Sign In Form -->
         <form id="signin-form" class="init-form">
           <div class="form-group">
             <label>Username</label>
@@ -922,7 +931,6 @@
           <div id="signin-message" class="message"></div>
         </form>
 
-        <!-- Sign Up Form -->
         <form id="signup-form" class="init-form hidden">
           <div class="form-group">
             <label>Select Username <span class="required-mark">*</span></label>
@@ -968,13 +976,6 @@
 
 <script>
   (function() {
-    // ============================================
-    // Shared auth cache — read synchronously so every page can paint
-    // the correct signed-in/out state on first frame, instead of
-    // always starting from "Anonymous" and waiting on a fetch.
-    // Exposed on window so this page's second script block (and other
-    // pages that reuse this same block) can read/write it too.
-    // ============================================
     const AUTH_CACHE_KEY = 'sorasys_auth_cache';
 
     function readAuthCache() {
@@ -990,12 +991,11 @@
         } else {
           localStorage.removeItem(AUTH_CACHE_KEY);
         }
-      } catch (e) { /* storage disabled, ignore */ }
+      } catch (e) { }
     }
 
     window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
 
-    // ---------- custom cursor (desktop only) ----------
     let cursor, bindHoverables;
     if (window.innerWidth > 640) {
       cursor = document.getElementById('cursor');
@@ -1028,7 +1028,6 @@
     }
     window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
 
-    // ---------- side panel (mobile slide-up) ----------
     (function() {
       const panel = document.getElementById('side-panel');
       const toggle = document.getElementById('panel-toggle');
@@ -1040,8 +1039,6 @@
       backdrop.addEventListener('click', close);
     })();
 
-    // ---------- topbar click → mirrors the animation on the matching
-    // sidebar entry before navigating, so the sidebar never looks static ----------
     (function() {
       const topLinks = document.querySelectorAll('.site-nav .nav-link');
       topLinks.forEach(function(link) {
@@ -1058,7 +1055,6 @@
       });
     })();
 
-    // ---------- account area: sidebar + top bar auth state ----------
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -1088,10 +1084,6 @@
       });
     }
 
-    // Renders the sidebar account card + gated nav links from an auth
-    // payload. Shared by the instant cache-paint and the background
-    // fetch-confirm, so both paths produce identical markup and there's
-    // nothing left to visibly "swap" once the fetch resolves.
     async function applyAuthUI(data, opts) {
       opts = opts || {};
       const accountLink = document.getElementById('side-account');
@@ -1121,9 +1113,6 @@
         let avatarUrl = (data.user.avatar_url || '').trim();
         let bio = (data.user.bio || '').trim();
 
-        // Only hit /api/profile when this payload doesn't already carry
-        // avatar/bio AND we're in the network-confirm pass — the instant
-        // cache-paint should never block on a second request.
         if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
@@ -1132,7 +1121,7 @@
               avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
               bio = bio || (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to initials, no bio */ }
+          } catch (e) { }
         }
 
         if (bio) {
@@ -1154,8 +1143,6 @@
           currentSlot.textContent = initial;
         }
 
-        // stash resolved avatar/bio so the caller can persist them for
-        // next load's instant paint
         data._resolved = { avatar_url: avatarUrl, bio: bio };
 
       } else {
@@ -1183,14 +1170,11 @@
     window.sorasysApplyAuthUI = applyAuthUI;
 
     async function initAuthNav() {
-      // 1. Instant paint from cache — synchronous, no network wait,
-      // so there's nothing wrong to flash to first.
       const cached = readAuthCache();
       if (cached) {
         await applyAuthUI(cached, { skipProfileFetch: false });
       }
 
-      // 2. Confirm/correct against the server in the background.
       try {
         const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
         const data = await res.json();
@@ -1212,9 +1196,6 @@
       });
     });
 
-    // Cross-tab: react immediately if auth state changes in another tab
-    // (e.g. signed out elsewhere) instead of waiting on this tab's own
-    // background fetch to eventually catch up.
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
         const updated = readAuthCache();
@@ -1229,7 +1210,6 @@
 
 <script>
   (function() {
-    // DOM elements
     const signedInState = document.getElementById('signed-in-state');
     const authForms = document.getElementById('auth-forms');
     const signedInUsername = document.getElementById('signed-in-username');
@@ -1242,9 +1222,6 @@
     const signinForm = document.getElementById('signin-form');
     const signupForm = document.getElementById('signup-form');
 
-    // ============================================
-    // Sliding tab indicator
-    // ============================================
     function moveIndicatorTo(tab) {
       tabIndicator.style.left = tab.offsetLeft + 'px';
       tabIndicator.style.width = tab.offsetWidth + 'px';
@@ -1254,13 +1231,6 @@
       moveIndicatorTo(document.querySelector('.init-tab.active'));
     });
 
-    // ============================================
-    // Smooth cross-fade between the signed-out forms and the
-    // signed-in welcome card, instead of an abrupt display toggle.
-    // Used only for state changes that happen WHILE the user is on
-    // this page (sign in, sign up, sign out) — the very first paint
-    // uses setStateInstant() below with no animation at all.
-    // ============================================
     const SWAP_DURATION = 380;
     let swapInFlight = false;
 
@@ -1281,7 +1251,7 @@
         showEl.classList.remove('hidden');
         showEl.style.opacity = '0';
         showEl.style.transform = 'translateY(10px) scale(0.98)';
-        void showEl.offsetWidth; // force reflow so the transition runs
+        void showEl.offsetWidth;
         showEl.style.transition = `opacity ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1), transform ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1)`;
         showEl.style.opacity = '1';
         showEl.style.transform = 'translateY(0) scale(1)';
@@ -1301,11 +1271,6 @@
       initContainer.classList.add('pulse-success');
     }
 
-    // ============================================
-    // Paint the correct block with NO animation and NO intermediate
-    // frame — used only for the very first paint on load, sourced
-    // from the cached auth state so there's nothing to wait on.
-    // ============================================
     function setStateInstant(shouldShowSignedIn, user) {
       if (shouldShowSignedIn && user) signedInUsername.textContent = user.username;
       initSub.textContent = shouldShowSignedIn
@@ -1320,12 +1285,6 @@
       }
     }
 
-    // ============================================
-    // Check auth status against the server.
-    // animate=true crossfades between states; pass false when you just
-    // want to confirm/correct the state quietly (e.g. right after the
-    // instant cache paint on load).
-    // ============================================
     async function checkAuthStatus(animate) {
       try {
         const res = await fetch('/api/auth/status');
@@ -1355,7 +1314,6 @@
           signedInState.classList.remove('hidden');
         }
 
-        // keep the shared cache in sync with the confirmed server state
         if (window.sorasysAuthCache) {
           window.sorasysAuthCache.write(shouldShowSignedIn ? { authenticated: true, user: data.user } : null);
         }
@@ -1363,9 +1321,6 @@
         if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
         console.error('Auth check error:', err);
-        // On a network hiccup, trust the cache instead of forcing
-        // signed-out — avoids flashing to the forms for someone who is
-        // actually signed in but has a flaky connection.
         const cached = window.sorasysAuthCache ? window.sorasysAuthCache.read() : null;
         if (!cached) {
           signedInState.classList.add('hidden');
@@ -1374,10 +1329,6 @@
       }
     }
 
-    // ============================================
-    // Sign out from initialization page — no full reload, just a
-    // smooth crossfade back to the sign-in forms.
-    // ============================================
     signoutBtn.addEventListener('click', async () => {
       signoutBtn.disabled = true;
       try {
@@ -1391,9 +1342,6 @@
       signoutBtn.disabled = false;
     });
 
-    // ============================================
-    // Tab switching
-    // ============================================
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
@@ -1406,7 +1354,7 @@
         hideForm.classList.add('hidden');
         showForm.classList.remove('hidden');
         showForm.classList.remove('form-enter');
-        void showForm.offsetWidth; // restart animation
+        void showForm.offsetWidth;
         showForm.classList.add('form-enter');
 
         document.querySelectorAll('.message').forEach(m => {
@@ -1416,9 +1364,6 @@
       });
     });
 
-    // ============================================
-    // Signup avatar live preview
-    // ============================================
     const signupAvatarUrl = document.getElementById('signup-avatar-url');
     const signupAvatarImg = document.getElementById('signup-avatar-img');
     const signupAvatarFallback = document.getElementById('signup-avatar-fallback');
@@ -1441,9 +1386,6 @@
       signupAvatarImg.src = url;
     });
 
-    // ============================================
-    // Signup bio character count
-    // ============================================
     const signupBio = document.getElementById('signup-bio');
     const signupBioCount = document.getElementById('signup-bio-count');
     signupBio.addEventListener('input', () => {
@@ -1452,9 +1394,6 @@
       signupBioCount.classList.toggle('warn', len > 900);
     });
 
-    // ============================================
-    // Sign Up
-    // ============================================
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('signup-username').value.trim();
@@ -1539,9 +1478,6 @@
           return;
         }
 
-        // Write the cache immediately so the very next navigation (or
-        // this page's own re-check) has correct state to paint from
-        // instantly, without waiting on another round trip.
         if (window.sorasysAuthCache) {
           window.sorasysAuthCache.write({
             authenticated: true,
@@ -1549,8 +1485,6 @@
           });
         }
 
-        // Account created and session cookie is now set — immediately
-        // attach the required profile picture and description.
         let profileWarning = '';
         try {
           const profRes = await fetch('/api/profile', {
@@ -1561,7 +1495,6 @@
           });
           if (profRes.ok) {
             const prof = await profRes.json();
-            // fold the now-known avatar/bio into the cache too
             if (window.sorasysAuthCache) {
               const cached = window.sorasysAuthCache.read();
               if (cached && cached.user) {
@@ -1583,7 +1516,6 @@
         btn.disabled = false;
         pulseSuccess();
 
-        // Clear form
         document.getElementById('signup-username').value = '';
         document.getElementById('signup-password').value = '';
         document.getElementById('signup-confirm').value = '';
@@ -1594,11 +1526,9 @@
         signupBioCount.textContent = '0 / 1000';
         signupBioCount.classList.remove('warn');
 
-        // Check auth status to show signed-in state
         setTimeout(() => {
           checkAuthStatus(true);
           initAuthNavRefresh();
-          // Switch to sign in tab
           tabs.forEach(t => t.classList.remove('active'));
           const signinTab = document.querySelector('[data-tab="signin"]');
           signinTab.classList.add('active');
@@ -1615,9 +1545,6 @@
       }
     });
 
-    // ============================================
-    // Sign In
-    // ============================================
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('signin-username').value.trim();
@@ -1664,7 +1591,6 @@
           return;
         }
 
-        // Write cache immediately — instant correct paint on next nav.
         if (window.sorasysAuthCache) {
           window.sorasysAuthCache.write({
             authenticated: true,
@@ -1677,11 +1603,9 @@
         btn.disabled = false;
         pulseSuccess();
 
-        // Clear form
         document.getElementById('signin-username').value = '';
         document.getElementById('signin-password').value = '';
 
-        // Check auth status to show signed-in state
         setTimeout(() => {
           checkAuthStatus(true);
           initAuthNavRefresh();
@@ -1695,28 +1619,18 @@
       }
     });
 
-    // Re-runs the sidebar/top-bar auth state after a fresh sign in/up/out,
-    // so the account card and gated links update without a reload.
     function initAuthNavRefresh() {
       const evt = new Event('sorasys:authchanged');
       document.dispatchEvent(evt);
     }
 
-    // ============================================
-    // Initialize — read the cached auth state SYNCHRONOUSLY and paint
-    // the correct block with zero animation before anything else runs.
-    // This is what actually removes the flash: there is no frame where
-    // the wrong state is visible, because we never start from a default
-    // and swap later — we start from the last known-good state.
-    // The background fetch below then just quietly confirms/corrects.
-    // ============================================
     const cachedAuth = window.sorasysAuthCache ? window.sorasysAuthCache.read() : null;
     if (cachedAuth && cachedAuth.authenticated) {
       setStateInstant(true, cachedAuth.user);
     } else {
       setStateInstant(false);
     }
-    checkAuthStatus(false); // confirm/correct in background, no animation
+    checkAuthStatus(false);
   })();
 </script>
 </body>
