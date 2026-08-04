@@ -671,12 +671,14 @@
 <aside class="side-panel" id="side-panel">
   <div class="side-panel-inner">
     <a href="/initialization" class="side-account" id="side-account">
-      <img
-        src="https://i.imgur.com/NGyCK6G.png"
-        alt="Anonymous"
-        class="side-avatar side-avatar-fallback"
-        id="side-avatar-slot"
-      />
+      <span class="side-avatar-wrap">
+        <img
+          src="https://i.imgur.com/NGyCK6G.png"
+          alt="Anonymous"
+          class="side-avatar"
+          id="side-avatar-slot"
+        />
+      </span>
       <div class="side-account-text">
         <div class="side-account-cta" id="side-account-name">Anonymous</div>
         <div class="side-account-role" id="side-account-role" style="display:none;"></div>
@@ -751,6 +753,36 @@
 
 <script>
   (function() {
+    // ============================================
+    // Shared auth cache — same key/API used on every SoraSys page.
+    // Reading it is synchronous, so the sidebar account card and the
+    // gated nav links (Profile Configuration, Control Panel) can be
+    // painted correctly on the very first frame instead of always
+    // starting from "Anonymous" and flashing once /api/auth/status
+    // resolves. If this page set/confirmed the cache more recently
+    // than another page, window.sorasysAuthCache is reused as-is;
+    // it's defined fresh here too so this page works standalone.
+    // ============================================
+    const AUTH_CACHE_KEY = 'sorasys_auth_cache';
+
+    function readAuthCache() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+      } catch (e) { return null; }
+    }
+
+    function writeAuthCache(data) {
+      try {
+        if (data && data.authenticated) {
+          localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(AUTH_CACHE_KEY);
+        }
+      } catch (e) { /* storage disabled, ignore */ }
+    }
+
+    window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
+
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
     const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
@@ -785,6 +817,7 @@
     } else {
       document.body.style.cursor = 'auto';
     }
+    window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
 
     // ---------- side panel (mobile slide-up) ----------
     (function() {
@@ -806,27 +839,6 @@
       return div.innerHTML;
     }
 
-    // Builds the "〔 Communicated via @user ❖ SoraSys Articlespace
-    // MM.DD.YYYY CE 〕" meta phrase shown beside the title, in place
-    // of the old "date · author" line.
-    function formatMeta(article, author) {
-      const d = new Date(article.created_at);
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return '〔 Communicated via @' + escapeHtml(author) + ' ❖ SoraSys Articlespace ' +
-        mm + '.' + dd + '.' + yyyy + ' CE 〕';
-    }
-
-    function debounce(fn, wait) {
-      let t;
-      return function() {
-        clearTimeout(t);
-        const args = arguments;
-        t = setTimeout(() => fn.apply(null, args), wait);
-      };
-    }
-
     function unlockGate(gate, subText) {
       document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
         el.classList.remove('locked');
@@ -838,67 +850,127 @@
       });
     }
 
-    async function initAuthNav() {
+    function relockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.add('locked');
+        el.setAttribute('aria-disabled', 'true');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    // Renders the sidebar account card + gated nav links from an auth
+    // payload. Shared by the instant cache-paint and the background
+    // fetch-confirm so both produce identical markup — nothing visibly
+    // "swaps" once the confirm resolves.
+    async function applyAuthUI(data, opts) {
+      opts = opts || {};
       const accountLink = document.getElementById('side-account');
-      const avatarSlot = document.getElementById('side-avatar-slot');
       const nameSlot = document.getElementById('side-account-name');
       const roleSlot = document.getElementById('side-account-role');
       const bioSlot = document.getElementById('side-account-bio');
 
-      try {
-        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-        const data = await res.json();
+      if (data && data.authenticated && data.user) {
+        accountLink.setAttribute('href', '/profile-config');
+        accountLink.classList.add('signed-in');
+        nameSlot.textContent = data.user.username;
+        nameSlot.classList.remove('side-account-cta');
+        nameSlot.classList.add('side-account-username');
 
-        if (data.authenticated && data.user) {
-          accountLink.setAttribute('href', '/profile-config');
-          accountLink.classList.add('signed-in');
-          nameSlot.textContent = data.user.username;
-          nameSlot.classList.remove('side-account-cta');
-          nameSlot.classList.add('side-account-username');
+        if (data.user.role) {
+          roleSlot.style.display = 'block';
+          roleSlot.textContent = data.user.role;
+        } else {
+          roleSlot.style.display = 'none';
+        }
 
-          if (data.user.role) {
-            roleSlot.style.display = 'block';
-            roleSlot.textContent = data.user.role;
-          }
+        unlockGate('auth', 'active account session required');
+        if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        else relockGate('sysadmin', 'designated for sysadmin');
 
-          unlockGate('auth', 'active account session required');
+        let avatarUrl = (data.user.avatar_url || '').trim();
+        let bio = (data.user.bio || '').trim();
 
-          let avatarUrl = '';
-          let bio = '';
+        // Only hit /api/profile when this payload doesn't already carry
+        // avatar/bio AND we're in the network-confirm pass — the instant
+        // cache-paint should never block on a second request.
+        if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
             if (profRes.ok) {
               const prof = await profRes.json();
-              avatarUrl = (prof.avatar_url || '').trim();
-              bio = (prof.bio || '').trim();
+              avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
+              bio = bio || (prof.bio || '').trim();
             }
           } catch (e) { /* fall back to initials, no bio */ }
-
-          if (bio && bioSlot) {
-            bioSlot.style.display = 'block';
-            bioSlot.textContent = bio;
-          }
-
-          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
-          if (avatarUrl) {
-            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
-                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
-            '</span>';
-          } else {
-            avatarSlot.textContent = initial;
-          }
-
-          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
-        } else {
-          accountLink.setAttribute('href', '/initialization');
-          accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Anonymous';
         }
+
+        if (bio) {
+          bioSlot.style.display = 'block';
+          bioSlot.textContent = bio;
+        } else {
+          bioSlot.style.display = 'none';
+        }
+
+        const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+        const currentSlot = document.getElementById('side-avatar-slot');
+        if (avatarUrl) {
+          const wrap = currentSlot.closest('.side-avatar-wrap') || currentSlot;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img class="side-avatar" id="side-avatar-slot" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+              'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+          '</span>';
+        } else if (currentSlot.tagName !== 'IMG') {
+          currentSlot.textContent = initial;
+        }
+
+        data._resolved = { avatar_url: avatarUrl, bio: bio };
+
+      } else {
+        accountLink.setAttribute('href', '/initialization');
+        accountLink.classList.remove('signed-in');
+        nameSlot.textContent = 'Anonymous';
+        nameSlot.classList.add('side-account-cta');
+        nameSlot.classList.remove('side-account-username');
+        roleSlot.style.display = 'none';
+        bioSlot.style.display = 'none';
+        const fresh = document.getElementById('side-avatar-slot');
+        if (fresh && fresh.tagName !== 'IMG') {
+          const wrap = fresh.closest('.side-avatar-wrap') || fresh;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img src="https://i.imgur.com/NGyCK6G.png" alt="Anonymous" class="side-avatar" id="side-avatar-slot" />' +
+          '</span>';
+        } else if (fresh) {
+          fresh.src = 'https://i.imgur.com/NGyCK6G.png';
+          fresh.alt = 'Anonymous';
+        }
+        relockGate('auth', 'active account session required');
+        relockGate('sysadmin', 'designated for sysadmin');
+      }
+    }
+    window.sorasysApplyAuthUI = applyAuthUI;
+
+    async function initAuthNav() {
+      // 1. Instant paint from cache — synchronous, no network wait.
+      const cached = readAuthCache();
+      if (cached) {
+        await applyAuthUI(cached, { skipProfileFetch: false });
+      }
+
+      // 2. Confirm/correct against the server in the background.
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+        await applyAuthUI(data);
+        writeAuthCache(data.authenticated ? {
+          authenticated: true,
+          user: { ...data.user, ...(data._resolved || {}) }
+        } : null);
       } catch (err) {
         console.error('Auth nav error:', err);
-        accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Anonymous';
+        if (!cached) await applyAuthUI({ authenticated: false });
       }
       if (bindHoverables) bindHoverables();
     }
@@ -909,6 +981,15 @@
       });
     });
 
+    // Cross-tab: react immediately if auth changes in another tab.
+    window.addEventListener('storage', function(e) {
+      if (e.key === AUTH_CACHE_KEY) {
+        const updated = readAuthCache();
+        applyAuthUI(updated || { authenticated: false }, { skipProfileFetch: !updated });
+      }
+    });
+
+    document.addEventListener('sorasys:authchanged', initAuthNav);
     initAuthNav();
 
     // ---------- articles ----------
@@ -1005,7 +1086,7 @@
     function renderList() {
       const container = document.getElementById('articles-container');
       if (!currentArticles.length) {
-        container.innerHTML = '<div class="empty-articles">no articles have been published yet.</div>';
+        container.innerHTML = '<div class="empty-articles">0 accessible articles.</div>';
         return;
       }
 
@@ -1055,6 +1136,27 @@
 
       bindCopyButtons();
       if (bindHoverables) bindHoverables();
+    }
+
+    // Builds the "〔 Communicated via @user ❖ SoraSys Articlespace
+    // MM.DD.YYYY CE 〕" meta phrase shown beside the title, in place
+    // of the old "date · author" line.
+    function formatMeta(article, author) {
+      const d = new Date(article.created_at);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return '〔 Communicated via @' + escapeHtml(author) + ' ❖ SoraSys Articlespace ' +
+        mm + '.' + dd + '.' + yyyy + ' CE 〕';
+    }
+
+    function debounce(fn, wait) {
+      let t;
+      return function() {
+        clearTimeout(t);
+        const args = arguments;
+        t = setTimeout(() => fn.apply(null, args), wait);
+      };
     }
 
     async function loadArticles() {
