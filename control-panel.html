@@ -891,7 +891,7 @@
     <a href="/initialization" class="side-account" id="side-account">
       <img
         src="https://i.imgur.com/NGyCK6G.png"
-        alt="Sign in"
+        alt="Anonymous"
         class="side-avatar side-avatar-fallback"
         id="side-avatar-slot"
       />
@@ -1136,12 +1136,12 @@
         } else {
           accountLink.setAttribute('href', '/initialization');
           accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Sign In';
+          nameSlot.textContent = 'Anonymous';
         }
       } catch (err) {
         console.error('Auth nav error:', err);
         accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Sign In';
+        nameSlot.textContent = 'Anonymous';
       }
       if (bindHoverables) bindHoverables();
     }
