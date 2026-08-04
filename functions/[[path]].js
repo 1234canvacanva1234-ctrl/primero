@@ -153,7 +153,7 @@ export async function onRequest(context) {
       // NOTE: now also returns avatar_url / bio so any page (nav avatars, etc.)
       // can use them straight off the status check without a second request.
       const user = await env.DB.prepare('SELECT username, role, avatar_url, bio FROM users WHERE username = ?').bind(session.username).first();
-      return new Response(JSON.stringify({ authenticated: true, user: withProfileDefaults(user) }), { headers });
+      return new Response(JSON.stringify({ authenticated: true, user: await withProfileDefaults(user) }), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ authenticated: false }), { headers });
@@ -194,7 +194,7 @@ export async function onRequest(context) {
         'SELECT username, role, avatar_url, bio FROM users WHERE username = ?'
       ).bind(user.username).first();
 
-      return new Response(JSON.stringify(withProfileDefaults(profile)), { headers });
+      return new Response(JSON.stringify(await withProfileDefaults(profile)), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -245,10 +245,14 @@ export async function onRequest(context) {
       ).bind(avatar_url, bio, user.username).run();
 
       // NOTE: response reflects defaults too, in case the user just cleared
-      // their avatar/bio back to empty (PUT stores the true empty value in
-      // the DB — we only ever apply the fallback at read/render time, except
-      // for the invalid-image case above which is corrected at write time).
-      return new Response(JSON.stringify(withProfileDefaults({ success: true, avatar_url, bio })), { headers });
+      // their avatar/bio back to empty. avatar_url has already been resolved
+      // above (either the real, reachable image, or DEFAULT_AVATAR_URL), so
+      // we don't re-run the network probe here — just apply the bio default.
+      return new Response(JSON.stringify({
+        success: true,
+        avatar_url: avatar_url || DEFAULT_AVATAR_URL,
+        bio: bio || DEFAULT_BIO
+      }), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -272,7 +276,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers });
       }
 
-      return new Response(JSON.stringify(withProfileDefaults(profile)), { headers });
+      return new Response(JSON.stringify(await withProfileDefaults(profile)), { headers });
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
@@ -442,18 +446,31 @@ export async function onRequest(context) {
 // Applied at read/render time — the DB keeps storing whatever the user
 // actually set (including empty string), so clearing a field in the
 // profile editor just falls back to these defaults rather than being
-// "stuck" on them. The one exception is avatar_url specifically when
-// it fails the reachable-image probe in the PUT handler above — that
-// case writes DEFAULT_AVATAR_URL straight into the DB, since a broken
-// link isn't something we want to keep re-attempting to load forever.
+// "stuck" on them.
+//
+// avatar_url gets an extra pass here: it's not enough for the field to
+// be non-empty, it also has to actually resolve to an image right now.
+// A link that was fine when saved can go dead later (deleted upload,
+// expired CDN, etc.), and previously that state only ever got fixed if
+// the user happened to re-save through the profile editor — every other
+// page reading the same profile (nav avatars, bylines, etc.) kept
+// serving the dead link until then. Now every read re-checks it, so the
+// fallback pfp shows up consistently everywhere, not just after a save.
 const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
 const DEFAULT_BIO = "i'm an anonymous private bitch and consequently refuse to provide a simple description";
 
-function withProfileDefaults(profile) {
+async function withProfileDefaults(profile) {
   if (!profile) return profile;
+
+  let avatar_url = profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url.trim() : '';
+  if (avatar_url && avatar_url !== DEFAULT_AVATAR_URL) {
+    const reachable = await isImageUrlReachable(avatar_url);
+    if (!reachable) avatar_url = '';
+  }
+
   return {
     ...profile,
-    avatar_url: profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url : DEFAULT_AVATAR_URL,
+    avatar_url: avatar_url || DEFAULT_AVATAR_URL,
     bio: profile.bio && profile.bio.trim() ? profile.bio : DEFAULT_BIO
   };
 }
