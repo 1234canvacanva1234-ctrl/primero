@@ -850,9 +850,10 @@
       .nav-logo img { width: 32px; height: 32px; }
 
       .hero {
-        min-height: 400px;
-        padding: calc(6vh - 48px + 48px) 0 26px;
+        min-height: auto;
+        padding: calc(6vh) 0 13px;
       }
+      .hero-scroll { display: none; }
       .hero-title {
         font-size: clamp(34px, 10vw, 46px);
         letter-spacing: 5px;
@@ -867,7 +868,7 @@
         min-width: 150px;
       }
 
-      .directory { padding: 26px 16px 6px; }
+      .directory { padding: 13px 16px 6px; }
       .cards { grid-template-columns: 1fr; gap: 16px; }
       .card { border-radius: 14px; }
       .card-img { height: 170px; }
