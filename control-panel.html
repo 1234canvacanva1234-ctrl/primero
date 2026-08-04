@@ -1359,7 +1359,7 @@
         currentUser = data.user;
         
         if (data.user.role !== 'sysadmin') {
-          showAccessDenied(`um ${data.user.username} the area requires sysadmin privileges.`);
+          showAccessDenied(`addressed to ${data.user.username} : the area requires sysadmin privileges.`);
           return;
         }
         
