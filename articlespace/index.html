@@ -27,9 +27,7 @@
       --pulse: #ff3b7c;
       --pulse-soft: #ff9bc0;
     }
-    /* Nav chrome (top bar + sidebar) borrows the home page's exact
-       tones — scoped so the rest of the page (cards, background)
-       keeps its own palette. */
+    
     .site-nav, .side-panel {
       --steel: #c2beb4;
       --line: rgba(162, 160, 152, 0.14);
@@ -44,7 +42,7 @@
       position: relative;
     }
 
-    /* ---------- ambient backdrop, toned to the articlespace theme ---------- */
+    
     .nebula {
       position: fixed;
       inset: -20%;
@@ -84,7 +82,7 @@
       100% { background-position: 0% 50%; opacity: 0.3; }
     }
 
-    /* ---------- fluctuating hot-pink frame, used on author profile pictures ---------- */
+    
     @keyframes frame-rotate { to { filter: hue-rotate(360deg); } }
     @keyframes frame-pulse {
       0%, 100% { opacity: 0.6; box-shadow: 0 0 12px rgba(255,59,124,0.22); }
@@ -98,7 +96,7 @@
       animation: frame-rotate 10s linear infinite, frame-pulse 4.5s ease-in-out infinite;
     }
 
-    /* ---------- top bar ---------- */
+    
     .site-nav {
       position: sticky;
       top: 0;
@@ -121,6 +119,7 @@
       color: inherit;
       flex-shrink: 0;
       justify-self: start;
+      white-space: nowrap;
     }
     .nav-logo img {
       width: 34px; height: 34px;
@@ -129,17 +128,35 @@
       border: 1px solid var(--line);
     }
     .nav-logo .word {
+      position: relative;
       font-family: 'Cinzel', serif;
       font-size: 15px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--steel);
-      transition: color 0.3s ease;
-      display: inline-block;
+      color: var(--pulse);
+      transition: text-shadow 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
       margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
-    .nav-logo:hover .word { color: var(--pulse); }
+    .nav-logo .word-text {
+      position: relative;
+    }
+    .nav-logo .word-text::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 100%;
+      bottom: -4px;
+      height: 1px;
+      background: var(--pulse);
+      transition: right 0.3s ease;
+    }
+    .nav-logo:hover .word-text::after { right: 0; }
+    .nav-logo:hover .word {
+      text-shadow: 0 0 6px rgba(255,255,255,0.55), 0 0 16px rgba(255,59,124,0.5), 0 0 28px rgba(255,59,124,0.3);
+    }
 
     .nav-links {
       display: flex;
@@ -214,7 +231,7 @@
       justify-self: end;
     }
 
-    /* ---------- side panel ---------- */
+    
     .panel-backdrop { display: none; }
     .side-panel {
       position: fixed;
@@ -450,10 +467,7 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.1), 0 2px 10px rgba(0, 0, 0, 0.35);
     }
-    /* align-items: flex-start (not stretch) so the preview column and
-       the author subcard each size to their own content — neither is
-       forced to grow to match the other's height, which is what was
-       leaving blank space beneath a short column. */
+    
     .article-card .card-inner { padding: 16px 20px; display: flex; align-items: flex-start; gap: 0; }
     .article-card .card-main { flex: 1 1 auto; min-width: 0; }
     .article-card.has-author-panel .card-main { padding-right: 18px; }
@@ -489,10 +503,7 @@
     .copy-link-btn.copied { opacity: 1 !important; color: #4ade80; }
     .copy-link-btn svg { width: 13px; height: 13px; display: block; }
 
-    /* Meta now lives inline beside the title (see title-row) instead
-       of on its own line, so the block spacing that used to separate
-       title / meta / content collapses down to a single small gap
-       before the content itself. */
+    
     .article-card .meta {
       font-family: 'Fira Code', monospace;
       font-size: 10.5px;
@@ -512,13 +523,7 @@
       word-wrap: break-word;
       margin-top: 8px;
     }
-    /* Preview state clamps to however many lines the card can hold
-       elegantly. The 5-line value here is only the fallback for
-       cards with no author subcard; when a subcard is present, JS
-       (syncPreviewHeights) raises this per-card to match the
-       subcard's own natural height, so the preview reads as far as
-       it elegantly can instead of stopping short with blank space
-       beneath it. */
+    
     .article-card .content.preview {
       display: -webkit-box;
       -webkit-box-orient: vertical;
@@ -549,7 +554,7 @@
       padding: 60px 0;
     }
 
-    /* ---------- author subcard ---------- */
+    
     .author-card {
       flex: 0 0 200px;
       width: 200px;
@@ -570,8 +575,7 @@
       background: linear-gradient(165deg, rgba(255, 59, 124, 0.04), rgba(11, 17, 20, 0.4));
     }
 
-    /* square (not circular) portrait with the same fluctuating
-       hot-pink frame used across the site */
+    
     .author-avatar-wrap { width: 124px; height: 124px; position: relative; flex-shrink: 0; }
     .author-avatar,
     .author-avatar-fallback {
@@ -761,7 +765,7 @@
   <nav class="site-nav">
     <a href="/" class="nav-logo">
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
-      <span class="word"><span class="highlight">✦</span> SoraSys</span>
+      <span class="word"><span class="highlight">✦</span> <span class="word-text">SoraSys</span></span>
     </a>
     <div class="nav-links">
       <a href="/articlespace" class="nav-link current">Articlespace</a>
@@ -784,16 +788,6 @@
 
 <script>
   (function() {
-    // ============================================
-    // Shared auth cache — same key/API used on every SoraSys page.
-    // Reading it is synchronous, so the sidebar account card and the
-    // gated nav links (Profile Configuration, Control Panel) can be
-    // painted correctly on the very first frame instead of always
-    // starting from "Anonymous" and flashing once /api/auth/status
-    // resolves. If this page set/confirmed the cache more recently
-    // than another page, window.sorasysAuthCache is reused as-is;
-    // it's defined fresh here too so this page works standalone.
-    // ============================================
     const AUTH_CACHE_KEY = 'sorasys_auth_cache';
 
     function readAuthCache() {
@@ -809,7 +803,7 @@
         } else {
           localStorage.removeItem(AUTH_CACHE_KEY);
         }
-      } catch (e) { /* storage disabled, ignore */ }
+      } catch (e) {  }
     }
 
     window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
@@ -817,7 +811,6 @@
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
     const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
-    // ---------- custom cursor (desktop only) ----------
     let cursor, bindHoverables;
     if (window.innerWidth > 640) {
       cursor = document.getElementById('cursor');
@@ -850,7 +843,6 @@
     }
     window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
 
-    // ---------- side panel (mobile slide-up) ----------
     (function() {
       const panel = document.getElementById('side-panel');
       const toggle = document.getElementById('panel-toggle');
@@ -862,8 +854,6 @@
       backdrop.addEventListener('click', close);
     })();
 
-    // ---------- topbar click → mirrors the animation on the matching
-    // sidebar entry before navigating, so the sidebar never looks static ----------
     (function() {
       const topLinks = document.querySelectorAll('.site-nav .nav-link');
       topLinks.forEach(function(link) {
@@ -880,7 +870,6 @@
       });
     })();
 
-    // ---------- account area: sidebar + top bar auth state ----------
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -910,10 +899,6 @@
       });
     }
 
-    // Renders the sidebar account card + gated nav links from an auth
-    // payload. Shared by the instant cache-paint and the background
-    // fetch-confirm so both produce identical markup — nothing visibly
-    // "swaps" once the confirm resolves.
     async function applyAuthUI(data, opts) {
       opts = opts || {};
       const accountLink = document.getElementById('side-account');
@@ -942,9 +927,6 @@
         let avatarUrl = (data.user.avatar_url || '').trim();
         let bio = (data.user.bio || '').trim();
 
-        // Only hit /api/profile when this payload doesn't already carry
-        // avatar/bio AND we're in the network-confirm pass — the instant
-        // cache-paint should never block on a second request.
         if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
@@ -953,7 +935,7 @@
               avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
               bio = bio || (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to initials, no bio */ }
+          } catch (e) {  }
         }
 
         if (bio) {
@@ -1002,13 +984,11 @@
     window.sorasysApplyAuthUI = applyAuthUI;
 
     async function initAuthNav() {
-      // 1. Instant paint from cache — synchronous, no network wait.
       const cached = readAuthCache();
       if (cached) {
         await applyAuthUI(cached, { skipProfileFetch: false });
       }
 
-      // 2. Confirm/correct against the server in the background.
       try {
         const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
         const data = await res.json();
@@ -1030,7 +1010,6 @@
       });
     });
 
-    // Cross-tab: react immediately if auth changes in another tab.
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
         const updated = readAuthCache();
@@ -1041,23 +1020,16 @@
     document.addEventListener('sorasys:authchanged', initAuthNav);
     initAuthNav();
 
-    // ---------- articles ----------
     let activeCard = null;
     let currentArticles = [];
     let currentSlugs = [];
-    let authorProfiles = {}; // username -> { username, role, avatar_url, bio }
+    let authorProfiles = {};
 
-    // Article identity lives entirely in the URL fragment (#slug).
-    // Fragments never reach the server — the browser resolves them
-    // purely client-side, so every request for this page is the
-    // same plain request whether or not it's a permalink.
     function buildArticlePath(slug) { return '#' + encodeURIComponent(slug); }
 
     function slugify(title) {
       return (title || 'Untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
-    // Slugs are <slugified-title>-<id> so the permalink is anchored
-    // to something that can never collide or drift.
     function articleSlug(article) { return slugify(article.title) + '-' + article.id; }
     function slugToId(slug) { const m = /-(\d+)$/.exec(slug || ''); return m ? parseInt(m[1], 10) : null; }
     function currentHashSlug() {
@@ -1066,7 +1038,6 @@
       return decodeURIComponent(h.slice(1));
     }
 
-    // ---------- author profiles ----------
     async function fetchAuthorProfiles(articles) {
       const usernames = [...new Set(articles.map(a => a.author).filter(Boolean))];
       const map = {};
@@ -1075,7 +1046,7 @@
           const res = await fetch('/api/users/' + encodeURIComponent(username) + '/profile');
           if (!res.ok) return;
           map[username] = await res.json();
-        } catch (err) { /* silently skip — article still renders without the panel */ }
+        } catch (err) {  }
       }));
       return map;
     }
@@ -1107,18 +1078,13 @@
       '</div>';
     }
 
-    // Matches each preview column's clamp to the natural height of its
-    // author subcard (when one exists), so the excerpt reads as far as
-    // it elegantly can instead of stopping at a fixed line count while
-    // the subcard beside it is taller — and so neither column carries
-    // dead blank space now that align-items is flex-start.
     function syncPreviewHeights() {
-      if (window.innerWidth <= 640) return; // subcard sits below, stacked — no matching needed
+      if (window.innerWidth <= 640) return;
       document.querySelectorAll('.article-card.has-author-panel').forEach(function(card) {
         const contentDiv = card.querySelector('.content');
         const authorCard = card.querySelector('.author-card');
         if (!contentDiv || !authorCard) return;
-        if (contentDiv.dataset.expanded === '1') return; // leave expanded cards alone
+        if (contentDiv.dataset.expanded === '1') return;
 
         const authorHeight = authorCard.getBoundingClientRect().height;
         const cs = window.getComputedStyle(contentDiv);
@@ -1131,7 +1097,6 @@
       });
     }
 
-    // ---------- list view ----------
     function renderList() {
       const container = document.getElementById('articles-container');
       if (!currentArticles.length) {
@@ -1187,9 +1152,6 @@
       if (bindHoverables) bindHoverables();
     }
 
-    // Builds the "〔 Communicated via @user ❖ SoraSys Articlespace
-    // MM.DD.YYYY CE 〕" meta phrase shown beside the title, in place
-    // of the old "date · author" line.
     function formatMeta(article, author) {
       const d = new Date(article.created_at);
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -1288,10 +1250,6 @@
       contentDiv.style.overflow = 'hidden';
       void contentDiv.offsetHeight;
 
-      // Measure the clamped (preview) height by toggling the class
-      // first, then animate down to whatever that turns out to be —
-      // this adapts to the card's real width instead of assuming a
-      // fixed line count in pixels.
       contentDiv.classList.remove('full');
       contentDiv.classList.add('preview');
       contentDiv.dataset.expanded = '0';
