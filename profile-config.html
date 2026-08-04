@@ -40,8 +40,6 @@
       overflow-x: hidden;
       position: relative;
     }
-
-    /* caret + text-selection use the same hot pink accent everywhere */
     ::selection {
       background: var(--pulse);
       color: var(--void);
@@ -49,8 +47,6 @@
     input, textarea {
       caret-color: var(--pulse);
     }
-
-    /* ---------- ambient backdrop (shared with articlespace) ---------- */
     .nebula {
       position: fixed;
       inset: -20%;
@@ -75,7 +71,6 @@
       pointer-events: none;
       background: radial-gradient(ellipse 80% 65% at 50% 30%, transparent 45%, rgba(4,6,7,0.55) 100%);
     }
-
     .thread {
       height: 1px;
       width: 100%;
@@ -89,8 +84,6 @@
       50%  { background-position: 100% 50%; opacity: 0.65; }
       100% { background-position: 0% 50%; opacity: 0.3; }
     }
-
-    /* ---------- top bar ---------- */
     .site-nav {
       position: sticky;
       top: 0;
@@ -132,7 +125,6 @@
     }
     .nav-logo .word .highlight { color: var(--pulse); }
     .nav-logo:hover .word { color: var(--ink); }
-
     .nav-links {
       display: flex;
       align-items: center;
@@ -166,7 +158,6 @@
     .nav-link.current::after { right: 0; }
     .nav-link.locked { color: var(--dim); cursor: not-allowed; }
     .nav-link.locked::after { display: none; }
-
     .panel-toggle {
       display: none;
       width: 40px; height: 40px;
@@ -181,8 +172,6 @@
       flex-shrink: 0;
       justify-self: end;
     }
-
-    /* ---------- side panel ---------- */
     .panel-backdrop { display: none; }
     .side-panel {
       position: fixed;
@@ -331,7 +320,6 @@
     .side-link.locked::before { display: none; }
     .side-link.locked:hover { border-color: transparent; transform: none; }
     .side-link.locked .side-link-arrow { color: var(--dim); }
-
     .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
       font-family: 'Fira Code', monospace;
@@ -340,9 +328,7 @@
       color: var(--dim);
       text-align: center;
     }
-
     .page { margin-right: 300px; }
-
     #cursor {
       position: fixed;
       width: 8px; height: 8px;
@@ -361,8 +347,6 @@
       background: rgba(255, 59, 124, 0.25);
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
-
-    /* ---------- page-specific: profile configuration ---------- */
     .panel-wrap { padding: 22px 24px 48px; }
     .panel-header {
       max-width: 900px;
@@ -383,9 +367,6 @@
     }
     .panel-title span { color: var(--pulse); }
     .panel-actions { display: flex; gap: 12px; align-items: center; }
-
-    /* Modernized buttons: rounded, lifted hover with a pulse glow,
-       shared with the control panel elsewhere on the site. */
     .panel-btn {
       font-family: 'Cinzel', serif;
       font-size: 10px;
@@ -421,7 +402,6 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
     }
-
     .panel-grid {
       max-width: 900px;
       margin: 0 auto;
@@ -429,7 +409,6 @@
       grid-template-columns: 260px 1fr;
       gap: 24px;
     }
-
     .panel-section {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -448,16 +427,12 @@
       margin-bottom: 16px;
     }
     .section-title span { color: var(--pulse); }
-
-    /* Avatar preview column */
     .avatar-preview-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 14px;
     }
-    /* Rounded-square pfp with a constant hot-pink outer layer,
-       matching the button accent but always-on (not hover-gated). */
     .avatar-preview {
       width: 160px;
       height: 160px;
@@ -497,8 +472,6 @@
       text-align: center;
     }
     .avatar-role.sysadmin { color: var(--pulse); }
-
-    /* Form */
     .editor-area { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label {
@@ -552,7 +525,6 @@
       text-align: right;
     }
     .char-count.warn { color: var(--pulse); }
-
     .editor-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .editor-actions button {
       font-family: 'Cinzel', serif;
@@ -591,7 +563,6 @@
       transform: none !important;
       box-shadow: none !important;
     }
-
     .message {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
@@ -603,7 +574,6 @@
     .message:empty { display: none; }
     .message.error { color: var(--pulse); }
     .message.success { color: var(--steel); }
-
     .access-denied {
       text-align: center;
       padding: 60px 20px;
@@ -626,12 +596,10 @@
       margin-bottom: 20px;
     }
     .hidden { display: none; }
-
     @media (max-width: 1100px) {
       .nav-links { gap: 18px; }
       .nav-link { font-size: 10px; letter-spacing: 1.5px; }
     }
-
     @media (max-width: 900px) {
       .page { margin-right: 0; }
       .side-panel {
@@ -666,13 +634,11 @@
         margin: 0 auto 14px;
       }
     }
-
     @media (max-width: 768px) {
       .panel-grid { grid-template-columns: 1fr; }
       .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
       .panel-actions { justify-content: center; flex-wrap: wrap; }
     }
-
     @media (max-width: 640px) {
       body { cursor: auto; }
       #cursor { display: none !important; }
@@ -681,7 +647,6 @@
       .nav-logo img { width: 25px; height: 25px; }
       .panel-wrap { padding: 16px 16px 32px; }
     }
-
     @media (prefers-reduced-motion: reduce) {
       .nebula, .thread { animation: none !important; }
     }
@@ -696,12 +661,14 @@
 <aside class="side-panel" id="side-panel">
   <div class="side-panel-inner">
     <a href="/initialization" class="side-account" id="side-account">
-      <img
-        src="https://i.imgur.com/NGyCK6G.png"
-        alt="Anonymous"
-        class="side-avatar side-avatar-fallback"
-        id="side-avatar-slot"
-      />
+      <span class="side-avatar-wrap">
+        <img
+          src="https://i.imgur.com/NGyCK6G.png"
+          alt="Anonymous"
+          class="side-avatar"
+          id="side-avatar-slot"
+        />
+      </span>
       <div class="side-account-text">
         <div class="side-account-cta" id="side-account-name">Anonymous</div>
         <div class="side-account-role" id="side-account-role" style="display:none;"></div>
@@ -772,7 +739,6 @@
       </div>
     </div>
 
-    <!-- Access Denied (not signed in) -->
     <div id="access-denied" class="access-denied hidden">
       <div class="icon">user-error</div>
       <h2>Active Account Session Required</h2>
@@ -780,11 +746,9 @@
       <a href="/initialization" class="panel-btn primary">↩ Navigate to Initialization</a>
     </div>
 
-    <!-- Main Content -->
     <div id="panel-content" class="hidden">
       <div class="panel-grid">
 
-        <!-- Avatar preview -->
         <div class="panel-section">
           <div class="section-title">𖤓 <span>profile-picture</span> Preview</div>
           <div class="avatar-preview-wrap">
@@ -795,7 +759,6 @@
           </div>
         </div>
 
-        <!-- Editor -->
         <div class="panel-section">
           <div class="section-title">⚚ <span>Modify / Customize</span> Specific Details</div>
           <div class="editor-area">
@@ -827,7 +790,27 @@
 
 <script>
   (function() {
-    // ---------- custom cursor (desktop only) ----------
+    const AUTH_CACHE_KEY = 'sorasys_auth_cache';
+
+    function readAuthCache() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+      } catch (e) { return null; }
+    }
+
+    function writeAuthCache(data) {
+      try {
+        if (data && data.authenticated) {
+          localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(AUTH_CACHE_KEY);
+        }
+      } catch (e) { }
+    }
+
+    window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
+    window.FALLBACK_AVATAR = 'https://i.imgur.com/baiP4yN.png';
+
     let cursor, bindHoverables;
     if (window.innerWidth > 640) {
       cursor = document.getElementById('cursor');
@@ -860,7 +843,6 @@
     }
     window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
 
-    // ---------- side panel (mobile slide-up) ----------
     (function() {
       const panel = document.getElementById('side-panel');
       const toggle = document.getElementById('panel-toggle');
@@ -872,12 +854,6 @@
       backdrop.addEventListener('click', close);
     })();
 
-    // ---------- shared fallback pfp ----------
-    // Used anywhere an avatar image is missing or fails to load, so the
-    // session always shows a real picture instead of a lettered placeholder.
-    window.FALLBACK_AVATAR = 'https://i.imgur.com/baiP4yN.png';
-
-    // ---------- account area: sidebar + top bar auth state ----------
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -896,66 +872,115 @@
       });
     }
 
-    async function initAuthNav() {
+    function relockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.add('locked');
+        el.setAttribute('aria-disabled', 'true');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    async function applyAuthUI(data, opts) {
+      opts = opts || {};
       const accountLink = document.getElementById('side-account');
-      const avatarSlot = document.getElementById('side-avatar-slot');
       const nameSlot = document.getElementById('side-account-name');
       const roleSlot = document.getElementById('side-account-role');
       const bioSlot = document.getElementById('side-account-bio');
 
-      try {
-        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-        const data = await res.json();
+      if (data && data.authenticated && data.user) {
+        accountLink.setAttribute('href', '/profile-config');
+        accountLink.classList.add('signed-in');
+        nameSlot.textContent = data.user.username;
+        nameSlot.classList.remove('side-account-cta');
+        nameSlot.classList.add('side-account-username');
 
-        if (data.authenticated && data.user) {
-          accountLink.setAttribute('href', '/profile-config');
-          accountLink.classList.add('signed-in');
-          nameSlot.textContent = data.user.username;
-          nameSlot.classList.remove('side-account-cta');
-          nameSlot.classList.add('side-account-username');
+        if (data.user.role) {
+          roleSlot.style.display = 'block';
+          roleSlot.textContent = data.user.role;
+        } else {
+          roleSlot.style.display = 'none';
+        }
 
-          if (data.user.role) {
-            roleSlot.style.display = 'block';
-            roleSlot.textContent = data.user.role;
-          }
+        unlockGate('auth', 'avatar, bio, presence');
+        if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        else relockGate('sysadmin', 'designated for sysadmin');
 
-          unlockGate('auth', 'avatar, bio, presence');
+        let avatarUrl = (data.user.avatar_url || '').trim();
+        let bio = (data.user.bio || '').trim();
 
-          let avatarUrl = '';
-          let bio = '';
+        if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
             if (profRes.ok) {
               const prof = await profRes.json();
-              avatarUrl = (prof.avatar_url || '').trim();
-              bio = (prof.bio || '').trim();
+              avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
+              bio = bio || (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to default pfp, no bio */ }
-
-          if (bio && bioSlot) {
-            bioSlot.style.display = 'block';
-            bioSlot.textContent = bio;
-          }
-
-          // Always render an actual image — if there's no saved avatar_url,
-          // or it fails to load, drop in the default pfp on the fly (client-
-          // side, this session) rather than a lettered placeholder.
-          const src = escapeHtml(avatarUrl || window.FALLBACK_AVATAR);
-          avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-            '<img class="side-avatar" src="' + src + '" alt="" ' +
-              'onerror="this.onerror=null;this.src=\'' + window.FALLBACK_AVATAR + '\';">' +
-          '</span>';
-
-          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
-        } else {
-          accountLink.setAttribute('href', '/initialization');
-          accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Anonymous';
+          } catch (e) { }
         }
+
+        if (bio) {
+          bioSlot.style.display = 'block';
+          bioSlot.textContent = bio;
+        } else {
+          bioSlot.style.display = 'none';
+        }
+
+        const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+        const currentSlot = document.getElementById('side-avatar-slot');
+        const src = escapeHtml(avatarUrl || window.FALLBACK_AVATAR);
+        const wrap = currentSlot.closest('.side-avatar-wrap') || currentSlot;
+        wrap.outerHTML = '<span class="side-avatar-wrap">' +
+          '<img class="side-avatar" id="side-avatar-slot" src="' + src + '" alt="" ' +
+            'onerror="this.onerror=null;this.src=\'' + window.FALLBACK_AVATAR + '\';">' +
+        '</span>';
+
+        data._resolved = { avatar_url: avatarUrl, bio: bio };
+
+      } else {
+        accountLink.setAttribute('href', '/initialization');
+        accountLink.classList.remove('signed-in');
+        nameSlot.textContent = 'Anonymous';
+        nameSlot.classList.add('side-account-cta');
+        nameSlot.classList.remove('side-account-username');
+        roleSlot.style.display = 'none';
+        bioSlot.style.display = 'none';
+        const fresh = document.getElementById('side-avatar-slot');
+        if (fresh && fresh.tagName !== 'IMG') {
+          const wrap = fresh.closest('.side-avatar-wrap') || fresh;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img src="https://i.imgur.com/NGyCK6G.png" alt="Anonymous" class="side-avatar" id="side-avatar-slot" />' +
+          '</span>';
+        } else if (fresh) {
+          fresh.src = 'https://i.imgur.com/NGyCK6G.png';
+          fresh.alt = 'Anonymous';
+        }
+        relockGate('auth', 'active account session required');
+        relockGate('sysadmin', 'designated for sysadmin');
+      }
+    }
+    window.sorasysApplyAuthUI = applyAuthUI;
+
+    async function initAuthNav() {
+      const cached = readAuthCache();
+      if (cached) {
+        await applyAuthUI(cached, { skipProfileFetch: false });
+      }
+
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+        await applyAuthUI(data);
+        writeAuthCache(data.authenticated ? {
+          authenticated: true,
+          user: { ...data.user, ...(data._resolved || {}) }
+        } : null);
       } catch (err) {
         console.error('Auth nav error:', err);
-        accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Anonymous';
+        if (!cached) await applyAuthUI({ authenticated: false });
       }
       if (bindHoverables) bindHoverables();
     }
@@ -966,6 +991,14 @@
       });
     });
 
+    window.addEventListener('storage', function(e) {
+      if (e.key === AUTH_CACHE_KEY) {
+        const updated = readAuthCache();
+        applyAuthUI(updated || { authenticated: false }, { skipProfileFetch: !updated });
+      }
+    });
+
+    document.addEventListener('sorasys:authchanged', initAuthNav);
     initAuthNav();
   })();
 </script>
@@ -982,6 +1015,8 @@
     const saveBtn = document.getElementById('save-btn');
     const resetBtn = document.getElementById('reset-btn');
     const msg = document.getElementById('editor-message');
+    const accessDenied = document.getElementById('access-denied');
+    const panelContent = document.getElementById('panel-content');
 
     const FALLBACK_AVATAR = window.FALLBACK_AVATAR || 'https://i.imgur.com/baiP4yN.png';
 
@@ -992,9 +1027,6 @@
       msg.className = 'message' + (type ? ' ' + type : '');
     }
 
-    // Empty field, invalid URL, or a broken image link all resolve to the
-    // same default pfp — shown immediately in this session regardless of
-    // whether the change has been saved to the database yet.
     function updateAvatarPreview() {
       const url = avatarUrlInput.value.trim();
       avatarImg.onerror = () => {
@@ -1017,34 +1049,57 @@
     avatarUrlInput.addEventListener('input', updateAvatarPreview);
     bioInput.addEventListener('input', updateBioCount);
 
+    function paintFromUser(user) {
+      previewUsername.textContent = user.username || 'username';
+      avatarFallback.textContent = (user.username || '?').charAt(0).toUpperCase();
+      previewRole.textContent = user.role || '';
+      previewRole.className = 'avatar-role ' + (user.role || '');
+
+      originalProfile = { avatar_url: user.avatar_url || '', bio: user.bio || '' };
+      avatarUrlInput.value = originalProfile.avatar_url;
+      bioInput.value = originalProfile.bio;
+      updateAvatarPreview();
+      updateBioCount();
+    }
+
+    function setStateInstant(authenticated, user) {
+      if (authenticated && user) {
+        paintFromUser(user);
+        accessDenied.classList.add('hidden');
+        panelContent.classList.remove('hidden');
+      } else {
+        panelContent.classList.add('hidden');
+        accessDenied.classList.remove('hidden');
+      }
+    }
+
     async function loadProfile() {
       try {
         const res = await fetch('/api/auth/status');
         const statusData = await res.json();
 
         if (!statusData.authenticated) {
-          document.getElementById('access-denied').classList.remove('hidden');
-          document.getElementById('panel-content').classList.add('hidden');
+          setStateInstant(false);
+          if (window.sorasysAuthCache) window.sorasysAuthCache.write(null);
           return;
         }
-
-        previewUsername.textContent = statusData.user.username;
-        avatarFallback.textContent = statusData.user.username.charAt(0).toUpperCase();
-        previewRole.textContent = statusData.user.role;
-        previewRole.className = 'avatar-role ' + statusData.user.role;
 
         const profRes = await fetch('/api/profile');
         if (!profRes.ok) throw new Error('Failed to load profile');
         const profile = await profRes.json();
 
-        originalProfile = { avatar_url: profile.avatar_url || '', bio: profile.bio || '' };
-        avatarUrlInput.value = originalProfile.avatar_url;
-        bioInput.value = originalProfile.bio;
-        updateAvatarPreview();
-        updateBioCount();
+        const user = {
+          username: statusData.user.username,
+          role: statusData.user.role,
+          avatar_url: profile.avatar_url || '',
+          bio: profile.bio || ''
+        };
 
-        document.getElementById('panel-content').classList.remove('hidden');
-        document.getElementById('access-denied').classList.add('hidden');
+        setStateInstant(true, user);
+
+        if (window.sorasysAuthCache) {
+          window.sorasysAuthCache.write({ authenticated: true, user });
+        }
 
       } catch (err) {
         console.error('Load profile error:', err);
@@ -1084,6 +1139,16 @@
         saveBtn.disabled = false;
         if (window.bindCursorHover) window.bindCursorHover();
 
+        if (window.sorasysAuthCache) {
+          const cached = window.sorasysAuthCache.read();
+          if (cached && cached.user) {
+            cached.user.avatar_url = avatar_url;
+            cached.user.bio = bio;
+            window.sorasysAuthCache.write(cached);
+          }
+        }
+        document.dispatchEvent(new Event('sorasys:authchanged'));
+
       } catch (err) {
         console.error('Save profile error:', err);
         setMessage('Network error: ' + err.message, 'error');
@@ -1102,12 +1167,17 @@
     document.getElementById('logout-btn').addEventListener('click', async () => {
       try {
         await fetch('/api/auth/signout', { method: 'POST' });
-        window.location.href = '/';
-      } catch (err) {
-        window.location.href = '/';
-      }
+      } catch (err) { }
+      if (window.sorasysAuthCache) window.sorasysAuthCache.write(null);
+      window.location.href = '/';
     });
 
+    const cachedAuth = window.sorasysAuthCache ? window.sorasysAuthCache.read() : null;
+    if (cachedAuth && cachedAuth.authenticated) {
+      setStateInstant(true, cachedAuth.user);
+    } else {
+      setStateInstant(false);
+    }
     loadProfile();
   })();
 </script>
