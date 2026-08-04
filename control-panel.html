@@ -1026,7 +1026,7 @@
           <div class="section-title">꩜ <span>Article</span> Processor</div>
           <div class="editor-area">
             <input type="text" id="article-title" placeholder="enter title / subject">
-            <textarea id="article-content" placeholder="insert your immensely valued material in my section..."></textarea>
+            <textarea id="article-content" placeholder="insert your immensely valued material in my section"></textarea>
             <div class="editor-actions">
               <button id="publish-btn" class="primary">Publish</button>
               <button id="cancel-edit-btn">Cancel</button>
@@ -1040,7 +1040,7 @@
           <div class="section-title">°𓏲⋆ <span>Directory</span> of Articlespace<span class="section-count" id="articles-count"></span></div>
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="article-search" placeholder="search the directory...">
+            <input type="text" id="article-search" placeholder="search using specific username or article-title.">
           </div>
           <div id="articles-list" class="article-list">
             <div class="empty-state">regenerating articles...</div>
@@ -1051,7 +1051,7 @@
           <div class="section-title">⿻ <span>Directory</span> of Users<span class="section-count" id="users-count"></span></div>
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="user-search" placeholder="search users by name or role...">
+            <input type="text" id="user-search" placeholder="search using specific username or role">
           </div>
           <div id="users-list" class="user-list">
             <div class="empty-state">regenerating users...</div>
@@ -1430,8 +1430,8 @@
               </div>
             </div>
             <div class="actions">
-              <button class="edit-btn ${!canEdit ? 'disabled' : ''}" ${!canEdit ? 'disabled' : ''} title="${!canEdit ? 'You can only edit your own articles' : 'Edit'}">${EDIT_ICON}</button>
-              <button class="delete-btn ${!canDelete ? 'disabled' : ''}" ${!canDelete ? 'disabled' : ''} title="${!canDelete ? 'You can only delete your own articles' : 'Delete'}">✕</button>
+              <button class="edit-btn ${!canEdit ? 'disabled' : ''}" ${!canEdit ? 'disabled' : ''} title="${!canEdit ? 'the sole articles you are capable of editing are yours, merely yours' : 'Edit'}">${EDIT_ICON}</button>
+              <button class="delete-btn ${!canDelete ? 'disabled' : ''}" ${!canDelete ? 'disabled' : ''} title="${!canDelete ? 'the sole articles you are capable of editing are yours, merely yours' : 'Delete'}">✕</button>
             </div>
           </div>
         `;
@@ -1444,14 +1444,14 @@
           const art = allArticlesData.find(x => x.id === id);
 
           if (art && art.author !== currentUser?.username) {
-            alert('You can only edit your own articles.');
+            alert('the sole articles you are capable of editing are yours, merely yours.');
             return;
           }
 
           const msg = document.getElementById('editor-message');
 
           try {
-            msg.textContent = 'Loading article...';
+            msg.textContent = 'regenerating / accessing article...';
             msg.style.color = 'var(--steel)';
 
             const article = await API.articles.get(id);
@@ -1481,11 +1481,11 @@
           const isOwner = articleAuthor === currentUser?.username;
 
           if (!isAdminUser && !isOwner) {
-            alert('You can only delete your own articles.');
+            alert('you are capable exclusively of deleting articles you published : the capacity does not extend past that');
             return;
           }
 
-          if (confirm('Delete this article?')) {
+          if (confirm('you are certain you intend to delete the selected article?')) {
             try {
               await API.articles.delete(id);
               loadArticles();
@@ -1494,11 +1494,11 @@
                 document.getElementById('article-content').value = '';
                 document.getElementById('publish-btn').textContent = 'Publish';
                 editingArticleId = null;
-                document.getElementById('editor-message').textContent = 'Article deleted.';
+                document.getElementById('editor-message').textContent = 'article deleted';
               }
             } catch (err) {
-              console.error('Delete error:', err);
-              alert('Failed to delete article: ' + err.message);
+              console.error('delete error:', err);
+              alert('unable to delete for a peculiar reason: ' + err.message);
             }
           }
         });
@@ -1636,7 +1636,7 @@
       const msg = document.getElementById('editor-message');
       
       if (!title || !content) {
-        msg.textContent = 'Title and content are required.';
+        msg.textContent = 'cease your retardation : enter content in conjunction with title';
         msg.style.color = 'var(--pulse)';
         return;
       }
@@ -1650,7 +1650,7 @@
           document.getElementById('publish-btn').textContent = 'Publish';
         } else {
           await API.articles.create({ title, content });
-          msg.textContent = 'Article published!';
+          msg.textContent = 'the article should be published';
           msg.style.color = 'var(--steel)';
         }
         document.getElementById('article-title').value = '';
@@ -1658,7 +1658,7 @@
         loadArticles();
         setTimeout(() => { msg.textContent = ''; }, 3000);
       } catch (err) {
-        msg.textContent = 'Failed to save article: ' + err.message;
+        msg.textContent = 'article save failure: ' + err.message;
         msg.style.color = 'var(--pulse)';
         console.error('Save article error:', err);
       }
