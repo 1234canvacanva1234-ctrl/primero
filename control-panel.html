@@ -115,6 +115,7 @@
       color: inherit;
       flex-shrink: 0;
       justify-self: start;
+      white-space: nowrap;
     }
     .nav-logo img {
       width: 34px; height: 34px;
@@ -123,17 +124,25 @@
       border: 1px solid var(--line);
     }
     .nav-logo .word {
+      position: relative;
       font-family: 'Cinzel', serif;
       font-size: 15px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--steel);
-      transition: color 0.3s ease;
-      display: inline-block;
+      color: var(--pulse);
+      transition: text-shadow 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
       margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
-    .nav-logo:hover .word { color: var(--pulse); }
+    .nav-logo .word-text {
+      position: relative;
+    }
+    .nav-logo:hover .word {
+      text-shadow: 0 0 6px rgba(255,255,255,0.55), 0 0 16px rgba(255,59,124,0.5), 0 0 28px rgba(255,59,124,0.3);
+    }
 
     .nav-links {
       display: flex;
@@ -189,9 +198,17 @@
     }
     .nav-link.current::after { right: 14px; }
     .nav-link.locked { color: var(--dim); cursor: not-allowed; }
-    .nav-link.locked::before { display: none; }
-    .nav-link.locked:hover { border-color: transparent; transform: none; box-shadow: none; }
-    .nav-link.locked::after { display: none; }
+    .nav-link.locked:hover,
+    .nav-link.locked:focus-visible {
+      color: var(--ink);
+      border-color: var(--pulse);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 124, 0.15);
+    }
+    .nav-link.locked:hover::before,
+    .nav-link.locked:focus-visible::before { transform: translateX(0); }
+    .nav-link.locked:hover::after,
+    .nav-link.locked:focus-visible::after { right: 14px; }
 
     .panel-toggle {
       display: none;
@@ -360,9 +377,19 @@
     .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.sim-active .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.locked { cursor: not-allowed; }
-    .side-link.locked::before { display: none; }
-    .side-link.locked:hover { border-color: transparent; transform: none; }
+    .side-link.locked:hover,
+    .side-link.locked:focus-visible {
+      border-color: var(--pulse);
+      transform: translateX(-3px);
+    }
+    .side-link.locked:hover::before,
+    .side-link.locked:focus-visible::before { transform: translateX(0); }
     .side-link.locked .side-link-arrow { color: var(--dim); }
+    .side-link.locked:hover .side-link-arrow,
+    .side-link.locked:focus-visible .side-link-arrow {
+      color: var(--pulse);
+      transform: translateX(3px);
+    }
 
     .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
@@ -967,7 +994,7 @@
   <nav class="site-nav">
     <a href="/" class="nav-logo">
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
-      <span class="word"><span class="highlight">✦</span> SoraSys</span>
+      <span class="word"><span class="highlight">✦</span> <span class="word-text">SoraSys</span></span>
     </a>
     <div class="nav-links">
       <a href="/articlespace" class="nav-link">Articlespace</a>
@@ -1081,8 +1108,6 @@
       backdrop.addEventListener('click', close);
     })();
 
-    // ---------- topbar click → mirrors the animation on the matching
-    // sidebar entry before navigating, so the sidebar never looks static ----------
     (function() {
       const topLinks = document.querySelectorAll('.site-nav .nav-link');
       topLinks.forEach(function(link) {
