@@ -45,11 +45,6 @@
       position: relative;
     }
 
-    /* ============================================
-       COSMIC BACKGROUND — fixed canvas starfield
-       with a slow, non-uniform drift (sine-modulated
-       speed) plus drifting nebula glows in CSS.
-       ============================================ */
     #cosmos {
       position: fixed;
       inset: 0;
@@ -94,11 +89,6 @@
       background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(162,160,152,0.018) 3px, rgba(162,160,152,0.018) 4px);
     }
 
-    /* ============================================
-       DYNAMIC DIVIDER — a hue-fluctuating gradient
-       thread used throughout the page as a section
-       separator / spine motif.
-       ============================================ */
     .thread {
       height: 1px;
       width: 100%;
@@ -118,12 +108,6 @@
       100% { background-position: 0% 50%; opacity: 0.35; }
     }
 
-    /* ============================================
-       SITE NAV — a proper top bar that mirrors the
-       side panel's four destinations, gated the
-       same way. The side panel remains for account
-       state and the mobile drawer.
-       ============================================ */
     .site-nav {
       position: sticky;
       top: 0;
@@ -167,11 +151,6 @@
     .nav-logo .word .highlight { color: var(--pulse); }
     .nav-logo:hover .word { color: #ff5c8f; }
 
-    /* The SoraSys wordmark stays permanently in the same hot pink
-       used on hover elsewhere (no background block, no highlight) —
-       just the text itself always colored, kept slightly more
-       specific than the hover rule above so it doesn't get swapped
-       out for the lighter hover pink. */
     .nav-logo .word .brand-pink {
       color: var(--pulse);
     }
@@ -231,11 +210,6 @@
       justify-self: end;
     }
 
-    /* ============================================
-       SIDE PROFILE / NAV PANEL — large, interactive,
-       fixed to the right on desktop. Houses account
-       state + the four primary destinations.
-       ============================================ */
     .side-panel {
       position: fixed;
       top: 0;
@@ -275,9 +249,6 @@
       border-color: var(--pulse);
       background: rgba(32, 32, 30, 0.85);
     }
-    /* enlarged card shown once a sign-in is detected: bigger square
-       avatar stays pinned to the side, the rest of the card grows to
-       hold the username + the bio the user entered themselves */
     .side-account.signed-in {
       align-items: flex-start;
       padding: 18px;
@@ -459,15 +430,10 @@
       display: none;
     }
 
-    /* page content sits to the left of the fixed side panel on desktop */
     .page {
       margin-right: 300px;
     }
 
-    /* ============================================
-       HERO — large, immersive, floats over the
-       animated cosmos.
-       ============================================ */
     .hero {
       position: relative;
       width: 100%;
@@ -604,10 +570,6 @@
       50% { opacity: 1; transform: scaleY(1.3); }
     }
 
-    /* ============================================
-       DIRECTORY — large, embedded, interactive
-       mid-page section. This IS the site map.
-       ============================================ */
     .directory {
       max-width: 1180px;
       margin: 0 auto;
@@ -781,7 +743,6 @@
       box-shadow: 0 0 12px rgba(255, 59, 124, 0.15);
     }
 
-    /* --- custom cursor --- */
     #cursor {
       position: fixed;
       width: 8px;
@@ -802,11 +763,6 @@
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
 
-    /* ============================================
-       MOBILE — side panel becomes a slide-up sheet
-       triggered by the toggle button; directory and
-       hero scale down; cursor effects disabled.
-       ============================================ */
     @media (max-width: 1100px) {
       .nav-links { gap: 18px; }
       .nav-link { font-size: 10px; letter-spacing: 1.5px; }
@@ -916,9 +872,6 @@
 
 <div class="panel-backdrop" id="panel-backdrop"></div>
 
-<!-- ============================================
-     SIDE PROFILE / NAV PANEL
-     ============================================ -->
 <aside class="side-panel" id="side-panel">
   <div class="side-panel-inner">
     <a href="/initialization" class="side-account" id="side-account">
@@ -1006,10 +959,6 @@
     </a>
   </div>
 
-  <!-- ============================================
-       DIRECTORY — the interactive site map itself,
-       embedded large in the middle of the page.
-       ============================================ -->
   <div class="directory" id="directory">
     <div class="cards">
       <a href="https://discord.gg/sorasys" class="card">
@@ -1044,31 +993,6 @@
 </div>
 
 <script>
-  // ============================================
-  // COSMOS — a soft, composite spiral galaxy
-  // rendered on canvas: many small points arranged
-  // along curved arms, rotating as one body. The
-  // rotation speed now runs on a small state
-  // machine — a random target speed is picked
-  // (rapid burst / brief lull / near-normal pace),
-  // held for a random duration, then eased toward
-  // smoothly. This keeps the motion from ever
-  // repeating on a fixed period the way a pure sine
-  // wobble would, while still staying bounded and
-  // sensical rather than erratic. Motion trails (a
-  // translucent clear instead of a hard clear) do
-  // the work of showing movement.
-  //
-  // Perf: the canvas is rendered at a reduced
-  // internal resolution and stretched to full size
-  // with CSS — the browser's own upscaling supplies
-  // the soft blur for free instead of an expensive
-  // per-frame CSS blur filter, and it cuts the pixel
-  // work several times over. The loop is also capped
-  // to ~30fps (this layer is decorative, so it
-  // doesn't need 60) and pauses entirely when the
-  // tab isn't visible.
-  // ============================================
   (function() {
     const canvas = document.getElementById('cosmos');
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -1091,8 +1015,6 @@
     function makePoint(span) {
       const arm = Math.floor(Math.random() * ARM_COUNT);
       const armAngle = (arm / ARM_COUNT) * Math.PI * 2;
-      // logarithmic-spiral placement along the chosen arm, plus
-      // scatter so it reads as a soft band rather than a thin line
       const tParam = Math.random();
       const radius = 18 + tParam * span * 0.62;
       const spiralTwist = tParam * 3.4;
@@ -1115,16 +1037,9 @@
     let t = 0;
     let rotation = 0;
     let lastTs = null;
-    const frameInterval = 1000 / 30; // throttle to ~30fps
+    const frameInterval = 1000 / 30;
     let acc = 0;
 
-    // --- randomized orbit-speed state machine ---
-    // Instead of a fixed sine wobble (which repeats on a predictable
-    // period), we pick a random speed target, hold it for a random
-    // duration, and ease toward it fairly quickly — meant to read like
-    // a ship's thrusters kicking in: a felt burst of speed, then back
-    // off, on an unpredictable cadence. Bursts are capped (~3.5x) so
-    // it stays punchy rather than irrational.
     let speedMult = 1;
     let speedTarget = 1;
     let holdTimer = 2 + Math.random() * 3;
@@ -1132,13 +1047,13 @@
     function pickNewSpeedTarget() {
       const roll = Math.random();
       if (roll < 0.22) {
-        speedTarget = 2.3 + Math.random() * 1.2;   // punchy burst, ~2.3x-3.5x — felt, not chaotic
+        speedTarget = 2.3 + Math.random() * 1.2;
       } else if (roll < 0.38) {
-        speedTarget = 0.45 + Math.random() * 0.25;  // brief lull, ~0.45x-0.7x
+        speedTarget = 0.45 + Math.random() * 0.25;
       } else {
-        speedTarget = 0.9 + Math.random() * 0.3;    // near-normal pace
+        speedTarget = 0.9 + Math.random() * 0.3;
       }
-      holdTimer = 1.3 + Math.random() * 3.4;         // next change in 1.3s-4.7s — snappier cadence
+      holdTimer = 1.3 + Math.random() * 3.4;
     }
 
     function draw(dt) {
@@ -1146,16 +1061,11 @@
 
       holdTimer -= dt;
       if (holdTimer <= 0) pickNewSpeedTarget();
-      // ease toward the current target rather than snapping to it —
-      // a quicker ease rate so bursts read like a thruster kicking in
-      // (fast but still a curve, never an instant jump)
       speedMult += (speedTarget - speedMult) * Math.min(1, dt * 1.4);
 
       const omega = 0.052 * speedMult;
       rotation += omega * dt;
 
-      // trailing clear (not a hard wipe) keeps the swirl
-      // reading as flowing motion rather than snapping frames
       ctx.fillStyle = 'rgba(12,12,12,0.22)';
       ctx.fillRect(0, 0, w, h);
 
@@ -1167,7 +1077,7 @@
       for (const p of points) {
         const angle = p.baseAngle + rotation;
         const x = Math.cos(angle) * p.radius;
-        const y = Math.sin(angle) * p.radius * 0.62; // tilt the disk
+        const y = Math.sin(angle) * p.radius * 0.62;
 
         const shimmer = 0.7 + Math.sin(t * 0.6 + p.tw) * 0.3;
         ctx.beginPath();
@@ -1176,7 +1086,6 @@
         ctx.fill();
       }
 
-      // soft core glow
       const coreR = Math.max(w, h) * 0.14;
       const core = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
       core.addColorStop(0, 'rgba(210,206,198,0.10)');
@@ -1229,9 +1138,6 @@
     }
   })();
 
-  // ============================================
-  // CUSTOM CURSOR
-  // ============================================
   (function() {
     if (window.innerWidth <= 640) return;
 
@@ -1273,9 +1179,6 @@
     updateCursor();
   })();
 
-  // ============================================
-  // SIDE PANEL — mobile slide-up toggle
-  // ============================================
   (function() {
     const panel = document.getElementById('side-panel');
     const toggle = document.getElementById('panel-toggle');
@@ -1296,13 +1199,27 @@
     backdrop.addEventListener('click', close);
   })();
 
-  // ============================================
-  // ACCOUNT AREA — populates the side panel with
-  // sign-in state, and gates Control Panel to
-  // sysadmin role (grayscale + unclickable
-  // otherwise).
-  // ============================================
   (function() {
+    const AUTH_CACHE_KEY = 'sorasys_auth_cache';
+
+    function readAuthCache() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+      } catch (e) { return null; }
+    }
+
+    function writeAuthCache(data) {
+      try {
+        if (data && data.authenticated) {
+          localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(AUTH_CACHE_KEY);
+        }
+      } catch (e) { }
+    }
+
+    window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
+
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -1310,9 +1227,6 @@
       return div.innerHTML;
     }
 
-    // Unlocks every element sharing a given data-gate value at once —
-    // this covers both the top-nav link and the side-panel link for
-    // "auth" (profile-config) and "sysadmin" (control-panel) in one call.
     function unlockGate(gate, subText) {
       document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
         el.classList.remove('locked');
@@ -1325,78 +1239,133 @@
       });
     }
 
-    async function initAuthNav() {
+    function relockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.add('locked');
+        el.classList.remove('unlocked');
+        el.setAttribute('aria-disabled', 'true');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    async function applyAuthUI(data, opts) {
+      opts = opts || {};
       const accountLink = document.getElementById('side-account');
-      const avatarSlot = document.getElementById('side-avatar-slot');
       const nameSlot = document.getElementById('side-account-name');
       const roleSlot = document.getElementById('side-account-role');
       const bioSlot = document.getElementById('side-account-bio');
 
-      try {
-        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-        const data = await res.json();
+      if (data && data.authenticated && data.user) {
+        accountLink.setAttribute('href', '/profile-config');
+        accountLink.classList.add('signed-in');
+        nameSlot.textContent = data.user.username;
+        nameSlot.classList.remove('side-account-cta');
+        nameSlot.classList.add('side-account-username');
 
-        if (data.authenticated && data.user) {
-          accountLink.setAttribute('href', '/profile-config');
-          accountLink.classList.add('signed-in');
-          nameSlot.textContent = data.user.username;
-          nameSlot.classList.remove('side-account-cta');
-          nameSlot.classList.add('side-account-username');
+        if (data.user.role) {
+          roleSlot.style.display = 'block';
+          roleSlot.textContent = data.user.role;
+        } else {
+          roleSlot.style.display = 'none';
+        }
 
-          if (data.user.role) {
-            roleSlot.style.display = 'block';
-            roleSlot.textContent = data.user.role;
-          }
+        unlockGate('auth', 'active account session required');
+        if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        else relockGate('sysadmin', 'designated for sysadmin');
 
-          unlockGate('auth', 'active account session required');
+        let avatarUrl = (data.user.avatar_url || '').trim();
+        let bio = (data.user.bio || '').trim();
 
-          let avatarUrl = '';
-          let bio = '';
+        if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
             if (profRes.ok) {
               const prof = await profRes.json();
-              avatarUrl = (prof.avatar_url || '').trim();
-              bio = (prof.bio || '').trim();
+              avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
+              bio = bio || (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to initials, no bio */ }
-
-          if (bio && bioSlot) {
-            bioSlot.style.display = 'block';
-            bioSlot.textContent = bio;
-          }
-
-          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
-          if (avatarUrl) {
-            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
-                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
-            '</span>';
-          } else {
-            avatarSlot.textContent = initial;
-          }
-
-          if (data.user.role === 'sysadmin') {
-            unlockGate('sysadmin');
-          }
-        } else {
-          accountLink.setAttribute('href', '/initialization');
-          accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Anonymous';
+          } catch (e) { }
         }
+
+        if (bio) {
+          bioSlot.style.display = 'block';
+          bioSlot.textContent = bio;
+        } else {
+          bioSlot.style.display = 'none';
+        }
+
+        const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+        const currentSlot = document.getElementById('side-avatar-slot');
+        if (avatarUrl) {
+          const wrap = currentSlot.closest('.side-avatar-wrap') || currentSlot;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img class="side-avatar" id="side-avatar-slot" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+              'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+          '</span>';
+        } else if (currentSlot.tagName !== 'IMG') {
+          currentSlot.textContent = initial;
+        }
+
+        data._resolved = { avatar_url: avatarUrl, bio: bio };
+      } else {
+        accountLink.setAttribute('href', '/initialization');
+        accountLink.classList.remove('signed-in');
+        nameSlot.textContent = 'Anonymous';
+        nameSlot.classList.add('side-account-cta');
+        nameSlot.classList.remove('side-account-username');
+        roleSlot.style.display = 'none';
+        bioSlot.style.display = 'none';
+        const fresh = document.getElementById('side-avatar-slot');
+        if (fresh && fresh.tagName !== 'IMG') {
+          const wrap = fresh.closest('.side-avatar-wrap') || fresh;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img src="https://i.imgur.com/NGyCK6G.png" alt="Anonymous" class="side-avatar" id="side-avatar-slot" />' +
+          '</span>';
+        } else if (fresh) {
+          fresh.src = 'https://i.imgur.com/NGyCK6G.png';
+          fresh.alt = 'Anonymous';
+        }
+        relockGate('auth', 'active account session required');
+        relockGate('sysadmin', 'designated for sysadmin');
+      }
+    }
+
+    async function initAuthNav() {
+      const cached = readAuthCache();
+      if (cached) {
+        await applyAuthUI(cached, { skipProfileFetch: false });
+        window.dispatchEvent(new Event('sorasys:nav-auth-ready'));
+      }
+
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+        await applyAuthUI(data);
+        writeAuthCache(data.authenticated ? {
+          authenticated: true,
+          user: { ...data.user, ...(data._resolved || {}) }
+        } : null);
       } catch (err) {
         console.error('Auth nav error:', err);
-        accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Anonymous';
+        if (!cached) await applyAuthUI({ authenticated: false });
       }
       window.dispatchEvent(new Event('sorasys:nav-auth-ready'));
     }
 
-    // prevent navigation on any locked link (top-nav + side-panel)
     document.querySelectorAll('.locked').forEach(function(el) {
       el.addEventListener('click', function(e) {
         if (this.classList.contains('locked')) e.preventDefault();
       });
+    });
+
+    window.addEventListener('storage', function(e) {
+      if (e.key === AUTH_CACHE_KEY) {
+        const updated = readAuthCache();
+        applyAuthUI(updated || { authenticated: false }, { skipProfileFetch: !updated });
+      }
     });
 
     initAuthNav();
