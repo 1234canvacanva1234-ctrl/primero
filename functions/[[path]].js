@@ -1,5 +1,8 @@
 const SUBPAGE_FALLBACKS = [
-  { pattern: /^\/articlespace\//, fallback: '/articlespace/' }
+  { pattern: /^\/articlespace\//, fallback: '/articlespace/' },
+  { pattern: /^\/control-panel\//, fallback: '/control-panel' },
+  { pattern: /^\/initialization\//, fallback: '/initialization' },
+  { pattern: /^\/profile-config\//, fallback: '/profile-config' }
 ];
 
 export async function onRequest(context) {
