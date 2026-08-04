@@ -182,22 +182,26 @@ export async function onRequest(context) {
       }
 
       const body = await request.json();
-      const avatar_url = await verifyAvatarUrl(body.avatar_url);
+      let avatar_url = (body.avatar_url || '').trim();
       let bio = (body.bio || '').trim();
 
+      if (avatar_url.length > 500) {
+        return new Response(JSON.stringify({ error: 'excessive characters (max 500 / image url)' }), { status: 400, headers });
+      }
+      if (avatar_url && !/^https?:\/\/.+/i.test(avatar_url)) {
+        return new Response(JSON.stringify({ error: 'image url requires http:// or https:// to start' }), { status: 400, headers });
+      }
       if (bio.length > 1000) {
         return new Response(JSON.stringify({ error: 'description exceeds permitted characters (max 1000)' }), { status: 400, headers });
       }
 
-      // Store '' when it resolved to the default so withProfileDefaults
-      // and this endpoint stay in sync and the default URL only lives in one place.
       await env.DB.prepare(
         'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
-      ).bind(avatar_url === DEFAULT_AVATAR_URL ? '' : avatar_url, bio, user.username).run();
+      ).bind(avatar_url, bio, user.username).run();
 
       return new Response(JSON.stringify({
         success: true,
-        avatar_url,
+        avatar_url: avatar_url || DEFAULT_AVATAR_URL,
         bio: bio || DEFAULT_BIO
       }), { headers });
 
@@ -371,62 +375,6 @@ async function withProfileDefaults(profile) {
     avatar_url: avatar_url || DEFAULT_AVATAR_URL,
     bio: profile.bio && profile.bio.trim() ? profile.bio : DEFAULT_BIO
   };
-}
-
-
-async function verifyAvatarUrl(url) {
-  const trimmed = (url || '').trim();
-  if (!trimmed) return DEFAULT_AVATAR_URL;
-  if (trimmed.length > 500) return DEFAULT_AVATAR_URL;
-
-  let parsed;
-  try {
-    parsed = new URL(trimmed);
-  } catch (err) {
-    return DEFAULT_AVATAR_URL;
-  }
-
-
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return DEFAULT_AVATAR_URL;
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    let response = await fetch(trimmed, {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: controller.signal
-    });
-
-
-    if (!response.ok || response.status === 405) {
-      response = await fetch(trimmed, {
-        method: 'GET',
-        redirect: 'follow',
-        headers: { Range: 'bytes=0-1024' },
-        signal: controller.signal
-      });
-    }
-
-    if (!response.ok) {
-      return DEFAULT_AVATAR_URL;
-    }
-
-    const contentType = (response.headers.get('content-type') || '').toLowerCase();
-    if (!contentType.startsWith('image/')) {
-      return DEFAULT_AVATAR_URL;
-    }
-
-    return trimmed;
-
-  } catch (err) {
-    return DEFAULT_AVATAR_URL;
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 async function getSessionUser(request, env) {
