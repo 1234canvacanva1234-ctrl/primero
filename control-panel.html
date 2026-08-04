@@ -41,6 +41,15 @@
       position: relative;
     }
 
+    /* caret + text-selection use the same hot pink accent everywhere */
+    ::selection {
+      background: var(--pulse);
+      color: var(--void);
+    }
+    input, textarea {
+      caret-color: var(--pulse);
+    }
+
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -459,7 +468,7 @@
       text-transform: none;
     }
 
-    /* Search bar above the article directory */
+    /* Search bar (shared by the article directory and user directory) */
     .search-bar {
       display: flex;
       align-items: center;
@@ -561,17 +570,20 @@
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .article-item .actions button svg {
+      width: 13px; height: 13px;
+    }
     .article-item .actions button:hover {
       border-color: var(--pulse);
       color: var(--pulse);
       background: rgba(255, 59, 124, 0.08);
       transform: scale(1.12) rotate(-4deg);
     }
-    .article-item .actions button.delete.disabled {
+    .article-item .actions button.disabled {
       opacity: 0.25;
       cursor: not-allowed;
     }
-    .article-item .actions button.delete.disabled:hover {
+    .article-item .actions button.disabled:hover {
       border-color: rgba(107, 142, 155, 0.15);
       color: var(--dim);
       background: none;
@@ -580,7 +592,7 @@
     .editor-area {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .editor-area input {
       background: rgba(11, 17, 20, 0.6);
@@ -644,6 +656,15 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
     }
+    #editor-message {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--steel);
+      min-height: 0;
+      line-height: 1.2;
+    }
+    #editor-message:empty { display: none; }
     .empty-state {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
@@ -962,7 +983,7 @@
               <button id="publish-btn" class="primary">Publish</button>
               <button id="cancel-edit-btn">Cancel</button>
             </div>
-            <div id="editor-message" style="font-family:'Cormorant Garamond';font-style:italic;font-size:13px;color:var(--steel);min-height:20px;"></div>
+            <div id="editor-message"></div>
           </div>
         </div>
 
@@ -980,6 +1001,10 @@
 
         <div class="panel-section" id="user-management">
           <div class="section-title">⿻ <span>Directory</span> of Users<span class="section-count" id="users-count"></span></div>
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="user-search" placeholder="search users by name or role...">
+          </div>
           <div id="users-list" class="user-list">
             <div class="empty-state">regenerating users...</div>
           </div>
@@ -1175,6 +1200,19 @@
       return div.innerHTML;
     }
 
+    // MM/DD/YYYY with leading zeros on both month and day
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
+
+    // modern, systematic pencil-line icon used for the edit action
+    const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
     // Check auth status - NO REDIRECT, just show/hide content
     async function checkAuth() {
       try {
@@ -1240,7 +1278,10 @@
       const isAdminUser = currentUser && currentUser.username === 'admin';
 
       container.innerHTML = articles.map((a, i) => {
+        // Deletion stays open to admin/owner; editing is restricted to
+        // the article's own author — even for sysadmins.
         const canDelete = isAdminUser || a.author === currentUser?.username;
+        const canEdit = a.author === currentUser?.username;
         const p = profileCache[a.author] || {};
         const avatarUrl = (p.avatar_url || '').trim();
         const initial = (a.author || '?').charAt(0).toUpperCase();
@@ -1255,22 +1296,29 @@
               </div>
               <div class="text-block">
                 <div class="name">${escapeHtml(a.title)}</div>
-                <div class="meta">${new Date(a.created_at).toLocaleDateString()} · ${escapeHtml(a.author)}</div>
+                <div class="meta">${formatDate(a.created_at)} · ${escapeHtml(a.author)}</div>
               </div>
             </div>
             <div class="actions">
-              <button class="edit-btn" title="Edit">✎</button>
+              <button class="edit-btn ${!canEdit ? 'disabled' : ''}" ${!canEdit ? 'disabled' : ''} title="${!canEdit ? 'You can only edit your own articles' : 'Edit'}">${EDIT_ICON}</button>
               <button class="delete-btn ${!canDelete ? 'disabled' : ''}" ${!canDelete ? 'disabled' : ''} title="${!canDelete ? 'You can only delete your own articles' : 'Delete'}">✕</button>
             </div>
           </div>
         `;
       }).join('');
 
-      // Edit button handler
-      container.querySelectorAll('.edit-btn').forEach(btn => {
+      // Edit button handler (only bound to enabled buttons — ownership already enforced above)
+      container.querySelectorAll('.edit-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', async () => {
           const item = btn.closest('.article-item');
           const id = parseInt(item.dataset.id);
+          const art = allArticlesData.find(x => x.id === id);
+
+          if (art && art.author !== currentUser?.username) {
+            alert('You can only edit your own articles.');
+            return;
+          }
+
           const msg = document.getElementById('editor-message');
 
           try {
@@ -1347,10 +1395,12 @@
       });
     }
 
-    // ---------- user directory: sysadmins first, rotating 6-up carousel ----------
+    // ---------- user directory: sysadmins first, rotating 6-up carousel, with search ----------
     const USERS_PER_PAGE = 6;
+    let allUsersData = [];
     let userPages = [];
     let userPageIndex = 0;
+    let userSearchQuery = '';
 
     async function loadUsers() {
       try {
@@ -1374,18 +1424,34 @@
 
         await getProfiles(sorted.map(u => u.username));
 
-        userPages = [];
-        for (let i = 0; i < sorted.length; i += USERS_PER_PAGE) {
-          userPages.push(sorted.slice(i, i + USERS_PER_PAGE));
-        }
-        if (userPages.length === 0) userPages = [[]];
-        userPageIndex = 0;
-
-        renderUserPage();
+        allUsersData = sorted;
+        applyUserFilter(userSearchQuery);
       } catch (err) {
         console.error('no accessible users / potential error:', err);
         document.getElementById('users-list').innerHTML = '<div class="empty-state">no accessible users / potential error</div>';
       }
+    }
+
+    function applyUserFilter(query) {
+      userSearchQuery = query || '';
+      const q = userSearchQuery.trim().toLowerCase();
+
+      const source = q
+        ? allUsersData.filter(u =>
+            (u.username || '').toLowerCase().includes(q) ||
+            (u.role || '').toLowerCase().includes(q) ||
+            ((profileCache[u.username] || {}).bio || '').toLowerCase().includes(q)
+          )
+        : allUsersData;
+
+      userPages = [];
+      for (let i = 0; i < source.length; i += USERS_PER_PAGE) {
+        userPages.push(source.slice(i, i + USERS_PER_PAGE));
+      }
+      if (userPages.length === 0) userPages = [[]];
+      userPageIndex = 0;
+
+      renderUserPage();
     }
 
     function renderUserPage() {
@@ -1415,7 +1481,7 @@
 
       container.innerHTML = `
         <div class="user-carousel-wrap">
-          <div class="user-grid">${cardsHtml || '<div class="empty-state">no users on this page</div>'}</div>
+          <div class="user-grid">${cardsHtml || '<div class="empty-state">no matching users</div>'}</div>
           <div class="carousel-controls">
             <button class="carousel-arrow" id="user-prev" ${userPageIndex === 0 ? 'disabled' : ''} aria-label="Previous users">‹</button>
             <span class="carousel-page-label">${userPageIndex + 1} / ${userPages.length}</span>
@@ -1430,6 +1496,13 @@
       if (nextBtn) nextBtn.addEventListener('click', () => { if (userPageIndex < userPages.length - 1) { userPageIndex++; renderUserPage(); } });
 
       if (window.bindCursorHover) window.bindCursorHover();
+    }
+
+    const userSearchInput = document.getElementById('user-search');
+    if (userSearchInput) {
+      userSearchInput.addEventListener('input', (e) => {
+        applyUserFilter(e.target.value);
+      });
     }
 
     document.getElementById('publish-btn').addEventListener('click', async () => {
