@@ -1413,22 +1413,22 @@
         return;
       }
       if (username.length < 3) {
-        msg.textContent = 'Username must be at least 3 characters.';
+        msg.textContent = 'username requires 3 characters at minimum.';
         msg.className = 'message error';
         return;
       }
       if (password.length < 8) {
-        msg.textContent = 'Security token must be at least 8 characters.';
+        msg.textContent = 'security token requires 10 characters at minimum.';
         msg.className = 'message error';
         return;
       }
       if (password !== confirm) {
-        msg.textContent = 'Tokens do not match.';
+        msg.textContent = 'incongruent tokens.';
         msg.className = 'message error';
         return;
       }
       if (!avatar_url) {
-        msg.textContent = 'A profile image URL is required.';
+        msg.textContent = 'a proper picture-url is required.';
         msg.className = 'message error';
         return;
       }
@@ -1598,7 +1598,7 @@
           });
         }
 
-        msg.textContent = 'Access granted!';
+        msg.textContent = 'Access extended to you';
         msg.className = 'message success';
         btn.disabled = false;
         pulseSuccess();
