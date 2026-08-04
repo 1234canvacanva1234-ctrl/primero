@@ -839,8 +839,8 @@
       <!-- Sign In / Sign Up Forms -->
       <div id="auth-forms">
         <div class="init-tabs">
-          <button class="init-tab active" data-tab="signin">Sign In</button>
-          <button class="init-tab" data-tab="signup">Sign Up</button>
+          <button class="init-tab active" data-tab="signin">Reconnect</button>
+          <button class="init-tab" data-tab="signup">Register</button>
           <div class="tab-indicator" id="tab-indicator"></div>
         </div>
 
@@ -861,15 +861,15 @@
         <!-- Sign Up Form -->
         <form id="signup-form" class="init-form hidden">
           <div class="form-group">
-            <label>Choose Username</label>
+            <label>Select Username <span class="required-mark">*</span></label>
             <input type="text" id="signup-username" placeholder="unique identifier" required>
           </div>
           <div class="form-group">
-            <label>Security Token</label>
+            <label>Security Token <span class="required-mark">*</span></label>
             <input type="password" id="signup-password" placeholder="create a strong token" required>
           </div>
           <div class="form-group">
-            <label>Confirm Token</label>
+            <label>Confirm Token <span class="required-mark">*</span></label>
             <input type="password" id="signup-confirm" placeholder="confirm your token" required>
           </div>
 
@@ -880,14 +880,14 @@
               <div class="author-avatar-fallback" id="signup-avatar-fallback">?</div>
             </div>
             <div class="form-group">
-              <label>Profile Image URL <span class="required-mark">*</span></label>
-              <input type="url" id="signup-avatar-url" placeholder="https://example.com/your-image.jpg" required>
+              <label>Picture URL <span class="required-mark">*</span></label>
+              <input type="url" id="signup-avatar-url" placeholder="it should appear as a link with the appropriate file extension simple as" required>
             </div>
           </div>
 
           <div class="form-group">
             <label>Personal Description <span class="required-mark">*</span></label>
-            <textarea id="signup-bio" maxlength="1000" placeholder="Tell the network a little about yourself..." required></textarea>
+            <textarea id="signup-bio" maxlength="1000" placeholder="Clarify your identity with precise and substantive diction" required></textarea>
             <div class="char-count" id="signup-bio-count">0 / 1000</div>
           </div>
 
