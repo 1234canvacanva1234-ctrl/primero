@@ -4,13 +4,13 @@
   <link rel="icon" href="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>SoraSys : Initialization</title>
+  <title>SoraSys : Profile Configuration</title>
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SoraSys : Initialization">
+  <meta property="og:title" content="SoraSys : Profile Configuration">
   <meta property="og:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
-  <meta name="theme-color" content="#0b1114">
+  <meta name="theme-color" content="#ff3b7c">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="SoraSys : Initialization">
+  <meta name="twitter:title" content="SoraSys : Profile Configuration">
   <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap');
@@ -362,338 +362,36 @@
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
 
-    /* ---------- page-specific: initialization card ---------- */
-    .init-wrap {
-      min-height: calc(100vh - 71px);
+    /* ---------- page-specific: profile configuration ---------- */
+    .panel-wrap { padding: 22px 24px 48px; }
+    .panel-header {
+      max-width: 900px;
+      margin: 0 auto 28px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 16px;
     }
-    .init-container {
-      max-width: 440px;
-      width: 100%;
-      padding: 40px 32px 48px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      backdrop-filter: blur(2px);
-      position: relative;
-    }
-    .init-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 14%;
-      right: 14%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 59, 124, 0.45), transparent);
-    }
-    /* brief pink glow pulse used to punctuate a successful sign-in / sign-up */
-    @keyframes success-pulse {
-      0%   { box-shadow: 0 0 0 rgba(255, 59, 124, 0); border-color: var(--line); }
-      30%  { box-shadow: 0 0 34px rgba(255, 59, 124, 0.32); border-color: rgba(255, 59, 124, 0.5); }
-      100% { box-shadow: 0 0 0 rgba(255, 59, 124, 0); border-color: var(--line); }
-    }
-    .init-container.pulse-success {
-      animation: success-pulse 900ms ease;
-    }
-    .init-title {
+    .panel-title {
       font-family: 'Cinzel', serif;
       font-weight: 600;
-      font-size: 28px;
-      letter-spacing: 6px;
+      font-size: 20px;
+      letter-spacing: 4px;
       text-transform: uppercase;
       color: var(--steel);
-      text-align: center;
-      margin-bottom: 4px;
     }
-    .init-sub {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-weight: 300;
-      font-size: 13px;
-      color: var(--pulse);
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 28px;
-      opacity: 0.8;
-      transition: opacity 0.3s ease;
-    }
-    .init-tabs {
-      position: relative;
-      display: flex;
-      gap: 0;
-      margin-bottom: 28px;
-      border-bottom: 1px solid var(--line);
-    }
-    .init-tab {
-      flex: 1;
-      padding: 10px 0;
-      text-align: center;
-      font-family: 'Cinzel', serif;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--dim);
-      cursor: pointer;
-      transition: color 0.3s ease;
-      border-bottom: none;
-      background: none;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-    }
-    .init-tab.active {
-      color: var(--pulse);
-    }
-    .init-tab:hover { color: var(--steel); }
-    .tab-indicator {
-      position: absolute;
-      bottom: -1px;
-      height: 2px;
-      background: var(--pulse);
-      box-shadow: 0 0 8px rgba(255, 59, 124, 0.6);
-      transition: left 0.35s cubic-bezier(0.65, 0, 0.35, 1), width 0.35s cubic-bezier(0.65, 0, 0.35, 1);
-    }
-    .init-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .init-form.hidden { display: none; }
-    .init-form.form-enter { animation: form-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-    @keyframes form-fade-in {
-      from { opacity: 0; transform: translateY(8px) scale(0.99); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    #signed-in-state, #auth-forms {
-      will-change: opacity, transform;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .form-group label {
-      font-family: 'Fira Code', monospace;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--dim);
-    }
-    .form-group label .required-mark {
-      color: var(--pulse);
-    }
-    .form-group input {
-      background: rgba(11, 17, 20, 0.6);
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      padding: 10px 12px;
-      color: var(--ink);
-      font-family: 'Crimson Text', serif;
-      font-size: 15px;
-      border-radius: 6px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      outline: none;
-      width: 100%;
-    }
-    .form-group input:focus {
-      border-color: var(--pulse);
-      box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08);
-    }
-    .form-group input::placeholder {
-      color: var(--dim);
-      font-style: italic;
-      font-size: 13px;
-    }
-    .form-group textarea {
-      background: rgba(11, 17, 20, 0.6);
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      padding: 10px 12px;
-      color: var(--ink);
-      font-family: 'Crimson Text', serif;
-      font-size: 14px;
-      line-height: 1.55;
-      border-radius: 6px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      outline: none;
-      width: 100%;
-      min-height: 90px;
-      resize: vertical;
-    }
-    .form-group textarea:focus {
-      border-color: var(--pulse);
-      box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08);
-    }
-    .form-group textarea::placeholder {
-      color: var(--dim);
-      font-style: italic;
-      font-size: 13px;
-    }
-    .char-count {
-      font-family: 'Fira Code', monospace;
-      font-size: 8px;
-      letter-spacing: 1px;
-      color: var(--dim);
-      text-align: right;
-    }
-    .char-count.warn { color: var(--pulse); }
-    .field-hint {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 11.5px;
-      color: var(--dim);
-    }
+    .panel-title span { color: var(--pulse); }
+    .panel-actions { display: flex; gap: 12px; align-items: center; }
 
-    /* ---------- avatar setup row (signup only) ---------- */
-    .avatar-setup {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .avatar-setup .form-group { flex: 1; min-width: 0; }
-
-    .author-avatar-wrap {
-      width: 60px;
-      height: 60px;
-      position: relative;
-      flex-shrink: 0;
-    }
-    .author-avatar-ring {
-      position: absolute;
-      inset: -5px;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, var(--pulse), var(--pulse-soft), var(--steel), var(--pulse));
-      animation: ring-rotate 9s linear infinite, ring-pulse 4.5s ease-in-out infinite;
-    }
-    .author-avatar,
-    .author-avatar-fallback {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      z-index: 1;
-    }
-    .author-avatar {
-      object-fit: cover;
-      display: none;
-      background: rgba(11, 17, 20, 0.6);
-    }
-    .author-avatar-fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Cinzel', serif;
-      font-size: 18px;
-      color: var(--dim);
-      background: rgba(11, 17, 20, 0.75);
-    }
-    @keyframes ring-rotate {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes ring-pulse {
-      0%, 100% {
-        opacity: 0.55;
-        box-shadow: 0 0 12px rgba(255, 59, 124, 0.2);
-      }
-      50% {
-        opacity: 1;
-        box-shadow: 0 0 18px rgba(107, 142, 155, 0.35);
-      }
-    }
-
-    /* Modernized primary action button — rounded, lifted hover with a
-       pulse glow, shared with the control panel / profile page. */
-    .init-btn {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--void);
-      background: linear-gradient(135deg, var(--pulse), #ff6f9c);
-      padding: 13px 28px;
-      border: 1px solid transparent;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      margin-top: 6px;
-      width: 100%;
-      box-shadow: 0 4px 16px rgba(255, 59, 124, 0.25);
-    }
-    .init-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
-    }
-    .init-btn:active { transform: translateY(0) scale(0.97); }
-    .init-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-    .message {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 13px;
-      color: var(--steel);
-      text-align: center;
-      margin-top: 12px;
-      min-height: 0;
-      line-height: 1.3;
-      transition: opacity 0.25s ease;
-    }
-    .message:empty { display: none; margin-top: 0; }
-    .message.error { color: var(--pulse); }
-    .message.success { color: var(--steel); }
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      font-family: 'Fira Code', monospace;
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: var(--dim);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    .back-link:hover { color: var(--pulse); }
-
-    /* Already signed in state */
-    .signed-in-state {
-      text-align: center;
-      padding: 20px 0;
-    }
-    .signed-in-state .greeting {
-      font-family: 'Cinzel', serif;
-      font-size: 18px;
-      letter-spacing: 2px;
-      color: var(--steel);
-      margin-bottom: 8px;
-    }
-    .signed-in-state .greeting span { color: var(--pulse); }
-    .signed-in-state .sub {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 14px;
-      color: var(--dim);
-      margin-bottom: 16px;
-    }
-    .signed-in-state .actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* Modernized buttons: rounded, lifted hover with a pulse glow —
-       shared class with the control panel and profile-config pages. */
+    /* Modernized buttons: rounded, lifted hover with a pulse glow,
+       shared with the control panel elsewhere on the site. */
     .panel-btn {
       font-family: 'Cinzel', serif;
       font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      padding: 11px 22px;
+      padding: 11px 26px;
       background: rgba(30, 42, 47, 0.4);
       border: 1px solid var(--line);
       color: var(--ink);
@@ -723,11 +421,205 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
     }
-    .panel-btn:disabled {
+
+    .panel-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+    }
+
+    .panel-section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      backdrop-filter: blur(2px);
+      transition: border-color 0.4s ease;
+    }
+    .panel-section:hover { border-color: rgba(107, 142, 155, 0.2); }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--steel);
+      margin-bottom: 16px;
+    }
+    .section-title span { color: var(--pulse); }
+
+    /* Avatar preview column */
+    .avatar-preview-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .avatar-preview {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid var(--line);
+      object-fit: cover;
+      display: block;
+    }
+    .avatar-fallback {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 42px;
+      color: var(--dim);
+    }
+    .avatar-username {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--ink);
+      text-align: center;
+    }
+    .avatar-role {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: var(--dim);
+      text-align: center;
+    }
+    .avatar-role.sysadmin { color: var(--pulse); }
+
+    /* Form */
+    .editor-area { display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-family: 'Fira Code', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .form-group .hint {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: var(--dim);
+    }
+    .editor-area input[type="text"],
+    .editor-area input[type="url"] {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 10px 12px;
+      color: var(--ink);
+      font-family: 'Crimson Text', serif;
+      font-size: 15px;
+      border-radius: 6px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .editor-area input:focus { border-color: var(--pulse); box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08); }
+    .editor-area textarea {
+      background: rgba(11, 17, 20, 0.6);
+      border: 1px solid rgba(107, 142, 155, 0.15);
+      padding: 12px;
+      color: var(--ink);
+      font-family: 'Crimson Text', serif;
+      font-size: 14px;
+      border-radius: 6px;
+      outline: none;
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.6;
+      width: 100%;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .editor-area textarea:focus { border-color: var(--pulse); box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08); }
+    .char-count {
+      font-family: 'Fira Code', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: var(--dim);
+      text-align: right;
+    }
+    .char-count.warn { color: var(--pulse); }
+
+    .editor-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .editor-actions button {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 28px;
+      border: 1px solid rgba(107, 142, 155, 0.18);
+      background: rgba(30, 42, 47, 0.4);
+      color: var(--ink);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .editor-actions button:hover {
+      border-color: var(--pulse);
+      color: var(--pulse);
+      background: rgba(30, 42, 47, 0.7);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 124, 0.15);
+    }
+    .editor-actions button:active { transform: translateY(0) scale(0.97); }
+    .editor-actions button.primary {
+      background: linear-gradient(135deg, var(--pulse), #ff6f9c);
+      color: var(--void);
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(255, 59, 124, 0.25);
+    }
+    .editor-actions button.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
+    }
+    .editor-actions button:disabled {
       opacity: 0.4;
       cursor: not-allowed;
       transform: none !important;
       box-shadow: none !important;
+    }
+
+    .message {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--steel);
+      min-height: 0;
+      line-height: 1.2;
+    }
+    .message:empty { display: none; }
+    .message.error { color: var(--pulse); }
+    .message.success { color: var(--steel); }
+
+    .access-denied {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .access-denied .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .access-denied h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: var(--steel);
+      margin-bottom: 8px;
+    }
+    .access-denied p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: var(--dim);
+      margin-bottom: 20px;
     }
     .hidden { display: none; }
 
@@ -771,25 +663,27 @@
       }
     }
 
+    @media (max-width: 768px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      .panel-header { flex-direction: column; gap: 12px; align-items: stretch; text-align: center; }
+      .panel-actions { justify-content: center; flex-wrap: wrap; }
+    }
+
     @media (max-width: 640px) {
       body { cursor: auto; }
       #cursor { display: none !important; }
       .site-nav { padding: 10px 14px; }
       .nav-logo .word { font-size: 11px; letter-spacing: 2px; }
       .nav-logo img { width: 25px; height: 25px; }
-      .init-wrap { min-height: calc(100vh - 57px); padding: 24px 14px; }
-      .init-container { padding: 28px 20px 36px; }
-      .init-title { font-size: 24px; letter-spacing: 4px; }
-      .signed-in-state .actions { flex-direction: column; align-items: center; }
+      .panel-wrap { padding: 16px 16px 32px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .nebula, .thread, .init-container.pulse-success, .init-form.form-enter { animation: none !important; }
+      .nebula, .thread { animation: none !important; }
     }
   </style>
 </head>
 <body>
-
 <div class="nebula"></div>
 <div class="vignette"></div>
 <div id="cursor"></div>
@@ -810,23 +704,24 @@
         <div class="side-account-bio" id="side-account-bio" style="display:none;"></div>
       </div>
     </a>
+
     <div class="side-label">◈ Navigate</div>
     <nav class="side-links">
       <a href="/articlespace" class="side-link">
         <span class="side-link-main">
           <span class="side-link-title">Articlespace</span>
-          <span class="side-link-sub">writings from the network</span>
+          <span class="side-link-sub">collection of texts</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
-      <a href="/initialization" class="side-link current">
+      <a href="/initialization" class="side-link">
         <span class="side-link-main">
           <span class="side-link-title">Initialization</span>
           <span class="side-link-sub">acquire access + personalize</span>
         </span>
         <span class="side-link-arrow">→</span>
       </a>
-      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
+      <a href="/profile-config" class="side-link current locked" data-gate="auth" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Profile Configuration</span>
           <span class="side-link-sub">active account session required</span>
@@ -858,91 +753,69 @@
     </a>
     <div class="nav-links">
       <a href="/articlespace" class="nav-link">Articlespace</a>
-      <a href="/initialization" class="nav-link current">Initialization</a>
-      <a href="/profile-config" class="nav-link locked" data-gate="auth" aria-disabled="true">Profile Configuration</a>
+      <a href="/initialization" class="nav-link">Initialization</a>
+      <a href="/profile-config" class="nav-link current locked" data-gate="auth" aria-disabled="true">Profile Configuration</a>
       <a href="/control-panel" class="nav-link locked" data-gate="sysadmin" aria-disabled="true">Control Panel</a>
     </div>
     <button class="panel-toggle" id="panel-toggle" type="button" aria-label="Open menu">☰</button>
   </nav>
 
-  <div class="init-wrap">
-    <div class="init-container" id="init-container">
-      <div class="init-title">Initialization</div>
-      <div class="init-sub">establish your presence</div>
-
-      <!-- Already Signed In State -->
-      <div id="signed-in-state" class="signed-in-state hidden">
-        <div class="greeting">Welcome, <span id="signed-in-username">User</span>!</div>
-        <div class="sub">you're literally connected : the page presents no utility to you</div>
-        <div class="actions">
-          <a href="/control-panel" class="panel-btn primary">⌘ Control Panel</a>
-          <a href="/profile-config" class="panel-btn">𖤓 Profile Configuration</a>
-          <a href="/articlespace" class="panel-btn">𓅓 Articlespace</a>
-          <button id="signout-from-init" class="panel-btn">⏻ Disconnect</button>
-        </div>
+  <div class="panel-wrap">
+    <div class="panel-header">
+      <div class="panel-title">◈ <span>Profile</span> Configuration</div>
+      <div class="panel-actions">
+        <button id="logout-btn" class="panel-btn">⏻ Disconnect</button>
       </div>
+    </div>
 
-      <!-- Sign In / Sign Up Forms -->
-      <div id="auth-forms">
-        <div class="init-tabs">
-          <button class="init-tab active" data-tab="signin">Reconnect</button>
-          <button class="init-tab" data-tab="signup">Register</button>
-          <div class="tab-indicator" id="tab-indicator"></div>
+    <!-- Access Denied (not signed in) -->
+    <div id="access-denied" class="access-denied hidden">
+      <div class="icon">user-error</div>
+      <h2>Active Account Session Required</h2>
+      <p>a profile-configuration page necessitates a detectable profile to configure in order to function properly</p>
+      <a href="/initialization" class="panel-btn primary">↩ Navigate to Initialization</a>
+    </div>
+
+    <!-- Main Content -->
+    <div id="panel-content" class="hidden">
+      <div class="panel-grid">
+
+        <!-- Avatar preview -->
+        <div class="panel-section">
+          <div class="section-title">𖤓 <span>profile-picture</span> Preview</div>
+          <div class="avatar-preview-wrap">
+            <img id="avatar-img" class="avatar-preview hidden" alt="avatar preview">
+            <div id="avatar-fallback" class="avatar-fallback">?</div>
+            <div class="avatar-username" id="preview-username">username</div>
+            <div class="avatar-role" id="preview-role"></div>
+          </div>
         </div>
 
-        <!-- Sign In Form -->
-        <form id="signin-form" class="init-form">
-          <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="signin-username" placeholder="your username" required>
-          </div>
-          <div class="form-group">
-            <label>Security Token</label>
-            <input type="password" id="signin-password" placeholder="••••••••" required>
-          </div>
-          <button type="submit" class="init-btn">Access Network</button>
-          <div id="signin-message" class="message"></div>
-        </form>
-
-        <!-- Sign Up Form -->
-        <form id="signup-form" class="init-form hidden">
-          <div class="form-group">
-            <label>Select Username <span class="required-mark">*</span></label>
-            <input type="text" id="signup-username" placeholder="unique identifier" required>
-          </div>
-          <div class="form-group">
-            <label>Security Token <span class="required-mark">*</span></label>
-            <input type="password" id="signup-password" placeholder="create a strong token" required>
-          </div>
-          <div class="form-group">
-            <label>Confirm Token <span class="required-mark">*</span></label>
-            <input type="password" id="signup-confirm" placeholder="confirm your token" required>
-          </div>
-
-          <div class="avatar-setup">
-            <div class="author-avatar-wrap">
-              <div class="author-avatar-ring"></div>
-              <img class="author-avatar" id="signup-avatar-img" alt="avatar preview">
-              <div class="author-avatar-fallback" id="signup-avatar-fallback">?</div>
-            </div>
+        <!-- Editor -->
+        <div class="panel-section">
+          <div class="section-title">⚚ <span>Modify / Customize</span> Specific Details</div>
+          <div class="editor-area">
             <div class="form-group">
-              <label>Picture URL <span class="required-mark">*</span></label>
-              <input type="url" id="signup-avatar-url" placeholder="it should appear as a link with the appropriate file extension simple as" required>
+              <label>picture-url</label>
+              <input type="url" id="avatar-url" placeholder="https://example.com/your-image.jpg">
+              <div class="hint">paste one simply : a profile picture provides visual data essential to transmitting your identity</div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>Personal Description <span class="required-mark">*</span></label>
-            <textarea id="signup-bio" maxlength="1000" placeholder="Clarify your identity with precise and substantive diction" required></textarea>
-            <div class="char-count" id="signup-bio-count">0 / 1000</div>
-          </div>
+            <div class="form-group">
+              <label>Personal Description</label>
+              <textarea id="bio" maxlength="1000" placeholder="an exhaustive or concise description you should enter : preferably the former, but it's your decision"></textarea>
+              <div class="char-count" id="bio-count">0 / 1000</div>
+            </div>
 
-          <button type="submit" class="init-btn">Establish Identity</button>
-          <div id="signup-message" class="message"></div>
-        </form>
+            <div class="editor-actions">
+              <button id="save-btn" class="primary">Execute</button>
+              <button id="reset-btn">Reverse actions committed in retrievable session</button>
+            </div>
+            <div id="editor-message" class="message"></div>
+          </div>
+        </div>
+
       </div>
-
-      <a href="/" class="back-link">↩ return to network</a>
     </div>
   </div>
 
@@ -1037,7 +910,7 @@
             roleSlot.textContent = data.user.role;
           }
 
-          unlockGate('auth', 'active account session required');
+          unlockGate('auth', 'avatar, bio, presence');
 
           let avatarUrl = '';
           let bio = '';
@@ -1085,428 +958,149 @@
       });
     });
 
-    document.addEventListener('sorasys:authchanged', initAuthNav);
     initAuthNav();
   })();
 </script>
 
 <script>
   (function() {
-    // DOM elements
-    const signedInState = document.getElementById('signed-in-state');
-    const authForms = document.getElementById('auth-forms');
-    const signedInUsername = document.getElementById('signed-in-username');
-    const signoutBtn = document.getElementById('signout-from-init');
-    const initSub = document.querySelector('.init-sub');
-    const initContainer = document.getElementById('init-container');
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const bioInput = document.getElementById('bio');
+    const bioCount = document.getElementById('bio-count');
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarFallback = document.getElementById('avatar-fallback');
+    const previewUsername = document.getElementById('preview-username');
+    const previewRole = document.getElementById('preview-role');
+    const saveBtn = document.getElementById('save-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const msg = document.getElementById('editor-message');
 
-    const tabs = document.querySelectorAll('.init-tab');
-    const tabIndicator = document.getElementById('tab-indicator');
-    const signinForm = document.getElementById('signin-form');
-    const signupForm = document.getElementById('signup-form');
+    let originalProfile = { avatar_url: '', bio: '' };
 
-    // ============================================
-    // Sliding tab indicator
-    // ============================================
-    function moveIndicatorTo(tab) {
-      tabIndicator.style.left = tab.offsetLeft + 'px';
-      tabIndicator.style.width = tab.offsetWidth + 'px';
-    }
-    // Position on load (and again after fonts/layout settle)
-    requestAnimationFrame(() => moveIndicatorTo(document.querySelector('.init-tab.active')));
-    window.addEventListener('resize', () => {
-      moveIndicatorTo(document.querySelector('.init-tab.active'));
-    });
-
-    // ============================================
-    // Smooth cross-fade between the signed-out forms and the
-    // signed-in welcome card, instead of an abrupt display toggle.
-    // ============================================
-    const SWAP_DURATION = 380;
-    let swapInFlight = false;
-
-    function swapState(hideEl, showEl) {
-      if (swapInFlight) return;
-      swapInFlight = true;
-
-      hideEl.style.transition = `opacity ${SWAP_DURATION}ms cubic-bezier(0.4,0,0.2,1), transform ${SWAP_DURATION}ms cubic-bezier(0.4,0,0.2,1)`;
-      hideEl.style.opacity = '0';
-      hideEl.style.transform = 'translateY(-10px) scale(0.98)';
-
-      setTimeout(() => {
-        hideEl.classList.add('hidden');
-        hideEl.style.transition = '';
-        hideEl.style.opacity = '';
-        hideEl.style.transform = '';
-
-        showEl.classList.remove('hidden');
-        showEl.style.opacity = '0';
-        showEl.style.transform = 'translateY(10px) scale(0.98)';
-        void showEl.offsetWidth; // force reflow so the transition runs
-        showEl.style.transition = `opacity ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1), transform ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1)`;
-        showEl.style.opacity = '1';
-        showEl.style.transform = 'translateY(0) scale(1)';
-
-        setTimeout(() => {
-          showEl.style.transition = '';
-          showEl.style.opacity = '';
-          showEl.style.transform = '';
-          swapInFlight = false;
-        }, SWAP_DURATION);
-      }, SWAP_DURATION);
+    function setMessage(text, type) {
+      msg.textContent = text;
+      msg.className = 'message' + (type ? ' ' + type : '');
     }
 
-    function pulseSuccess() {
-      initContainer.classList.remove('pulse-success');
-      void initContainer.offsetWidth;
-      initContainer.classList.add('pulse-success');
+    function updateAvatarPreview() {
+      const url = avatarUrlInput.value.trim();
+      if (!url) {
+        avatarImg.classList.add('hidden');
+        avatarFallback.classList.remove('hidden');
+        return;
+      }
+      avatarImg.src = url;
+      avatarImg.onload = () => {
+        avatarImg.classList.remove('hidden');
+        avatarFallback.classList.add('hidden');
+      };
+      avatarImg.onerror = () => {
+        avatarImg.classList.add('hidden');
+        avatarFallback.classList.remove('hidden');
+      };
     }
 
-    // ============================================
-    // Check if user is already signed in
-    // animate=true crossfades between states; leave false for the
-    // very first load so the correct state simply appears.
-    // ============================================
-    async function checkAuthStatus(animate) {
+    function updateBioCount() {
+      const len = bioInput.value.length;
+      bioCount.textContent = len + ' / 1000';
+      bioCount.classList.toggle('warn', len > 900);
+    }
+
+    avatarUrlInput.addEventListener('input', updateAvatarPreview);
+    bioInput.addEventListener('input', updateBioCount);
+
+    async function loadProfile() {
       try {
         const res = await fetch('/api/auth/status');
+        const statusData = await res.json();
+
+        if (!statusData.authenticated) {
+          document.getElementById('access-denied').classList.remove('hidden');
+          document.getElementById('panel-content').classList.add('hidden');
+          return;
+        }
+
+        previewUsername.textContent = statusData.user.username;
+        avatarFallback.textContent = statusData.user.username.charAt(0).toUpperCase();
+        previewRole.textContent = statusData.user.role;
+        previewRole.className = 'avatar-role ' + statusData.user.role;
+
+        const profRes = await fetch('/api/profile');
+        if (!profRes.ok) throw new Error('Failed to load profile');
+        const profile = await profRes.json();
+
+        originalProfile = { avatar_url: profile.avatar_url || '', bio: profile.bio || '' };
+        avatarUrlInput.value = originalProfile.avatar_url;
+        bioInput.value = originalProfile.bio;
+        updateAvatarPreview();
+        updateBioCount();
+
+        document.getElementById('panel-content').classList.remove('hidden');
+        document.getElementById('access-denied').classList.add('hidden');
+
+      } catch (err) {
+        console.error('Load profile error:', err);
+        setMessage('Failed to load profile.', 'error');
+      }
+    }
+
+    saveBtn.addEventListener('click', async () => {
+      const avatar_url = avatarUrlInput.value.trim();
+      const bio = bioInput.value.trim();
+
+      if (avatar_url && !/^https?:\/\/.+/i.test(avatar_url)) {
+        setMessage('Image URL must start with http:// or https://', 'error');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      setMessage('Saving...', '');
+
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ avatar_url, bio })
+        });
         const data = await res.json();
 
-        const shouldShowSignedIn = !!(data.authenticated && data.user);
-
-        if (shouldShowSignedIn) {
-          signedInUsername.textContent = data.user.username;
-        }
-        initSub.textContent = shouldShowSignedIn
-          ? 'is complete and a process of the past'
-          : 'establish your presence';
-
-        const currentlyShowingForms = !authForms.classList.contains('hidden');
-        const currentlyShowingSignedIn = !signedInState.classList.contains('hidden');
-
-        if (shouldShowSignedIn && currentlyShowingForms) {
-          if (animate) swapState(authForms, signedInState);
-          else { authForms.classList.add('hidden'); signedInState.classList.remove('hidden'); }
-        } else if (!shouldShowSignedIn && currentlyShowingSignedIn) {
-          if (animate) swapState(signedInState, authForms);
-          else { signedInState.classList.add('hidden'); authForms.classList.remove('hidden'); }
-        } else if (!shouldShowSignedIn && !currentlyShowingForms && !currentlyShowingSignedIn) {
-          authForms.classList.remove('hidden');
-        } else if (shouldShowSignedIn && !currentlyShowingSignedIn && !currentlyShowingForms) {
-          signedInState.classList.remove('hidden');
+        if (!res.ok) {
+          setMessage(data.error || 'Failed to save profile.', 'error');
+          saveBtn.disabled = false;
+          return;
         }
 
+        originalProfile = { avatar_url, bio };
+        setMessage('Profile saved.', 'success');
+        saveBtn.disabled = false;
         if (window.bindCursorHover) window.bindCursorHover();
-      } catch (err) {
-        console.error('Auth check error:', err);
-        signedInState.classList.add('hidden');
-        authForms.classList.remove('hidden');
-      }
-    }
 
-    // ============================================
-    // Sign out from initialization page — no full reload, just a
-    // smooth crossfade back to the sign-in forms.
-    // ============================================
-    signoutBtn.addEventListener('click', async () => {
-      signoutBtn.disabled = true;
+      } catch (err) {
+        console.error('Save profile error:', err);
+        setMessage('Network error: ' + err.message, 'error');
+        saveBtn.disabled = false;
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      avatarUrlInput.value = originalProfile.avatar_url;
+      bioInput.value = originalProfile.bio;
+      updateAvatarPreview();
+      updateBioCount();
+      setMessage('Changes reverted.', '');
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
       try {
         await fetch('/api/auth/signout', { method: 'POST' });
+        window.location.href = '/';
       } catch (err) {
-        console.error('Signout error:', err);
-      }
-      await checkAuthStatus(true);
-      initAuthNavRefresh();
-      signoutBtn.disabled = false;
-    });
-
-    // ============================================
-    // Tab switching
-    // ============================================
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        moveIndicatorTo(tab);
-
-        const showForm = tab.dataset.tab === 'signin' ? signinForm : signupForm;
-        const hideForm = tab.dataset.tab === 'signin' ? signupForm : signinForm;
-
-        hideForm.classList.add('hidden');
-        showForm.classList.remove('hidden');
-        showForm.classList.remove('form-enter');
-        void showForm.offsetWidth; // restart animation
-        showForm.classList.add('form-enter');
-
-        document.querySelectorAll('.message').forEach(m => {
-          m.textContent = '';
-          m.className = 'message';
-        });
-      });
-    });
-
-    // ============================================
-    // Signup avatar live preview
-    // ============================================
-    const signupAvatarUrl = document.getElementById('signup-avatar-url');
-    const signupAvatarImg = document.getElementById('signup-avatar-img');
-    const signupAvatarFallback = document.getElementById('signup-avatar-fallback');
-
-    signupAvatarUrl.addEventListener('input', () => {
-      const url = signupAvatarUrl.value.trim();
-      if (!url) {
-        signupAvatarImg.style.display = 'none';
-        signupAvatarFallback.style.display = 'flex';
-        return;
-      }
-      signupAvatarImg.onload = () => {
-        signupAvatarImg.style.display = 'block';
-        signupAvatarFallback.style.display = 'none';
-      };
-      signupAvatarImg.onerror = () => {
-        signupAvatarImg.style.display = 'none';
-        signupAvatarFallback.style.display = 'flex';
-      };
-      signupAvatarImg.src = url;
-    });
-
-    // ============================================
-    // Signup bio character count
-    // ============================================
-    const signupBio = document.getElementById('signup-bio');
-    const signupBioCount = document.getElementById('signup-bio-count');
-    signupBio.addEventListener('input', () => {
-      const len = signupBio.value.length;
-      signupBioCount.textContent = len + ' / 1000';
-      signupBioCount.classList.toggle('warn', len > 900);
-    });
-
-    // ============================================
-    // Sign Up
-    // ============================================
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('signup-username').value.trim();
-      const password = document.getElementById('signup-password').value;
-      const confirm = document.getElementById('signup-confirm').value;
-      const avatar_url = signupAvatarUrl.value.trim();
-      const bio = signupBio.value.trim();
-      const msg = document.getElementById('signup-message');
-      const btn = e.target.querySelector('.init-btn');
-      
-      msg.textContent = '';
-      msg.className = 'message';
-      
-      if (!username || !password || !confirm) {
-        msg.textContent = 'All fields are required.';
-        msg.className = 'message error';
-        return;
-      }
-      if (username.length < 3) {
-        msg.textContent = 'Username must be at least 3 characters.';
-        msg.className = 'message error';
-        return;
-      }
-      if (password.length < 8) {
-        msg.textContent = 'Security token must be at least 8 characters.';
-        msg.className = 'message error';
-        return;
-      }
-      if (password !== confirm) {
-        msg.textContent = 'Tokens do not match.';
-        msg.className = 'message error';
-        return;
-      }
-      if (!avatar_url) {
-        msg.textContent = 'A profile image URL is required.';
-        msg.className = 'message error';
-        return;
-      }
-      if (!/^https?:\/\/.+/i.test(avatar_url)) {
-        msg.textContent = 'Image URL must start with http:// or https://';
-        msg.className = 'message error';
-        return;
-      }
-      if (!bio) {
-        msg.textContent = 'A personal description is required.';
-        msg.className = 'message error';
-        return;
-      }
-      if (bio.length < 10) {
-        msg.textContent = 'Description should be at least 10 characters.';
-        msg.className = 'message error';
-        return;
-      }
-      
-      btn.disabled = true;
-      msg.textContent = 'Creating account...';
-      msg.className = 'message';
-      
-      try {
-        const res = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
-        });
-        
-        let data;
-        try {
-          data = await res.json();
-        } catch (parseError) {
-          console.error('Response is not JSON:', parseError);
-          throw new Error('Server returned invalid response format');
-        }
-        
-        if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Signup failed.';
-          msg.className = 'message error';
-          btn.disabled = false;
-          return;
-        }
-
-        // Account created and session cookie is now set — immediately
-        // attach the required profile picture and description.
-        let profileWarning = '';
-        try {
-          const profRes = await fetch('/api/profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ avatar_url, bio })
-          });
-          if (!profRes.ok) {
-            profileWarning = ' (profile details could not be saved — add them from the Profile page)';
-          }
-        } catch (profileErr) {
-          console.error('Profile save error:', profileErr);
-          profileWarning = ' (profile details could not be saved — add them from the Profile page)';
-        }
-        
-        msg.textContent = 'Identity established!' + profileWarning;
-        msg.className = 'message success';
-        btn.disabled = false;
-        pulseSuccess();
-        
-        // Clear form
-        document.getElementById('signup-username').value = '';
-        document.getElementById('signup-password').value = '';
-        document.getElementById('signup-confirm').value = '';
-        signupAvatarUrl.value = '';
-        signupBio.value = '';
-        signupAvatarImg.style.display = 'none';
-        signupAvatarFallback.style.display = 'flex';
-        signupBioCount.textContent = '0 / 1000';
-        signupBioCount.classList.remove('warn');
-        
-        // Check auth status to show signed-in state
-        setTimeout(() => {
-          checkAuthStatus(true);
-          initAuthNavRefresh();
-          // Switch to sign in tab
-          tabs.forEach(t => t.classList.remove('active'));
-          const signinTab = document.querySelector('[data-tab="signin"]');
-          signinTab.classList.add('active');
-          moveIndicatorTo(signinTab);
-          signinForm.classList.remove('hidden');
-          signupForm.classList.add('hidden');
-        }, 1000);
-        
-      } catch (err) {
-        console.error('Signup error:', err);
-        msg.textContent = 'Network error: ' + err.message;
-        msg.className = 'message error';
-        btn.disabled = false;
+        window.location.href = '/';
       }
     });
 
-    // ============================================
-    // Sign In
-    // ============================================
-    document.getElementById('signin-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('signin-username').value.trim();
-      const password = document.getElementById('signin-password').value;
-      const msg = document.getElementById('signin-message');
-      const btn = e.target.querySelector('.init-btn');
-      
-      msg.textContent = '';
-      msg.className = 'message';
-      
-      if (!username || !password) {
-        msg.textContent = 'All fields are required.';
-        msg.className = 'message error';
-        return;
-      }
-      
-      btn.disabled = true;
-      msg.textContent = 'Authenticating...';
-      msg.className = 'message';
-      
-      try {
-        const res = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ username, password })
-        });
-        
-        let data;
-        try {
-          data = await res.json();
-        } catch (parseError) {
-          console.error('Response is not JSON:', parseError);
-          throw new Error('Server returned invalid response format');
-        }
-        
-        if (!res.ok) {
-          msg.textContent = data.error || data.message || 'Authentication failed.';
-          msg.className = 'message error';
-          btn.disabled = false;
-          return;
-        }
-        
-        msg.textContent = 'Access granted!';
-        msg.className = 'message success';
-        btn.disabled = false;
-        pulseSuccess();
-        
-        // Clear form
-        document.getElementById('signin-username').value = '';
-        document.getElementById('signin-password').value = '';
-        
-        // Check auth status to show signed-in state
-        setTimeout(() => {
-          checkAuthStatus(true);
-          initAuthNavRefresh();
-        }, 500);
-        
-      } catch (err) {
-        console.error('Signin error:', err);
-        msg.textContent = 'Network error: ' + err.message;
-        msg.className = 'message error';
-        btn.disabled = false;
-      }
-    });
-
-    // Re-runs the sidebar/top-bar auth state after a fresh sign in/up/out,
-    // so the account card and gated links update without a reload.
-    function initAuthNavRefresh() {
-      const evt = new Event('sorasys:authchanged');
-      document.dispatchEvent(evt);
-    }
-
-    // ============================================
-    // Initialize - Check auth status on load (no animation for the
-    // very first paint, so nothing crossfades before it's visible)
-    // ============================================
-    checkAuthStatus(false);
+    loadProfile();
   })();
 </script>
 </body>
