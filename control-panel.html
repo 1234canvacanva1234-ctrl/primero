@@ -606,27 +606,36 @@
     }
     .article-item .actions { display: flex; gap: 8px; flex-shrink: 0; }
     .article-item .actions button {
-      width: 30px; height: 30px;
+      width: auto;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(30, 42, 47, 0.4);
-      border: 1px solid rgba(107, 142, 155, 0.15);
+      background: rgba(30, 42, 47, 0.5);
+      border: 1px solid rgba(107, 142, 155, 0.2);
+      border-bottom: 2px solid rgba(107, 142, 155, 0.3);
       color: var(--dim);
-      border-radius: 50%;
+      border-radius: 6px;
       font-family: 'Fira Code', monospace;
-      font-size: 11px;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      text-transform: lowercase;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .article-item .actions button svg {
-      width: 13px; height: 13px;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .article-item .actions button:hover {
       border-color: var(--pulse);
       color: var(--pulse);
       background: rgba(255, 59, 124, 0.08);
-      transform: scale(1.12) rotate(-4deg);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 0 rgba(255, 59, 124, 0.3);
+    }
+    .article-item .actions button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(255, 59, 124, 0.3);
     }
     .article-item .actions button.restricted {
       cursor: not-allowed;
@@ -1337,7 +1346,7 @@
       return `${mm}/${dd}/${yyyy}`;
     }
 
-    const EDIT_ICON = '✄';
+    const EDIT_ICON = 'modify';
 
     async function checkAuth() {
       try {
@@ -1424,7 +1433,7 @@
             </div>
             <div class="actions">
               <button class="edit-btn ${!canEdit ? 'restricted' : ''}" title="${!canEdit ? 'the sole articles you are capable of editing are yours, merely yours' : 'Edit'}">${EDIT_ICON}</button>
-              <button class="delete-btn ${!canDelete ? 'restricted' : ''}" title="${!canDelete ? 'the sole articles you are capable of editing are yours, merely yours' : 'Delete'}">✕</button>
+              <button class="delete-btn ${!canDelete ? 'restricted' : ''}" title="${!canDelete ? 'the sole articles you are capable of editing are yours, merely yours' : 'Delete'}">delete</button>
             </div>
           </div>
         `;
