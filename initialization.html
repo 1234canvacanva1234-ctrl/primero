@@ -8,7 +8,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="SoraSys : Initialization">
   <meta property="og:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
-  <meta name="theme-color" content="#ff3b7c">
+  <meta name="theme-color" content="#0b1114">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="SoraSys : Initialization">
   <meta name="twitter:image" content="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no">
@@ -39,6 +39,15 @@
       cursor: none;
       overflow-x: hidden;
       position: relative;
+    }
+
+    /* caret + text-selection use the same hot pink accent everywhere */
+    ::selection {
+      background: var(--pulse);
+      color: var(--void);
+    }
+    input, textarea {
+      caret-color: var(--pulse);
     }
 
     /* ---------- ambient backdrop (shared with articlespace) ---------- */
@@ -367,7 +376,7 @@
       padding: 40px 32px 48px;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 3px;
+      border-radius: 8px;
       backdrop-filter: blur(2px);
       position: relative;
     }
@@ -379,6 +388,15 @@
       right: 14%;
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 59, 124, 0.45), transparent);
+    }
+    /* brief pink glow pulse used to punctuate a successful sign-in / sign-up */
+    @keyframes success-pulse {
+      0%   { box-shadow: 0 0 0 rgba(255, 59, 124, 0); border-color: var(--line); }
+      30%  { box-shadow: 0 0 34px rgba(255, 59, 124, 0.32); border-color: rgba(255, 59, 124, 0.5); }
+      100% { box-shadow: 0 0 0 rgba(255, 59, 124, 0); border-color: var(--line); }
+    }
+    .init-container.pulse-success {
+      animation: success-pulse 900ms ease;
     }
     .init-title {
       font-family: 'Cinzel', serif;
@@ -400,6 +418,7 @@
       letter-spacing: 2px;
       margin-bottom: 28px;
       opacity: 0.8;
+      transition: opacity 0.3s ease;
     }
     .init-tabs {
       position: relative;
@@ -443,10 +462,13 @@
       gap: 16px;
     }
     .init-form.hidden { display: none; }
-    .init-form.form-enter { animation: form-fade-in 0.35s ease; }
+    .init-form.form-enter { animation: form-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes form-fade-in {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #signed-in-state, #auth-forms {
+      will-change: opacity, transform;
     }
     .form-group {
       display: flex;
@@ -470,13 +492,14 @@
       color: var(--ink);
       font-family: 'Crimson Text', serif;
       font-size: 15px;
-      border-radius: 2px;
-      transition: border-color 0.3s ease;
+      border-radius: 6px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
       outline: none;
       width: 100%;
     }
     .form-group input:focus {
       border-color: var(--pulse);
+      box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08);
     }
     .form-group input::placeholder {
       color: var(--dim);
@@ -491,8 +514,8 @@
       font-family: 'Crimson Text', serif;
       font-size: 14px;
       line-height: 1.55;
-      border-radius: 2px;
-      transition: border-color 0.3s ease;
+      border-radius: 6px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
       outline: none;
       width: 100%;
       min-height: 90px;
@@ -500,6 +523,7 @@
     }
     .form-group textarea:focus {
       border-color: var(--pulse);
+      box-shadow: 0 0 0 3px rgba(255, 59, 124, 0.08);
     }
     .form-group textarea::placeholder {
       color: var(--dim);
@@ -579,31 +603,34 @@
       }
     }
 
+    /* Modernized primary action button — rounded, lifted hover with a
+       pulse glow, shared with the control panel / profile page. */
     .init-btn {
       font-family: 'Cinzel', serif;
       font-size: 11px;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--void);
-      background: var(--pulse);
-      padding: 12px 28px;
-      border: 1px solid rgba(255,59,124,0.3);
-      border-radius: 2px;
+      background: linear-gradient(135deg, var(--pulse), #ff6f9c);
+      padding: 13px 28px;
+      border: 1px solid transparent;
+      border-radius: 7px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       margin-top: 6px;
       width: 100%;
+      box-shadow: 0 4px 16px rgba(255, 59, 124, 0.25);
     }
     .init-btn:hover {
-      background: #ff5c8f;
-      box-shadow: 0 0 28px rgba(255,59,124,0.25);
       transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
     }
-    .init-btn:active { transform: scale(0.96); }
+    .init-btn:active { transform: translateY(0) scale(0.97); }
     .init-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
       transform: none !important;
+      box-shadow: none !important;
     }
     .message {
       font-family: 'Cormorant Garamond', serif;
@@ -612,8 +639,11 @@
       color: var(--steel);
       text-align: center;
       margin-top: 12px;
-      min-height: 20px;
+      min-height: 0;
+      line-height: 1.3;
+      transition: opacity 0.25s ease;
     }
+    .message:empty { display: none; margin-top: 0; }
     .message.error { color: var(--pulse); }
     .message.success { color: var(--steel); }
     .back-link {
@@ -655,33 +685,49 @@
       justify-content: center;
       flex-wrap: wrap;
     }
-    .signed-in-state .actions .panel-btn {
+
+    /* Modernized buttons: rounded, lifted hover with a pulse glow —
+       shared class with the control panel and profile-config pages. */
+    .panel-btn {
       font-family: 'Cinzel', serif;
-      font-size: 9px;
+      font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      padding: 8px 18px;
-      background: transparent;
-      border: 1px solid rgba(107, 142, 155, 0.15);
-      color: var(--dim);
-      border-radius: 2px;
+      padding: 11px 22px;
+      background: rgba(30, 42, 47, 0.4);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 7px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       text-decoration: none;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .signed-in-state .actions .panel-btn:hover {
+    .panel-btn:hover {
       border-color: var(--pulse);
       color: var(--pulse);
+      background: rgba(30, 42, 47, 0.7);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 124, 0.15);
     }
-    .signed-in-state .actions .panel-btn.primary {
-      background: var(--pulse);
+    .panel-btn:active { transform: translateY(0) scale(0.97); }
+    .panel-btn.primary {
+      background: linear-gradient(135deg, var(--pulse), #ff6f9c);
       color: var(--void);
-      border-color: var(--pulse);
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(255, 59, 124, 0.25);
     }
-    .signed-in-state .actions .panel-btn.primary:hover {
-      background: #ff5c8f;
-      box-shadow: 0 0 24px rgba(255,59,124,0.2);
+    .panel-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 59, 124, 0.4);
+    }
+    .panel-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
     }
     .hidden { display: none; }
 
@@ -738,7 +784,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .nebula, .thread { animation: none !important; }
+      .nebula, .thread, .init-container.pulse-success, .init-form.form-enter { animation: none !important; }
     }
   </style>
 </head>
@@ -820,7 +866,7 @@
   </nav>
 
   <div class="init-wrap">
-    <div class="init-container">
+    <div class="init-container" id="init-container">
       <div class="init-title">Initialization</div>
       <div class="init-sub">establish your presence</div>
 
@@ -1051,6 +1097,8 @@
     const authForms = document.getElementById('auth-forms');
     const signedInUsername = document.getElementById('signed-in-username');
     const signoutBtn = document.getElementById('signout-from-init');
+    const initSub = document.querySelector('.init-sub');
+    const initContainer = document.getElementById('init-container');
 
     const tabs = document.querySelectorAll('.init-tab');
     const tabIndicator = document.getElementById('tab-indicator');
@@ -1071,46 +1119,105 @@
     });
 
     // ============================================
-    // Check if user is already signed in
+    // Smooth cross-fade between the signed-out forms and the
+    // signed-in welcome card, instead of an abrupt display toggle.
     // ============================================
-    async function checkAuthStatus() {
+    const SWAP_DURATION = 380;
+    let swapInFlight = false;
+
+    function swapState(hideEl, showEl) {
+      if (swapInFlight) return;
+      swapInFlight = true;
+
+      hideEl.style.transition = `opacity ${SWAP_DURATION}ms cubic-bezier(0.4,0,0.2,1), transform ${SWAP_DURATION}ms cubic-bezier(0.4,0,0.2,1)`;
+      hideEl.style.opacity = '0';
+      hideEl.style.transform = 'translateY(-10px) scale(0.98)';
+
+      setTimeout(() => {
+        hideEl.classList.add('hidden');
+        hideEl.style.transition = '';
+        hideEl.style.opacity = '';
+        hideEl.style.transform = '';
+
+        showEl.classList.remove('hidden');
+        showEl.style.opacity = '0';
+        showEl.style.transform = 'translateY(10px) scale(0.98)';
+        void showEl.offsetWidth; // force reflow so the transition runs
+        showEl.style.transition = `opacity ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1), transform ${SWAP_DURATION}ms cubic-bezier(0.16,1,0.3,1)`;
+        showEl.style.opacity = '1';
+        showEl.style.transform = 'translateY(0) scale(1)';
+
+        setTimeout(() => {
+          showEl.style.transition = '';
+          showEl.style.opacity = '';
+          showEl.style.transform = '';
+          swapInFlight = false;
+        }, SWAP_DURATION);
+      }, SWAP_DURATION);
+    }
+
+    function pulseSuccess() {
+      initContainer.classList.remove('pulse-success');
+      void initContainer.offsetWidth;
+      initContainer.classList.add('pulse-success');
+    }
+
+    // ============================================
+    // Check if user is already signed in
+    // animate=true crossfades between states; leave false for the
+    // very first load so the correct state simply appears.
+    // ============================================
+    async function checkAuthStatus(animate) {
       try {
         const res = await fetch('/api/auth/status');
         const data = await res.json();
-        
-        if (data.authenticated && data.user) {
-          // User is signed in - show welcome state
+
+        const shouldShowSignedIn = !!(data.authenticated && data.user);
+
+        if (shouldShowSignedIn) {
           signedInUsername.textContent = data.user.username;
-          signedInState.classList.remove('hidden');
-          authForms.classList.add('hidden');
-          document.querySelector('.init-sub').textContent = 'is complete and a process of the past';
-        } else {
-          // User is not signed in - show forms
-          signedInState.classList.add('hidden');
-          authForms.classList.remove('hidden');
-          document.querySelector('.init-sub').textContent = 'establish your presence';
         }
+        initSub.textContent = shouldShowSignedIn
+          ? 'is complete and a process of the past'
+          : 'establish your presence';
+
+        const currentlyShowingForms = !authForms.classList.contains('hidden');
+        const currentlyShowingSignedIn = !signedInState.classList.contains('hidden');
+
+        if (shouldShowSignedIn && currentlyShowingForms) {
+          if (animate) swapState(authForms, signedInState);
+          else { authForms.classList.add('hidden'); signedInState.classList.remove('hidden'); }
+        } else if (!shouldShowSignedIn && currentlyShowingSignedIn) {
+          if (animate) swapState(signedInState, authForms);
+          else { signedInState.classList.add('hidden'); authForms.classList.remove('hidden'); }
+        } else if (!shouldShowSignedIn && !currentlyShowingForms && !currentlyShowingSignedIn) {
+          authForms.classList.remove('hidden');
+        } else if (shouldShowSignedIn && !currentlyShowingSignedIn && !currentlyShowingForms) {
+          signedInState.classList.remove('hidden');
+        }
+
         if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
         console.error('Auth check error:', err);
-        // Show forms on error
         signedInState.classList.add('hidden');
         authForms.classList.remove('hidden');
       }
     }
 
     // ============================================
-    // Sign out from initialization page
+    // Sign out from initialization page — no full reload, just a
+    // smooth crossfade back to the sign-in forms.
     // ============================================
     signoutBtn.addEventListener('click', async () => {
+      signoutBtn.disabled = true;
       try {
         await fetch('/api/auth/signout', { method: 'POST' });
-        // Refresh the page to show sign in forms
-        window.location.reload();
       } catch (err) {
         console.error('Signout error:', err);
-        window.location.reload();
       }
+      await checkAuthStatus(true);
+      initAuthNavRefresh();
+      signoutBtn.disabled = false;
     });
 
     // ============================================
@@ -1282,6 +1389,7 @@
         msg.textContent = 'Identity established!' + profileWarning;
         msg.className = 'message success';
         btn.disabled = false;
+        pulseSuccess();
         
         // Clear form
         document.getElementById('signup-username').value = '';
@@ -1296,7 +1404,7 @@
         
         // Check auth status to show signed-in state
         setTimeout(() => {
-          checkAuthStatus();
+          checkAuthStatus(true);
           initAuthNavRefresh();
           // Switch to sign in tab
           tabs.forEach(t => t.classList.remove('active'));
@@ -1367,6 +1475,7 @@
         msg.textContent = 'Access granted!';
         msg.className = 'message success';
         btn.disabled = false;
+        pulseSuccess();
         
         // Clear form
         document.getElementById('signin-username').value = '';
@@ -1374,7 +1483,7 @@
         
         // Check auth status to show signed-in state
         setTimeout(() => {
-          checkAuthStatus();
+          checkAuthStatus(true);
           initAuthNavRefresh();
         }, 500);
         
@@ -1386,7 +1495,7 @@
       }
     });
 
-    // Re-runs the sidebar/top-bar auth state after a fresh sign in/up,
+    // Re-runs the sidebar/top-bar auth state after a fresh sign in/up/out,
     // so the account card and gated links update without a reload.
     function initAuthNavRefresh() {
       const evt = new Event('sorasys:authchanged');
@@ -1394,9 +1503,10 @@
     }
 
     // ============================================
-    // Initialize - Check auth status on load
+    // Initialize - Check auth status on load (no animation for the
+    // very first paint, so nothing crossfades before it's visible)
     // ============================================
-    checkAuthStatus();
+    checkAuthStatus(false);
   })();
 </script>
 </body>
