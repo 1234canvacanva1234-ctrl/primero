@@ -157,26 +157,12 @@
       align-items: center;
       white-space: nowrap;
       margin-right: -3px;
+      text-shadow: 0 0 6px rgba(255,255,255,0.55), 0 0 16px rgba(255,59,124,0.5), 0 0 28px rgba(255,59,124,0.3);
     }
     .nav-logo .word .highlight { color: var(--pulse); }
 
     .nav-logo .word .brand-pink {
       color: var(--pulse);
-    }
-
-    /* Each character (including the star) is its own glyph so the glow
-       only ever touches the character shapes themselves — never a box
-       or halo around the word. The base glow below is the always-on
-       default state. */
-    .nav-logo .glyph {
-      text-shadow: 0 0 4px rgba(255,255,255,0.3), 0 0 12px rgba(255,59,124,0.22), 0 0 22px rgba(255,59,124,0.1);
-      transition: text-shadow 0.2s ease;
-    }
-    /* Directional hover boost: while hovering the logo, glyphs to the
-       left of the cursor get this stronger per-character glow; glyphs
-       to the right keep the default glow above, untouched. */
-    .nav-logo .glyph.glyph-lit {
-      text-shadow: 0 0 5px rgba(255,255,255,0.8), 0 0 13px rgba(255,59,124,0.7), 0 0 24px rgba(255,59,124,0.4);
     }
 
     .nav-links {
@@ -974,10 +960,7 @@
   <nav class="site-nav">
     <a href="/" class="nav-logo">
       <img src="https://lh3.googleusercontent.com/pw/AP1GczN2n_w2oiQgGdzSgyuT3bERHavQXDHj1eyp_G_RLk3qhS6O6LQrCokdaYPi0g97mCn7U15ePaFxLQnq6bnj6krHu56jMgmSQoY1_trJoBb5S1Bj0oNB8VA1YkHBtQ3-4CwuFkp-gxHmwJAzfNVWy0Q=w1176-h1176-s-no" alt="SoraSys">
-      <span class="word">
-        <span class="highlight"><span class="glyph">✦</span></span>
-        <span class="brand-pink"><span class="glyph">S</span><span class="glyph">o</span><span class="glyph">r</span><span class="glyph">a</span><span class="glyph">S</span><span class="glyph">y</span><span class="glyph">s</span></span>
-      </span>
+      <span class="word"><span class="highlight">✦</span> <span class="brand-pink">SoraSys</span></span>
     </a>
     <div class="nav-links">
       <a href="/articlespace" class="nav-link">Articlespace</a>
@@ -1224,61 +1207,6 @@
     window.addEventListener('sorasys:nav-auth-ready', bindHoverables);
 
     updateCursor();
-  })();
-
-  (function() {
-    // Directional logo glow: each character is its own glyph, so lighting
-    // it up only ever brightens that character's own shadow — never a
-    // box/halo around the word. Glyph centers are cached once per hover
-    // session (not re-measured every mousemove) and the lit/unlit state
-    // is only written once per animation frame, so this stays cheap even
-    // with rapid cursor movement.
-    const logo = document.querySelector('.nav-logo');
-    const word = logo && logo.querySelector('.word');
-    const glyphs = word ? Array.from(word.querySelectorAll('.glyph')) : [];
-    if (!logo || !glyphs.length) return;
-
-    let centers = [];
-    let pendingX = null;
-    let ticking = false;
-
-    function cacheCenters() {
-      centers = glyphs.map(function(g) {
-        const r = g.getBoundingClientRect();
-        return r.left + r.width / 2;
-      });
-    }
-
-    function applyLit(clientX) {
-      for (let i = 0; i < glyphs.length; i++) {
-        if (centers[i] <= clientX) glyphs[i].classList.add('glyph-lit');
-        else glyphs[i].classList.remove('glyph-lit');
-      }
-    }
-
-    function onEnter(e) {
-      cacheCenters();
-      applyLit(e.clientX);
-    }
-
-    function onMove(e) {
-      pendingX = e.clientX;
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(function() {
-          applyLit(pendingX);
-          ticking = false;
-        });
-      }
-    }
-
-    function onLeave() {
-      glyphs.forEach(function(g) { g.classList.remove('glyph-lit'); });
-    }
-
-    logo.addEventListener('mouseenter', onEnter, { passive: true });
-    logo.addEventListener('mousemove', onMove, { passive: true });
-    logo.addEventListener('mouseleave', onLeave, { passive: true });
   })();
 
   (function() {
