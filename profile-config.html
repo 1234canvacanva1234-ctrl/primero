@@ -112,6 +112,11 @@
       border-radius: 50%;
       object-fit: cover;
       border: 1px solid var(--line);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .nav-logo:hover img {
+      border-color: var(--pulse);
+      box-shadow: 0 0 14px rgba(255, 59, 124, 0.35);
     }
     .nav-logo .word {
       font-family: 'Cinzel', serif;
@@ -321,6 +326,12 @@
     .side-link:hover::before { transform: translateX(0); }
     .side-link:hover { border-color: var(--pulse); transform: translateX(-3px); }
     .side-link.current { border-color: rgba(255, 59, 124, 0.35); background: rgba(255, 59, 124, 0.06); }
+    .side-link.sim-active {
+      border-color: var(--pulse);
+      background: rgba(255, 59, 124, 0.06);
+      transform: translateX(-3px);
+    }
+    .side-link.sim-active::before { transform: translateX(0); }
     .side-link-title {
       font-family: 'Cinzel', serif;
       font-size: 12px;
@@ -340,6 +351,7 @@
     }
     .side-link-arrow { position: relative; z-index: 1; font-size: 13px; color: var(--dim); transition: all 0.3s ease; }
     .side-link:hover .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
+    .side-link.sim-active .side-link-arrow { color: var(--pulse); transform: translateX(3px); }
     .side-link.locked { cursor: not-allowed; }
     .side-link.locked::before { display: none; }
     .side-link.locked:hover { border-color: transparent; transform: none; }
@@ -877,6 +889,22 @@
       function close() { panel.classList.remove('open'); backdrop.classList.remove('open'); }
       toggle.addEventListener('click', () => panel.classList.contains('open') ? close() : open());
       backdrop.addEventListener('click', close);
+    })();
+
+    (function() {
+      const topLinks = document.querySelectorAll('.site-nav .nav-link');
+      topLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          if (this.classList.contains('locked')) return;
+          const href = this.getAttribute('href');
+          const sideMatch = document.querySelector('.side-panel .side-link[href="' + href + '"]');
+          if (sideMatch && !sideMatch.classList.contains('locked')) {
+            e.preventDefault();
+            sideMatch.classList.add('sim-active');
+            setTimeout(function() { window.location.href = href; }, 320);
+          }
+        });
+      });
     })();
 
     function escapeHtml(text) {
