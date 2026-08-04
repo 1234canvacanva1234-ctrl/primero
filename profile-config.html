@@ -456,21 +456,25 @@
       align-items: center;
       gap: 14px;
     }
+    /* Rounded-square pfp with a constant hot-pink outer layer,
+       matching the button accent but always-on (not hover-gated). */
     .avatar-preview {
       width: 160px;
       height: 160px;
-      border-radius: 50%;
+      border-radius: 26px;
       background: rgba(11, 17, 20, 0.6);
-      border: 1px solid var(--line);
+      border: 2px solid var(--pulse);
+      box-shadow: 0 0 0 4px rgba(255, 59, 124, 0.12), 0 10px 26px rgba(255, 59, 124, 0.2);
       object-fit: cover;
       display: block;
     }
     .avatar-fallback {
       width: 160px;
       height: 160px;
-      border-radius: 50%;
+      border-radius: 26px;
       background: rgba(11, 17, 20, 0.6);
-      border: 1px solid var(--line);
+      border: 2px solid var(--pulse);
+      box-shadow: 0 0 0 4px rgba(255, 59, 124, 0.12), 0 10px 26px rgba(255, 59, 124, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -868,6 +872,11 @@
       backdrop.addEventListener('click', close);
     })();
 
+    // ---------- shared fallback pfp ----------
+    // Used anywhere an avatar image is missing or fails to load, so the
+    // session always shows a real picture instead of a lettered placeholder.
+    window.FALLBACK_AVATAR = 'https://i.imgur.com/baiP4yN.png';
+
     // ---------- account area: sidebar + top bar auth state ----------
     function escapeHtml(text) {
       if (!text) return '';
@@ -921,22 +930,21 @@
               avatarUrl = (prof.avatar_url || '').trim();
               bio = (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to initials, no bio */ }
+          } catch (e) { /* fall back to default pfp, no bio */ }
 
           if (bio && bioSlot) {
             bioSlot.style.display = 'block';
             bioSlot.textContent = bio;
           }
 
-          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
-          if (avatarUrl) {
-            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
-                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
-            '</span>';
-          } else {
-            avatarSlot.textContent = initial;
-          }
+          // Always render an actual image — if there's no saved avatar_url,
+          // or it fails to load, drop in the default pfp on the fly (client-
+          // side, this session) rather than a lettered placeholder.
+          const src = escapeHtml(avatarUrl || window.FALLBACK_AVATAR);
+          avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img class="side-avatar" src="' + src + '" alt="" ' +
+              'onerror="this.onerror=null;this.src=\'' + window.FALLBACK_AVATAR + '\';">' +
+          '</span>';
 
           if (data.user.role === 'sysadmin') unlockGate('sysadmin');
         } else {
@@ -975,6 +983,8 @@
     const resetBtn = document.getElementById('reset-btn');
     const msg = document.getElementById('editor-message');
 
+    const FALLBACK_AVATAR = window.FALLBACK_AVATAR || 'https://i.imgur.com/baiP4yN.png';
+
     let originalProfile = { avatar_url: '', bio: '' };
 
     function setMessage(text, type) {
@@ -982,22 +992,20 @@
       msg.className = 'message' + (type ? ' ' + type : '');
     }
 
+    // Empty field, invalid URL, or a broken image link all resolve to the
+    // same default pfp — shown immediately in this session regardless of
+    // whether the change has been saved to the database yet.
     function updateAvatarPreview() {
       const url = avatarUrlInput.value.trim();
-      if (!url) {
-        avatarImg.classList.add('hidden');
-        avatarFallback.classList.remove('hidden');
-        return;
-      }
-      avatarImg.src = url;
+      avatarImg.onerror = () => {
+        avatarImg.onerror = null;
+        avatarImg.src = FALLBACK_AVATAR;
+      };
       avatarImg.onload = () => {
         avatarImg.classList.remove('hidden');
         avatarFallback.classList.add('hidden');
       };
-      avatarImg.onerror = () => {
-        avatarImg.classList.add('hidden');
-        avatarFallback.classList.remove('hidden');
-      };
+      avatarImg.src = url || FALLBACK_AVATAR;
     }
 
     function updateBioCount() {
