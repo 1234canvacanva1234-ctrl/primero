@@ -41,7 +41,6 @@
       position: relative;
     }
 
-    /* caret + text-selection use the same hot pink accent everywhere */
     ::selection {
       background: var(--pulse);
       color: var(--void);
@@ -55,7 +54,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ---------- ambient backdrop (shared with articlespace) ---------- */
     .nebula {
       position: fixed;
       inset: -20%;
@@ -95,7 +93,6 @@
       100% { background-position: 0% 50%; opacity: 0.3; }
     }
 
-    /* ---------- top bar ---------- */
     .site-nav {
       position: sticky;
       top: 0;
@@ -187,7 +184,6 @@
       justify-self: end;
     }
 
-    /* ---------- side panel ---------- */
     .panel-backdrop { display: none; }
     .side-panel {
       position: fixed;
@@ -367,7 +363,6 @@
       box-shadow: 0 0 32px rgba(255, 59, 124, 0.4);
     }
 
-    /* ---------- page-specific: control panel ---------- */
     .panel-wrap { padding: 22px 24px 48px; }
     .panel-header {
       max-width: 1100px;
@@ -393,9 +388,6 @@
       align-items: center;
     }
 
-    /* Modernized buttons: rounded, lifted hover with a pulse glow,
-       and a bouncy cubic-bezier shared with the article cards
-       elsewhere on the site. */
     .panel-btn {
       font-family: 'Cinzel', serif;
       font-size: 10px;
@@ -468,7 +460,6 @@
       text-transform: none;
     }
 
-    /* Search bar (shared by the article directory and user directory) */
     .search-bar {
       display: flex;
       align-items: center;
@@ -674,7 +665,6 @@
       font-size: 14px;
     }
 
-    /* ---------- user directory: rotating card carousel ---------- */
     .user-carousel-wrap { display: flex; flex-direction: column; gap: 14px; }
     .user-grid {
       display: grid;
@@ -1017,7 +1007,6 @@
 
 <script>
   (function() {
-    // ---------- custom cursor (desktop only) ----------
     let cursor, bindHoverables;
     if (window.innerWidth > 640) {
       cursor = document.getElementById('cursor');
@@ -1050,7 +1039,6 @@
     }
     window.bindCursorHover = function() { if (bindHoverables) bindHoverables(); };
 
-    // ---------- side panel (mobile slide-up) ----------
     (function() {
       const panel = document.getElementById('side-panel');
       const toggle = document.getElementById('panel-toggle');
@@ -1062,7 +1050,26 @@
       backdrop.addEventListener('click', close);
     })();
 
-    // ---------- account area: sidebar + top bar auth state ----------
+    const AUTH_CACHE_KEY = 'sorasys_auth_cache';
+
+    function readAuthCache() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+      } catch (e) { return null; }
+    }
+
+    function writeAuthCache(data) {
+      try {
+        if (data && data.authenticated) {
+          localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(AUTH_CACHE_KEY);
+        }
+      } catch (e) { }
+    }
+
+    window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
+
     function escapeHtml(text) {
       if (!text) return '';
       const div = document.createElement('div');
@@ -1081,67 +1088,117 @@
       });
     }
 
-    async function initAuthNav() {
+    function relockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.add('locked');
+        el.setAttribute('aria-disabled', 'true');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    async function applyAuthUI(data, opts) {
+      opts = opts || {};
       const accountLink = document.getElementById('side-account');
-      const avatarSlot = document.getElementById('side-avatar-slot');
       const nameSlot = document.getElementById('side-account-name');
       const roleSlot = document.getElementById('side-account-role');
       const bioSlot = document.getElementById('side-account-bio');
 
-      try {
-        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-        const data = await res.json();
+      if (data && data.authenticated && data.user) {
+        accountLink.setAttribute('href', '/profile-config');
+        accountLink.classList.add('signed-in');
+        nameSlot.textContent = data.user.username;
+        nameSlot.classList.remove('side-account-cta');
+        nameSlot.classList.add('side-account-username');
 
-        if (data.authenticated && data.user) {
-          accountLink.setAttribute('href', '/profile-config');
-          accountLink.classList.add('signed-in');
-          nameSlot.textContent = data.user.username;
-          nameSlot.classList.remove('side-account-cta');
-          nameSlot.classList.add('side-account-username');
+        if (data.user.role) {
+          roleSlot.style.display = 'block';
+          roleSlot.textContent = data.user.role;
+        } else {
+          roleSlot.style.display = 'none';
+        }
 
-          if (data.user.role) {
-            roleSlot.style.display = 'block';
-            roleSlot.textContent = data.user.role;
-          }
+        unlockGate('auth', 'avatar, bio, presence');
+        if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        else relockGate('sysadmin', 'designated for sysadmin');
 
-          unlockGate('auth', 'avatar, bio, presence');
+        let avatarUrl = (data.user.avatar_url || '').trim();
+        let bio = (data.user.bio || '').trim();
 
-          let avatarUrl = '';
-          let bio = '';
+        if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
             if (profRes.ok) {
               const prof = await profRes.json();
-              avatarUrl = (prof.avatar_url || '').trim();
-              bio = (prof.bio || '').trim();
+              avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
+              bio = bio || (prof.bio || '').trim();
             }
-          } catch (e) { /* fall back to initials, no bio */ }
-
-          if (bio && bioSlot) {
-            bioSlot.style.display = 'block';
-            bioSlot.textContent = bio;
-          }
-
-          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
-          if (avatarUrl) {
-            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
-                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
-            '</span>';
-          } else {
-            avatarSlot.textContent = initial;
-          }
-
-          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
-        } else {
-          accountLink.setAttribute('href', '/initialization');
-          accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Anonymous';
+          } catch (e) { }
         }
+
+        if (bio) {
+          bioSlot.style.display = 'block';
+          bioSlot.textContent = bio;
+        } else {
+          bioSlot.style.display = 'none';
+        }
+
+        const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+        const currentSlot = document.getElementById('side-avatar-slot');
+        if (avatarUrl) {
+          const wrap = currentSlot.closest('.side-avatar-wrap') || currentSlot;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img class="side-avatar" id="side-avatar-slot" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+              'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+          '</span>';
+        } else if (currentSlot.tagName !== 'IMG') {
+          currentSlot.textContent = initial;
+        }
+
+        data._resolved = { avatar_url: avatarUrl, bio: bio };
+      } else {
+        accountLink.setAttribute('href', '/initialization');
+        accountLink.classList.remove('signed-in');
+        nameSlot.textContent = 'Anonymous';
+        nameSlot.classList.add('side-account-cta');
+        nameSlot.classList.remove('side-account-username');
+        roleSlot.style.display = 'none';
+        bioSlot.style.display = 'none';
+        const fresh = document.getElementById('side-avatar-slot');
+        if (fresh && fresh.tagName !== 'IMG') {
+          const wrap = fresh.closest('.side-avatar-wrap') || fresh;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img src="https://i.imgur.com/NGyCK6G.png" alt="Anonymous" class="side-avatar" id="side-avatar-slot" />' +
+          '</span>';
+        } else if (fresh) {
+          fresh.src = 'https://i.imgur.com/NGyCK6G.png';
+          fresh.alt = 'Anonymous';
+        }
+        relockGate('auth', 'account session required');
+        relockGate('sysadmin', 'designated for sysadmin');
+      }
+    }
+
+    async function initAuthNav() {
+      const cached = readAuthCache();
+      if (cached) {
+        await applyAuthUI(cached, { skipProfileFetch: false });
+        if (bindHoverables) bindHoverables();
+      }
+
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+        await applyAuthUI(data);
+        writeAuthCache(data.authenticated ? {
+          authenticated: true,
+          user: { ...data.user, ...(data._resolved || {}) }
+        } : null);
       } catch (err) {
         console.error('Auth nav error:', err);
-        accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Anonymous';
+        if (!cached) await applyAuthUI({ authenticated: false });
       }
       if (bindHoverables) bindHoverables();
     }
@@ -1150,6 +1207,13 @@
       el.addEventListener('click', function(e) {
         if (this.classList.contains('locked')) e.preventDefault();
       });
+    });
+
+    window.addEventListener('storage', function(e) {
+      if (e.key === AUTH_CACHE_KEY) {
+        const updated = readAuthCache();
+        applyAuthUI(updated || { authenticated: false }, { skipProfileFetch: !updated });
+      }
     });
 
     initAuthNav();
@@ -1178,9 +1242,6 @@
     let editingArticleId = null;
     let allArticlesData = [];
 
-    // Shared avatar/bio cache — both the article directory (author
-    // thumbnails) and the user directory (profile cards) draw from
-    // this so nobody's profile is fetched twice.
     const profileCache = {};
     async function getProfiles(usernames) {
       const need = usernames.filter(u => u && !(u in profileCache));
@@ -1200,7 +1261,6 @@
       return div.innerHTML;
     }
 
-    // MM/DD/YYYY with leading zeros on both month and day
     function formatDate(dateStr) {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return '';
@@ -1210,10 +1270,8 @@
       return `${mm}/${dd}/${yyyy}`;
     }
 
-    // modern, systematic pencil-line icon used for the edit action
     const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 
-    // Check auth status - NO REDIRECT, just show/hide content
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/status');
@@ -1278,8 +1336,6 @@
       const isAdminUser = currentUser && currentUser.username === 'admin';
 
       container.innerHTML = articles.map((a, i) => {
-        // Deletion stays open to admin/owner; editing is restricted to
-        // the article's own author — even for sysadmins.
         const canDelete = isAdminUser || a.author === currentUser?.username;
         const canEdit = a.author === currentUser?.username;
         const p = profileCache[a.author] || {};
@@ -1307,7 +1363,6 @@
         `;
       }).join('');
 
-      // Edit button handler (only bound to enabled buttons — ownership already enforced above)
       container.querySelectorAll('.edit-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', async () => {
           const item = btn.closest('.article-item');
@@ -1341,7 +1396,6 @@
         });
       });
 
-      // Delete button handler - only if user owns the article or is admin
       container.querySelectorAll('.delete-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', async () => {
           const item = btn.closest('.article-item');
@@ -1379,7 +1433,6 @@
       if (window.bindCursorHover) window.bindCursorHover();
     }
 
-    // ---------- article search ----------
     const searchInput = document.getElementById('article-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -1395,7 +1448,6 @@
       });
     }
 
-    // ---------- user directory: sysadmins first, rotating 6-up carousel, with search ----------
     const USERS_PER_PAGE = 6;
     let allUsersData = [];
     let userPages = [];
@@ -1412,7 +1464,6 @@
           return;
         }
 
-        // sysadmins surface first; original ordering preserved within each group
         const sorted = users.slice().sort((a, b) => {
           const aFirst = a.role === 'sysadmin' ? 0 : 1;
           const bFirst = b.role === 'sysadmin' ? 0 : 1;
@@ -1547,7 +1598,6 @@
       editingArticleId = null;
     });
 
-    // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {
       try {
         await API.auth.signout();
@@ -1558,7 +1608,6 @@
       }
     });
 
-    // Start
     checkAuth();
   })();
 </script>
