@@ -225,13 +225,29 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'Description is too long (max 1000 characters)' }), { status: 400, headers });
       }
 
+      // NOTE: format-valid isn't the same as *actually an image*. A link
+      // that's well-formed (http/https, passes the regex above) can still
+      // 404, redirect to a dead page, or resolve to something that isn't
+      // an image at all. Previously that kind of broken-but-present link
+      // just got stored as-is and only the *empty* case fell back to the
+      // default pfp at read time. Now we actively probe the URL here and,
+      // if it doesn't come back as a real image, store the default pfp
+      // directly in the DB instead of the broken link.
+      if (avatar_url) {
+        const isImage = await isImageUrlReachable(avatar_url);
+        if (!isImage) {
+          avatar_url = DEFAULT_AVATAR_URL;
+        }
+      }
+
       await env.DB.prepare(
         'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
       ).bind(avatar_url, bio, user.username).run();
 
       // NOTE: response reflects defaults too, in case the user just cleared
       // their avatar/bio back to empty (PUT stores the true empty value in
-      // the DB — we only ever apply the fallback at read/render time).
+      // the DB — we only ever apply the fallback at read/render time, except
+      // for the invalid-image case above which is corrected at write time).
       return new Response(JSON.stringify(withProfileDefaults({ success: true, avatar_url, bio })), { headers });
 
     } catch (err) {
@@ -423,10 +439,13 @@ export async function onRequest(context) {
 // ============================================
 // Profile defaults
 // ============================================
-// Applied at read/render time only — the DB keeps storing whatever the
-// user actually set (including empty string), so clearing a field in
-// the profile editor just falls back to these defaults rather than
-// being "stuck" on them.
+// Applied at read/render time — the DB keeps storing whatever the user
+// actually set (including empty string), so clearing a field in the
+// profile editor just falls back to these defaults rather than being
+// "stuck" on them. The one exception is avatar_url specifically when
+// it fails the reachable-image probe in the PUT handler above — that
+// case writes DEFAULT_AVATAR_URL straight into the DB, since a broken
+// link isn't something we want to keep re-attempting to load forever.
 const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
 const DEFAULT_BIO = "i'm an anonymous private bitch and consequently refuse to provide a simple description";
 
@@ -437,6 +456,47 @@ function withProfileDefaults(profile) {
     avatar_url: profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url : DEFAULT_AVATAR_URL,
     bio: profile.bio && profile.bio.trim() ? profile.bio : DEFAULT_BIO
   };
+}
+
+// ============================================
+// Avatar URL reachability / image-type probe
+// ============================================
+// Format-valid (http/https, well-formed) is not the same as "actually an
+// image." This does a real network check: HEAD first (cheap), and only
+// falls back to GET if the host doesn't answer HEAD usefully (some CDNs
+// return 403/405 on HEAD, or omit Content-Type on it). Anything that
+// errors, times out, comes back non-2xx, or isn't an image/* content type
+// is treated as invalid so the caller can substitute the default pfp.
+async function isImageUrlReachable(imageUrl) {
+  const TIMEOUT_MS = 5000;
+
+  async function attempt(method) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const res = await fetch(imageUrl, {
+        method,
+        redirect: 'follow',
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      return null;
+    }
+  }
+
+  let res = await attempt('HEAD');
+
+  const contentTypeIsImage = (r) => (r.headers.get('content-type') || '').toLowerCase().startsWith('image/');
+
+  if (!res || !res.ok || !res.headers.get('content-type')) {
+    res = await attempt('GET');
+  }
+
+  if (!res || !res.ok) return false;
+  return contentTypeIsImage(res);
 }
 
 // ============================================
@@ -457,4 +517,4 @@ async function getSessionUser(request, env) {
   } catch (err) {
     return null;
   }
-} 
+}
