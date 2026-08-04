@@ -789,7 +789,7 @@
   </div>
 
   <div id="articles-container" class="articles-container">
-    <div class="empty-articles">loading articles...</div>
+    <div class="empty-articles">regenerating / accessing articles...</div>
   </div>
 
 </div>
@@ -1108,7 +1108,7 @@
     function renderList() {
       const container = document.getElementById('articles-container');
       if (!currentArticles.length) {
-        container.innerHTML = '<div class="empty-articles">0 accessible articles.</div>';
+        container.innerHTML = '<div class="empty-articles">precisely 0̷ accessible articles.</div>';
         return;
       }
 
@@ -1126,7 +1126,7 @@
               '<div class="title-row">' +
                 '<a class="title" href="' + buildArticlePath(slug) + '">' + escapeHtml(title) + '</a>' +
                 '<span class="meta">' + metaText + '</span>' +
-                '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="Copy link to this article">' + COPY_ICON + '</button>' +
+                '<button class="copy-link-btn" type="button" data-share="' + slug + '" aria-label="copy url">' + COPY_ICON + '</button>' +
               '</div>' +
               '<div class="content preview" data-expanded="0">' + escapeHtml(content) + '</div>' +
             '</div>' +
@@ -1180,7 +1180,7 @@
 
     async function loadArticles() {
       const container = document.getElementById('articles-container');
-      container.innerHTML = '<div class="empty-articles">loading articles...</div>';
+      container.innerHTML = '<div class="empty-articles">regenerating / accessing articles...</div>';
       try {
         const res = await fetch('/api/articles');
         currentArticles = res.ok ? (await res.json() || []) : [];
@@ -1322,7 +1322,7 @@
       banner.className = 'empty-articles';
       banner.style.padding = '16px 0';
       banner.style.fontSize = '14px';
-      banner.textContent = 'That article link could not be found — showing all articles.';
+      banner.textContent = 'no article url exists with usable corresponding value.';
       container.prepend(banner);
     }
 
