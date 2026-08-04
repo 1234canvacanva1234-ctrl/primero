@@ -344,6 +344,23 @@
     .side-link.locked::before { display: none; }
     .side-link.locked:hover { border-color: transparent; transform: none; }
     .side-link.locked .side-link-arrow { color: var(--dim); }
+
+    @keyframes sideLinkArrive {
+      0%   { box-shadow: 0 0 0 rgba(255, 59, 124, 0); }
+      35%  { box-shadow: 0 0 22px rgba(255, 59, 124, 0.3); }
+      100% { box-shadow: 0 0 0 rgba(255, 59, 124, 0); }
+    }
+    @keyframes sideLinkSweep {
+      0%   { transform: translateX(-100%); }
+      55%  { transform: translateX(0); }
+      100% { transform: translateX(120%); }
+    }
+    .side-link.just-arrived {
+      animation: sideLinkArrive 900ms ease;
+    }
+    .side-link.just-arrived::before {
+      animation: sideLinkSweep 900ms ease;
+    }
     .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
       font-family: 'Fira Code', monospace;
@@ -1014,6 +1031,16 @@
         if (this.classList.contains('locked')) e.preventDefault();
       });
     });
+
+    function pulseCurrentSideLink() {
+      const link = document.querySelector('.side-link.current');
+      if (!link) return;
+      requestAnimationFrame(() => {
+        link.classList.add('just-arrived');
+        link.addEventListener('animationend', () => link.classList.remove('just-arrived'), { once: true });
+      });
+    }
+    pulseCurrentSideLink();
 
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
