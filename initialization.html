@@ -784,10 +784,12 @@
   <div class="side-panel-inner">
     <a href="/initialization" class="side-account" id="side-account">
       <span class="side-avatar-wrap">
-        <span
-          class="side-avatar-fallback"
+        <img
+          src="https://i.imgur.com/NGyCK6G.png"
+          alt="Anonymous"
+          class="side-avatar"
           id="side-avatar-slot"
-        >?</span>
+        />
       </span>
       <div class="side-account-text">
         <div class="side-account-cta" id="side-account-name">Anonymous</div>
@@ -1116,11 +1118,14 @@
         roleSlot.style.display = 'none';
         bioSlot.style.display = 'none';
         const fresh = document.getElementById('side-avatar-slot');
-        if (fresh && fresh.tagName === 'IMG') {
+        if (fresh && fresh.tagName !== 'IMG') {
           const wrap = fresh.closest('.side-avatar-wrap') || fresh;
-          wrap.outerHTML = '<span class="side-avatar-wrap"><span class="side-avatar-fallback" id="side-avatar-slot">?</span></span>';
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img src="https://i.imgur.com/NGyCK6G.png" alt="Anonymous" class="side-avatar" id="side-avatar-slot" />' +
+          '</span>';
         } else if (fresh) {
-          fresh.textContent = '?';
+          fresh.src = 'https://i.imgur.com/NGyCK6G.png';
+          fresh.alt = 'Anonymous';
         }
         relockGate('auth', 'active account session required');
         relockGate('sysadmin', 'designated for sysadmin');
