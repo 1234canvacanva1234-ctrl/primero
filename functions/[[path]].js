@@ -1,6 +1,5 @@
 const SUBPAGE_FALLBACKS = [
-  { pattern: /^\/article\//, fallback: '/article/' },
-  { pattern: /^\/profile\//, fallback: '/profile/' }
+  { pattern: /^\/articlespace\//, fallback: '/articlespace/' }
 ];
 
 export async function onRequest(context) {
