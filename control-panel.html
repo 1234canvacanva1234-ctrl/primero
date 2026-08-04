@@ -1120,7 +1120,7 @@
           roleSlot.style.display = 'none';
         }
 
-        unlockGate('auth', 'avatar, bio, presence');
+        unlockGate('auth', 'active account session required');
         if (data.user.role === 'sysadmin') unlockGate('sysadmin');
         else relockGate('sysadmin', 'designated for sysadmin');
 
