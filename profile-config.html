@@ -139,24 +139,48 @@
       text-transform: uppercase;
       color: var(--dim);
       text-decoration: none;
-      padding: 4px 1px;
-      transition: color 0.3s ease;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: rgba(30, 42, 47, 0.28);
+      overflow: hidden;
+      transition: all 0.35s ease;
       white-space: nowrap;
+    }
+    .nav-link::before {
+      content: '';
+      position: absolute; inset: 0;
+      z-index: -1;
+      background: linear-gradient(120deg, rgba(255,59,124,0.1), rgba(107,142,155,0.1));
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
     }
     .nav-link::after {
       content: '';
       position: absolute;
-      left: 0; right: 100%;
-      bottom: 0;
+      left: 14px; right: calc(100% - 14px);
+      bottom: 4px;
       height: 1px;
       background: var(--pulse);
       transition: right 0.3s ease;
     }
-    .nav-link:hover { color: var(--ink); }
-    .nav-link:hover::after { right: 0; }
-    .nav-link.current { color: var(--pulse); }
-    .nav-link.current::after { right: 0; }
+    .nav-link:hover::before { transform: translateX(0); }
+    .nav-link:hover {
+      color: var(--ink);
+      border-color: var(--pulse);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 59, 124, 0.15);
+    }
+    .nav-link:hover::after { right: 14px; }
+    .nav-link.current {
+      color: var(--pulse);
+      border-color: rgba(255, 59, 124, 0.35);
+      background: rgba(255, 59, 124, 0.06);
+    }
+    .nav-link.current::after { right: 14px; }
     .nav-link.locked { color: var(--dim); cursor: not-allowed; }
+    .nav-link.locked::before { display: none; }
+    .nav-link.locked:hover { border-color: transparent; transform: none; box-shadow: none; }
     .nav-link.locked::after { display: none; }
     .panel-toggle {
       display: none;
@@ -692,7 +716,7 @@
         </span>
         <span class="side-link-arrow">→</span>
       </a>
-      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
+      <a href="/profile-config" class="side-link current locked" data-gate="auth" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Profile Configuration</span>
           <span class="side-link-sub">active account session required</span>
@@ -990,17 +1014,6 @@
         if (this.classList.contains('locked')) e.preventDefault();
       });
     });
-
-    function activateCurrentSideLink() {
-      const link = document.querySelector('.side-link[href="' + window.location.pathname + '"]');
-      if (!link || link.classList.contains('current')) return;
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          link.classList.add('current');
-        }, 220);
-      });
-    }
-    activateCurrentSideLink();
 
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
