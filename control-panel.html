@@ -628,15 +628,8 @@
       background: rgba(255, 59, 124, 0.08);
       transform: scale(1.12) rotate(-4deg);
     }
-    .article-item .actions button.disabled {
-      opacity: 0.25;
+    .article-item .actions button.restricted {
       cursor: not-allowed;
-    }
-    .article-item .actions button.disabled:hover {
-      border-color: rgba(107, 142, 155, 0.15);
-      color: var(--dim);
-      background: none;
-      transform: none;
     }
     .editor-area {
       display: flex;
@@ -1430,15 +1423,17 @@
               </div>
             </div>
             <div class="actions">
-              <button class="edit-btn ${!canEdit ? 'disabled' : ''}" ${!canEdit ? 'disabled' : ''} title="${!canEdit ? 'the sole articles you are capable of editing are yours, merely yours' : 'Edit'}">${EDIT_ICON}</button>
-              <button class="delete-btn ${!canDelete ? 'disabled' : ''}" ${!canDelete ? 'disabled' : ''} title="${!canDelete ? 'the sole articles you are capable of editing are yours, merely yours' : 'Delete'}">✕</button>
+              <button class="edit-btn ${!canEdit ? 'restricted' : ''}" title="${!canEdit ? 'the sole articles you are capable of editing are yours, merely yours' : 'Edit'}">${EDIT_ICON}</button>
+              <button class="delete-btn ${!canDelete ? 'restricted' : ''}" title="${!canDelete ? 'the sole articles you are capable of editing are yours, merely yours' : 'Delete'}">✕</button>
             </div>
           </div>
         `;
       }).join('');
 
-      container.querySelectorAll('.edit-btn:not(.disabled)').forEach(btn => {
+      container.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
+          if (btn.classList.contains('restricted')) return;
+
           const item = btn.closest('.article-item');
           const id = parseInt(item.dataset.id);
           const art = allArticlesData.find(x => x.id === id);
@@ -1470,8 +1465,10 @@
         });
       });
 
-      container.querySelectorAll('.delete-btn:not(.disabled)').forEach(btn => {
+      container.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
+          if (btn.classList.contains('restricted')) return;
+
           const item = btn.closest('.article-item');
           const id = parseInt(item.dataset.id);
           const art = allArticlesData.find(x => x.id === id);
