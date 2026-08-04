@@ -138,6 +138,7 @@
       color: inherit;
       flex-shrink: 0;
       justify-self: start;
+      white-space: nowrap;
     }
     .nav-logo img {
       width: 34px;
@@ -152,12 +153,16 @@
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--ink);
-      transition: color 0.3s ease;
-      display: inline-block;
+      transition: text-shadow 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
       margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
-    .nav-logo:hover .word { color: #ff5c8f; }
+    .nav-logo:hover .word {
+      text-shadow: 0 0 6px rgba(255,255,255,0.55), 0 0 16px rgba(255,59,124,0.5), 0 0 28px rgba(255,59,124,0.3);
+    }
 
     .nav-logo .word .brand-pink {
       color: var(--pulse);
@@ -220,9 +225,6 @@
       color: var(--dim);
       cursor: not-allowed;
     }
-    .nav-link.locked::before { display: none; }
-    .nav-link.locked:hover { border-color: transparent; transform: none; box-shadow: none; }
-    .nav-link.locked::after { display: none; }
 
     .panel-toggle {
       display: none;
@@ -442,12 +444,6 @@
     .side-link.locked {
       cursor: not-allowed;
     }
-    .side-link.locked::before { display: none; }
-    .side-link.locked:hover {
-      border-color: transparent;
-      transform: none;
-    }
-    .side-link.locked .side-link-arrow { color: var(--dim); }
     .side-link.unlocked {
       filter: none;
       opacity: 1;
