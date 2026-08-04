@@ -938,7 +938,7 @@
           </div>
           <div class="form-group">
             <label>Security Token <span class="required-mark">*</span></label>
-            <input type="password" id="signup-password" placeholder="create a strong token" required>
+            <input type="password" id="signup-password" placeholder="insert a hacker-resistant token" required>
           </div>
           <div class="form-group">
             <label>Confirm Token <span class="required-mark">*</span></label>
@@ -949,7 +949,7 @@
             <div class="author-avatar-wrap">
               <div class="author-avatar-ring"></div>
               <img class="author-avatar" id="signup-avatar-img" alt="avatar preview">
-              <div class="author-avatar-fallback" id="signup-avatar-fallback">?</div>
+              <div class="author-avatar-fallback" id="signup-avatar-fallback">;)</div>
             </div>
             <div class="form-group">
               <label>Picture URL <span class="required-mark">*</span></label>
@@ -1433,23 +1433,23 @@
         return;
       }
       if (!/^https?:\/\/.+/i.test(avatar_url)) {
-        msg.textContent = 'Image URL must start with http:// or https://';
+        msg.textContent = 'requires string starting with http:// or https://';
         msg.className = 'message error';
         return;
       }
       if (!bio) {
-        msg.textContent = 'A personal description is required.';
+        msg.textContent = 'personal description required.';
         msg.className = 'message error';
         return;
       }
       if (bio.length < 10) {
-        msg.textContent = 'Description should be at least 10 characters.';
+        msg.textContent = '10 characters at minimum.';
         msg.className = 'message error';
         return;
       }
 
       btn.disabled = true;
-      msg.textContent = 'Creating account...';
+      msg.textContent = 'generating user';
       msg.className = 'message';
 
       try {
@@ -1504,14 +1504,14 @@
               }
             }
           } else {
-            profileWarning = ' (profile details could not be saved — add them from the Profile page)';
+            profileWarning = ' (unable to be saved)';
           }
         } catch (profileErr) {
-          console.error('Profile save error:', profileErr);
-          profileWarning = ' (profile details could not be saved — add them from the Profile page)';
+          console.error('profile save error:', profileErr);
+          profileWarning = ' (unable to be saved)';
         }
 
-        msg.textContent = 'Identity established!' + profileWarning;
+        msg.textContent = 'user implemented into system' + profileWarning;
         msg.className = 'message success';
         btn.disabled = false;
         pulseSuccess();
@@ -1556,7 +1556,7 @@
       msg.className = 'message';
 
       if (!username || !password) {
-        msg.textContent = 'All fields are required.';
+        msg.textContent = 'certain required fields (conceivably the entirety of them) you are yet to address';
         msg.className = 'message error';
         return;
       }
@@ -1581,7 +1581,7 @@
           data = await res.json();
         } catch (parseError) {
           console.error('Response is not JSON:', parseError);
-          throw new Error('Server returned invalid response format');
+          throw new Error('server returned invalid response format');
         }
 
         if (!res.ok) {
@@ -1612,8 +1612,8 @@
         }, 500);
 
       } catch (err) {
-        console.error('Signin error:', err);
-        msg.textContent = 'Network error: ' + err.message;
+        console.error('reconnection error:', err);
+        msg.textContent = 'network error: ' + err.message;
         msg.className = 'message error';
         btn.disabled = false;
       }
