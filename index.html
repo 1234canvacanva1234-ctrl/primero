@@ -1229,8 +1229,7 @@
     backdrop.addEventListener('click', close);
   })();
 
-  // ---------- topbar click → mirrors the animation on the matching
-  // sidebar entry before navigating, so the sidebar never looks static ----------
+
   (function() {
     const topLinks = document.querySelectorAll('.site-nav .nav-link');
     topLinks.forEach(function(link) {
@@ -1433,10 +1432,10 @@
         })
       });
       if (!response.ok) {
-        console.error("Ping failed:", response.status, await response.text());
+        console.error("ping failed apparently:", response.status, await response.text());
       }
     } catch (err) {
-      console.error("Ping failed:", err);
+      console.error("ping failed apparently:", err);
     }
   });
 </script>
