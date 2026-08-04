@@ -783,12 +783,12 @@
 <aside class="side-panel" id="side-panel">
   <div class="side-panel-inner">
     <a href="/initialization" class="side-account" id="side-account">
-      <img
-        src="https://i.imgur.com/NGyCK6G.png"
-        alt="Anonymous"
-        class="side-avatar side-avatar-fallback"
-        id="side-avatar-slot"
-      />
+      <span class="side-avatar-wrap">
+        <span
+          class="side-avatar-fallback"
+          id="side-avatar-slot"
+        >?</span>
+      </span>
       <div class="side-account-text">
         <div class="side-account-cta" id="side-account-name">Anonymous</div>
         <div class="side-account-role" id="side-account-role" style="display:none;"></div>
@@ -935,6 +935,33 @@
 
 <script>
   (function() {
+    // ============================================
+    // Shared auth cache — read synchronously so every page can paint
+    // the correct signed-in/out state on first frame, instead of
+    // always starting from "Anonymous" and waiting on a fetch.
+    // Exposed on window so this page's second script block (and other
+    // pages that reuse this same block) can read/write it too.
+    // ============================================
+    const AUTH_CACHE_KEY = 'sorasys_auth_cache';
+
+    function readAuthCache() {
+      try {
+        return JSON.parse(localStorage.getItem(AUTH_CACHE_KEY) || 'null');
+      } catch (e) { return null; }
+    }
+
+    function writeAuthCache(data) {
+      try {
+        if (data && data.authenticated) {
+          localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(AUTH_CACHE_KEY);
+        }
+      } catch (e) { /* storage disabled, ignore */ }
+    }
+
+    window.sorasysAuthCache = { read: readAuthCache, write: writeAuthCache };
+
     // ---------- custom cursor (desktop only) ----------
     let cursor, bindHoverables;
     if (window.innerWidth > 640) {
@@ -999,67 +1026,128 @@
       });
     }
 
-    async function initAuthNav() {
+    function relockGate(gate, subText) {
+      document.querySelectorAll('[data-gate="' + gate + '"]').forEach(function(el) {
+        el.classList.add('locked');
+        el.setAttribute('aria-disabled', 'true');
+        const sub = el.querySelector('.side-link-sub');
+        if (sub && subText) sub.textContent = subText;
+        const arrow = el.querySelector('.side-link-arrow');
+        if (arrow) arrow.textContent = '→';
+      });
+    }
+
+    // Renders the sidebar account card + gated nav links from an auth
+    // payload. Shared by the instant cache-paint and the background
+    // fetch-confirm, so both paths produce identical markup and there's
+    // nothing left to visibly "swap" once the fetch resolves.
+    async function applyAuthUI(data, opts) {
+      opts = opts || {};
       const accountLink = document.getElementById('side-account');
-      const avatarSlot = document.getElementById('side-avatar-slot');
       const nameSlot = document.getElementById('side-account-name');
       const roleSlot = document.getElementById('side-account-role');
       const bioSlot = document.getElementById('side-account-bio');
+      const avatarSlot = document.getElementById('side-avatar-slot');
 
-      try {
-        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-        const data = await res.json();
+      if (data && data.authenticated && data.user) {
+        accountLink.setAttribute('href', '/profile-config');
+        accountLink.classList.add('signed-in');
+        nameSlot.textContent = data.user.username;
+        nameSlot.classList.remove('side-account-cta');
+        nameSlot.classList.add('side-account-username');
 
-        if (data.authenticated && data.user) {
-          accountLink.setAttribute('href', '/profile-config');
-          accountLink.classList.add('signed-in');
-          nameSlot.textContent = data.user.username;
-          nameSlot.classList.remove('side-account-cta');
-          nameSlot.classList.add('side-account-username');
+        if (data.user.role) {
+          roleSlot.style.display = 'block';
+          roleSlot.textContent = data.user.role;
+        } else {
+          roleSlot.style.display = 'none';
+        }
 
-          if (data.user.role) {
-            roleSlot.style.display = 'block';
-            roleSlot.textContent = data.user.role;
-          }
+        unlockGate('auth', 'active account session required');
+        if (data.user.role === 'sysadmin') unlockGate('sysadmin');
+        else relockGate('sysadmin', 'designated for sysadmin');
 
-          unlockGate('auth', 'active account session required');
+        let avatarUrl = (data.user.avatar_url || '').trim();
+        let bio = (data.user.bio || '').trim();
 
-          let avatarUrl = '';
-          let bio = '';
+        // Only hit /api/profile when this payload doesn't already carry
+        // avatar/bio AND we're in the network-confirm pass — the instant
+        // cache-paint should never block on a second request.
+        if (!opts.skipProfileFetch && (!avatarUrl || !bio)) {
           try {
             const profRes = await fetch('/api/profile', { credentials: 'same-origin' });
             if (profRes.ok) {
               const prof = await profRes.json();
-              avatarUrl = (prof.avatar_url || '').trim();
-              bio = (prof.bio || '').trim();
+              avatarUrl = avatarUrl || (prof.avatar_url || '').trim();
+              bio = bio || (prof.bio || '').trim();
             }
           } catch (e) { /* fall back to initials, no bio */ }
-
-          if (bio && bioSlot) {
-            bioSlot.style.display = 'block';
-            bioSlot.textContent = bio;
-          }
-
-          const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
-          if (avatarUrl) {
-            avatarSlot.outerHTML = '<span class="side-avatar-wrap">' +
-              '<img class="side-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
-                'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
-            '</span>';
-          } else {
-            avatarSlot.textContent = initial;
-          }
-
-          if (data.user.role === 'sysadmin') unlockGate('sysadmin');
-        } else {
-          accountLink.setAttribute('href', '/initialization');
-          accountLink.classList.remove('signed-in');
-          nameSlot.textContent = 'Anonymous';
         }
+
+        if (bio) {
+          bioSlot.style.display = 'block';
+          bioSlot.textContent = bio;
+        } else {
+          bioSlot.style.display = 'none';
+        }
+
+        const initial = escapeHtml((data.user.username || '?').charAt(0).toUpperCase());
+        const currentSlot = document.getElementById('side-avatar-slot');
+        if (avatarUrl) {
+          const wrap = currentSlot.closest('.side-avatar-wrap') || currentSlot;
+          wrap.outerHTML = '<span class="side-avatar-wrap">' +
+            '<img class="side-avatar" id="side-avatar-slot" src="' + escapeHtml(avatarUrl) + '" alt="" ' +
+              'onerror="this.outerHTML=\'<span class=&quot;side-avatar-fallback&quot; id=&quot;side-avatar-slot&quot;>' + initial + '<\/span>\';">' +
+          '</span>';
+        } else if (currentSlot.tagName !== 'IMG') {
+          currentSlot.textContent = initial;
+        }
+
+        // stash resolved avatar/bio so the caller can persist them for
+        // next load's instant paint
+        data._resolved = { avatar_url: avatarUrl, bio: bio };
+
+      } else {
+        accountLink.setAttribute('href', '/initialization');
+        accountLink.classList.remove('signed-in');
+        nameSlot.textContent = 'Anonymous';
+        nameSlot.classList.add('side-account-cta');
+        nameSlot.classList.remove('side-account-username');
+        roleSlot.style.display = 'none';
+        bioSlot.style.display = 'none';
+        const fresh = document.getElementById('side-avatar-slot');
+        if (fresh && fresh.tagName === 'IMG') {
+          const wrap = fresh.closest('.side-avatar-wrap') || fresh;
+          wrap.outerHTML = '<span class="side-avatar-wrap"><span class="side-avatar-fallback" id="side-avatar-slot">?</span></span>';
+        } else if (fresh) {
+          fresh.textContent = '?';
+        }
+        relockGate('auth', 'active account session required');
+        relockGate('sysadmin', 'designated for sysadmin');
+      }
+    }
+    window.sorasysApplyAuthUI = applyAuthUI;
+
+    async function initAuthNav() {
+      // 1. Instant paint from cache — synchronous, no network wait,
+      // so there's nothing wrong to flash to first.
+      const cached = readAuthCache();
+      if (cached) {
+        await applyAuthUI(cached, { skipProfileFetch: false });
+      }
+
+      // 2. Confirm/correct against the server in the background.
+      try {
+        const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        const data = await res.json();
+        await applyAuthUI(data);
+        writeAuthCache(data.authenticated ? {
+          authenticated: true,
+          user: { ...data.user, ...(data._resolved || {}) }
+        } : null);
       } catch (err) {
         console.error('Auth nav error:', err);
-        accountLink.setAttribute('href', '/initialization');
-        nameSlot.textContent = 'Anonymous';
+        if (!cached) await applyAuthUI({ authenticated: false });
       }
       if (bindHoverables) bindHoverables();
     }
@@ -1068,6 +1156,16 @@
       el.addEventListener('click', function(e) {
         if (this.classList.contains('locked')) e.preventDefault();
       });
+    });
+
+    // Cross-tab: react immediately if auth state changes in another tab
+    // (e.g. signed out elsewhere) instead of waiting on this tab's own
+    // background fetch to eventually catch up.
+    window.addEventListener('storage', function(e) {
+      if (e.key === AUTH_CACHE_KEY) {
+        const updated = readAuthCache();
+        applyAuthUI(updated || { authenticated: false }, { skipProfileFetch: !updated });
+      }
     });
 
     document.addEventListener('sorasys:authchanged', initAuthNav);
@@ -1097,7 +1195,6 @@
       tabIndicator.style.left = tab.offsetLeft + 'px';
       tabIndicator.style.width = tab.offsetWidth + 'px';
     }
-    // Position on load (and again after fonts/layout settle)
     requestAnimationFrame(() => moveIndicatorTo(document.querySelector('.init-tab.active')));
     window.addEventListener('resize', () => {
       moveIndicatorTo(document.querySelector('.init-tab.active'));
@@ -1106,6 +1203,9 @@
     // ============================================
     // Smooth cross-fade between the signed-out forms and the
     // signed-in welcome card, instead of an abrupt display toggle.
+    // Used only for state changes that happen WHILE the user is on
+    // this page (sign in, sign up, sign out) — the very first paint
+    // uses setStateInstant() below with no animation at all.
     // ============================================
     const SWAP_DURATION = 380;
     let swapInFlight = false;
@@ -1148,9 +1248,29 @@
     }
 
     // ============================================
-    // Check if user is already signed in
-    // animate=true crossfades between states; leave false for the
-    // very first load so the correct state simply appears.
+    // Paint the correct block with NO animation and NO intermediate
+    // frame — used only for the very first paint on load, sourced
+    // from the cached auth state so there's nothing to wait on.
+    // ============================================
+    function setStateInstant(shouldShowSignedIn, user) {
+      if (shouldShowSignedIn && user) signedInUsername.textContent = user.username;
+      initSub.textContent = shouldShowSignedIn
+        ? 'is complete and a process of the past'
+        : 'establish your presence';
+      if (shouldShowSignedIn) {
+        authForms.classList.add('hidden');
+        signedInState.classList.remove('hidden');
+      } else {
+        signedInState.classList.add('hidden');
+        authForms.classList.remove('hidden');
+      }
+    }
+
+    // ============================================
+    // Check auth status against the server.
+    // animate=true crossfades between states; pass false when you just
+    // want to confirm/correct the state quietly (e.g. right after the
+    // instant cache paint on load).
     // ============================================
     async function checkAuthStatus(animate) {
       try {
@@ -1181,11 +1301,22 @@
           signedInState.classList.remove('hidden');
         }
 
+        // keep the shared cache in sync with the confirmed server state
+        if (window.sorasysAuthCache) {
+          window.sorasysAuthCache.write(shouldShowSignedIn ? { authenticated: true, user: data.user } : null);
+        }
+
         if (window.bindCursorHover) window.bindCursorHover();
       } catch (err) {
         console.error('Auth check error:', err);
-        signedInState.classList.add('hidden');
-        authForms.classList.remove('hidden');
+        // On a network hiccup, trust the cache instead of forcing
+        // signed-out — avoids flashing to the forms for someone who is
+        // actually signed in but has a flaky connection.
+        const cached = window.sorasysAuthCache ? window.sorasysAuthCache.read() : null;
+        if (!cached) {
+          signedInState.classList.add('hidden');
+          authForms.classList.remove('hidden');
+        }
       }
     }
 
@@ -1200,6 +1331,7 @@
       } catch (err) {
         console.error('Signout error:', err);
       }
+      if (window.sorasysAuthCache) window.sorasysAuthCache.write(null);
       await checkAuthStatus(true);
       initAuthNavRefresh();
       signoutBtn.disabled = false;
@@ -1278,10 +1410,10 @@
       const bio = signupBio.value.trim();
       const msg = document.getElementById('signup-message');
       const btn = e.target.querySelector('.init-btn');
-      
+
       msg.textContent = '';
       msg.className = 'message';
-      
+
       if (!username || !password || !confirm) {
         msg.textContent = 'All fields are required.';
         msg.className = 'message error';
@@ -1322,22 +1454,22 @@
         msg.className = 'message error';
         return;
       }
-      
+
       btn.disabled = true;
       msg.textContent = 'Creating account...';
       msg.className = 'message';
-      
+
       try {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
           credentials: 'same-origin',
           body: JSON.stringify({ username, password })
         });
-        
+
         let data;
         try {
           data = await res.json();
@@ -1345,12 +1477,22 @@
           console.error('Response is not JSON:', parseError);
           throw new Error('Server returned invalid response format');
         }
-        
+
         if (!res.ok) {
           msg.textContent = data.error || data.message || 'Signup failed.';
           msg.className = 'message error';
           btn.disabled = false;
           return;
+        }
+
+        // Write the cache immediately so the very next navigation (or
+        // this page's own re-check) has correct state to paint from
+        // instantly, without waiting on another round trip.
+        if (window.sorasysAuthCache) {
+          window.sorasysAuthCache.write({
+            authenticated: true,
+            user: { username: data.username, role: data.role || 'user' }
+          });
         }
 
         // Account created and session cookie is now set — immediately
@@ -1363,19 +1505,30 @@
             credentials: 'same-origin',
             body: JSON.stringify({ avatar_url, bio })
           });
-          if (!profRes.ok) {
+          if (profRes.ok) {
+            const prof = await profRes.json();
+            // fold the now-known avatar/bio into the cache too
+            if (window.sorasysAuthCache) {
+              const cached = window.sorasysAuthCache.read();
+              if (cached && cached.user) {
+                cached.user.avatar_url = prof.avatar_url;
+                cached.user.bio = prof.bio;
+                window.sorasysAuthCache.write(cached);
+              }
+            }
+          } else {
             profileWarning = ' (profile details could not be saved — add them from the Profile page)';
           }
         } catch (profileErr) {
           console.error('Profile save error:', profileErr);
           profileWarning = ' (profile details could not be saved — add them from the Profile page)';
         }
-        
+
         msg.textContent = 'Identity established!' + profileWarning;
         msg.className = 'message success';
         btn.disabled = false;
         pulseSuccess();
-        
+
         // Clear form
         document.getElementById('signup-username').value = '';
         document.getElementById('signup-password').value = '';
@@ -1386,7 +1539,7 @@
         signupAvatarFallback.style.display = 'flex';
         signupBioCount.textContent = '0 / 1000';
         signupBioCount.classList.remove('warn');
-        
+
         // Check auth status to show signed-in state
         setTimeout(() => {
           checkAuthStatus(true);
@@ -1399,7 +1552,7 @@
           signinForm.classList.remove('hidden');
           signupForm.classList.add('hidden');
         }, 1000);
-        
+
       } catch (err) {
         console.error('Signup error:', err);
         msg.textContent = 'Network error: ' + err.message;
@@ -1417,31 +1570,31 @@
       const password = document.getElementById('signin-password').value;
       const msg = document.getElementById('signin-message');
       const btn = e.target.querySelector('.init-btn');
-      
+
       msg.textContent = '';
       msg.className = 'message';
-      
+
       if (!username || !password) {
         msg.textContent = 'All fields are required.';
         msg.className = 'message error';
         return;
       }
-      
+
       btn.disabled = true;
       msg.textContent = 'Authenticating...';
       msg.className = 'message';
-      
+
       try {
         const res = await fetch('/api/auth/signin', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
           credentials: 'same-origin',
           body: JSON.stringify({ username, password })
         });
-        
+
         let data;
         try {
           data = await res.json();
@@ -1449,29 +1602,37 @@
           console.error('Response is not JSON:', parseError);
           throw new Error('Server returned invalid response format');
         }
-        
+
         if (!res.ok) {
           msg.textContent = data.error || data.message || 'Authentication failed.';
           msg.className = 'message error';
           btn.disabled = false;
           return;
         }
-        
+
+        // Write cache immediately — instant correct paint on next nav.
+        if (window.sorasysAuthCache) {
+          window.sorasysAuthCache.write({
+            authenticated: true,
+            user: { username: data.username, role: data.role }
+          });
+        }
+
         msg.textContent = 'Access granted!';
         msg.className = 'message success';
         btn.disabled = false;
         pulseSuccess();
-        
+
         // Clear form
         document.getElementById('signin-username').value = '';
         document.getElementById('signin-password').value = '';
-        
+
         // Check auth status to show signed-in state
         setTimeout(() => {
           checkAuthStatus(true);
           initAuthNavRefresh();
         }, 500);
-        
+
       } catch (err) {
         console.error('Signin error:', err);
         msg.textContent = 'Network error: ' + err.message;
@@ -1488,10 +1649,20 @@
     }
 
     // ============================================
-    // Initialize - Check auth status on load (no animation for the
-    // very first paint, so nothing crossfades before it's visible)
+    // Initialize — read the cached auth state SYNCHRONOUSLY and paint
+    // the correct block with zero animation before anything else runs.
+    // This is what actually removes the flash: there is no frame where
+    // the wrong state is visible, because we never start from a default
+    // and swap later — we start from the last known-good state.
+    // The background fetch below then just quietly confirms/corrects.
     // ============================================
-    checkAuthStatus(false);
+    const cachedAuth = window.sorasysAuthCache ? window.sorasysAuthCache.read() : null;
+    if (cachedAuth && cachedAuth.authenticated) {
+      setStateInstant(true, cachedAuth.user);
+    } else {
+      setStateInstant(false);
+    }
+    checkAuthStatus(false); // confirm/correct in background, no animation
   })();
 </script>
 </body>
