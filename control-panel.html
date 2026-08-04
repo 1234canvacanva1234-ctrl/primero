@@ -767,18 +767,15 @@
       </div>
     </div>
 
-    <!-- Access Denied Message (shown when not admin) -->
     <div id="access-denied" class="access-denied hidden">
-      <div class="icon">⛔</div>
+      <div class="icon">rejected</div>
       <h2>Access Restricted</h2>
-      <p>This area requires sysadmin privileges. If you believe you should have access, please contact an administrator.</p>
+      <p>sysadmin privileges not detected : exit immediately.</p>
       <a href="/" class="panel-btn">↩ Return Home</a>
     </div>
 
-    <!-- Main Panel Content -->
     <div id="panel-content">
       <div class="panel-grid">
-        <!-- Editor Section -->
         <div class="panel-section full">
           <div class="section-title">꩜ <span>Article</span> Processor</div>
           <div class="editor-area">
@@ -982,14 +979,14 @@
         const data = await res.json();
         
         if (!data.authenticated) {
-          showAccessDenied('Please sign in to access this area.');
+          showAccessDenied('you are attempting to enter a restricted area, and you are pitiably and predictably failing.');
           return;
         }
         
         currentUser = data.user;
         
         if (data.user.role !== 'sysadmin') {
-          showAccessDenied(`Welcome, ${data.user.username}. This area requires sysadmin privileges.`);
+          showAccessDenied(`um ${data.user.username} the area requires sysadmin privileges.`);
           return;
         }
         
