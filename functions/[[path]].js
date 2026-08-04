@@ -484,8 +484,23 @@ async function withProfileDefaults(profile) {
 // return 403/405 on HEAD, or omit Content-Type on it). Anything that
 // errors, times out, comes back non-2xx, or isn't an image/* content type
 // is treated as invalid so the caller can substitute the default pfp.
+//
+// FIX: previously this fetch() call sent no User-Agent / Accept headers,
+// which made it look like a bare bot request. Several image hosts (Imgur,
+// Discord CDN, various CDNs) respond to that kind of request with a 403
+// or a response missing Content-Type — even for a perfectly valid,
+// publicly-loadable image URL. That caused genuinely good avatar links to
+// get misclassified as "unreachable" and silently swapped for the default
+// pfp. Adding a normal-looking User-Agent/Accept, a longer timeout, and a
+// narrow extension-based leniency for ok-but-headerless responses fixes
+// that false-negative without loosening the check for actually-bad URLs.
 async function isImageUrlReachable(imageUrl) {
-  const TIMEOUT_MS = 5000;
+  const TIMEOUT_MS = 8000;
+
+  const commonHeaders = {
+    'User-Agent': 'Mozilla/5.0 (compatible; ArticlespaceImageCheck/1.0; +https://articlespace.example)',
+    'Accept': 'image/*,*/*;q=0.8'
+  };
 
   async function attempt(method) {
     const controller = new AbortController();
@@ -494,6 +509,7 @@ async function isImageUrlReachable(imageUrl) {
       const res = await fetch(imageUrl, {
         method,
         redirect: 'follow',
+        headers: commonHeaders,
         signal: controller.signal
       });
       clearTimeout(timer);
@@ -504,16 +520,28 @@ async function isImageUrlReachable(imageUrl) {
     }
   }
 
-  let res = await attempt('HEAD');
-
   const contentTypeIsImage = (r) => (r.headers.get('content-type') || '').toLowerCase().startsWith('image/');
+  const hasImageExtension = (u) => /\.(jpe?g|png|gif|webp|bmp|svg|avif)(\?.*)?$/i.test(u);
 
+  // Try HEAD first (cheap), fall back to GET if HEAD is blocked/unhelpful
+  let res = await attempt('HEAD');
   if (!res || !res.ok || !res.headers.get('content-type')) {
     res = await attempt('GET');
   }
 
-  if (!res || !res.ok) return false;
-  return contentTypeIsImage(res);
+  if (!res) return false; // both requests genuinely failed (DNS, timeout, refused, etc.)
+
+  if (res.ok && contentTypeIsImage(res)) return true;
+
+  // Leniency: some hosts respond ok but strip/omit content-type on
+  // proxied or cached responses. If the response was otherwise
+  // successful and the URL clearly points at an image file, accept it
+  // rather than punishing a valid link for a host's header quirks.
+  if (res.ok && !res.headers.get('content-type') && hasImageExtension(imageUrl)) {
+    return true;
+  }
+
+  return false;
 }
 
 // ============================================
