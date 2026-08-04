@@ -3,31 +3,6 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // ============================================
-  // NOTE: Article permalinks now use a URL fragment (#slug), e.g.
-  // /articlespace#my-article-title-12. Fragments are never sent to
-  // the server as part of the HTTP request — the browser strips them
-  // before making the request and only re-applies them client-side
-  // after the page loads. That means there is nothing for this
-  // function (or any Cloudflare routing/redirect layer) to see or act
-  // on for the slug at all — every /articlespace request, permalink
-  // or not, is just a plain request for the list page. All permalink
-  // resolution (finding the article, expanding it, scrolling to it)
-  // happens entirely in articlespace/index.html's client-side JS by
-  // reading window.location.hash on load.
-  //
-  // Tradeoff: since the server never sees the slug, it can't render
-  // article-specific og:/twitter: meta tags for link-preview bots —
-  // shared links show the generic Articlespace preview instead of a
-  // per-article one. Everything else (opening the link, expanding the
-  // right article, scrolling to it, copy-link, back/forward) works
-  // the same as before.
-  // ============================================
-
-  // ============================================
-  // IMPORTANT: ONLY handle /api/* routes
-  // Everything else passes through to static files
-  // ============================================
   if (!path.startsWith('/api/')) {
     return next();
   }
@@ -46,9 +21,6 @@ export async function onRequest(context) {
     return new Response(null, { headers });
   }
 
-  // ============================================
-  // TEST - /api/test
-  // ============================================
   if (path === '/api/test') {
     return new Response(JSON.stringify({
       status: 'OK',
@@ -56,9 +28,6 @@ export async function onRequest(context) {
     }), { headers });
   }
 
-  // ============================================
-  // SIGNUP - /api/auth/signup
-  // ============================================
   if (path === '/api/auth/signup' && request.method === 'POST') {
     try {
       const body = await request.json();
@@ -98,9 +67,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // SIGNIN - /api/auth/signin
-  // ============================================
   if (path === '/api/auth/signin' && request.method === 'POST') {
     try {
       const body = await request.json();
@@ -133,9 +99,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // AUTH STATUS - /api/auth/status
-  // ============================================
   if (path === '/api/auth/status') {
     try {
       const cookie = request.headers.get('Cookie') || '';
@@ -150,8 +113,6 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ authenticated: false }), { headers });
       }
 
-      // NOTE: now also returns avatar_url / bio so any page (nav avatars, etc.)
-      // can use them straight off the status check without a second request.
       const user = await env.DB.prepare('SELECT username, role, avatar_url, bio FROM users WHERE username = ?').bind(session.username).first();
       return new Response(JSON.stringify({ authenticated: true, user: await withProfileDefaults(user) }), { headers });
 
@@ -160,9 +121,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // SIGNOUT - /api/auth/signout
-  // ============================================
   if (path === '/api/auth/signout' && request.method === 'POST') {
     try {
       const cookie = request.headers.get('Cookie') || '';
@@ -180,9 +138,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // PROFILE - GET /api/profile  (own profile, requires auth)
-  // ============================================
   if (path === '/api/profile' && request.method === 'GET') {
     try {
       const user = await getSessionUser(request, env);
@@ -201,9 +156,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // PROFILE - PUT /api/profile  (update own avatar_url / bio)
-  // ============================================
   if (path === '/api/profile' && request.method === 'PUT') {
     try {
       const user = await getSessionUser(request, env);
@@ -225,18 +177,6 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'Description is too long (max 1000 characters)' }), { status: 400, headers });
       }
 
-      // NOTE: we intentionally do NOT probe the URL over the network here
-      // anymore. A live fetch() from the Worker is an unreliable signal —
-      // hosts that block bot-like requests, are slow to respond, or sit
-      // behind auth/CORS all look "unreachable" even when the link is
-      // completely valid and works fine in a real browser. That was
-      // silently overwriting good avatar URLs with the default pfp.
-      // Format validation (http/https, length) already happened above.
-      // The only thing that falls back to the default now is an actually
-      // empty field — same rule bio already uses. A broken-but-present
-      // link is left as-is and will simply fail to load client-side,
-      // which is a far safer failure mode than the server guessing wrong.
-
       await env.DB.prepare(
         'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
       ).bind(avatar_url, bio, user.username).run();
@@ -252,11 +192,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // PUBLIC PROFILE - GET /api/users/:username/profile
-  // (no auth required — lets you show an author's avatar/bio
-  // next to their articles, on a byline page, etc.)
-  // ============================================
   const publicProfileMatch = path.match(/^\/api\/users\/([^\/]+)\/profile$/);
   if (publicProfileMatch && request.method === 'GET') {
     try {
@@ -276,9 +211,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // ARTICLES - GET all
-  // ============================================
   if (path === '/api/articles' && request.method === 'GET') {
     try {
       const articles = await env.DB.prepare(
@@ -290,9 +222,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // ARTICLES - POST (create)
-  // ============================================
   if (path === '/api/articles' && request.method === 'POST') {
     try {
       const user = await getSessionUser(request, env);
@@ -318,9 +247,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // SINGLE ARTICLE - GET /api/articles/:id
-  // ============================================
   const articleIdMatch = path.match(/^\/api\/articles\/(\d+)$/);
   if (articleIdMatch && request.method === 'GET') {
     try {
@@ -335,9 +261,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // SINGLE ARTICLE - PUT /api/articles/:id (update)
-  // ============================================
   if (articleIdMatch && request.method === 'PUT') {
     try {
       const user = await getSessionUser(request, env);
@@ -364,9 +287,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // SINGLE ARTICLE - DELETE /api/articles/:id
-  // ============================================
   if (articleIdMatch && request.method === 'DELETE') {
     try {
       const user = await getSessionUser(request, env);
@@ -384,9 +304,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // USERS - GET
-  // ============================================
   if (path === '/api/users' && request.method === 'GET') {
     try {
       const user = await getSessionUser(request, env);
@@ -402,9 +319,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // USER GRANT - /api/users/username/grant
-  // ============================================
   const grantMatch = path.match(/^\/api\/users\/(.+)\/grant$/);
   if (grantMatch && request.method === 'POST') {
     try {
@@ -423,9 +337,6 @@ export async function onRequest(context) {
     }
   }
 
-  // ============================================
-  // 404 - Return JSON
-  // ============================================
   return new Response(JSON.stringify({
     error: 'Not found',
     path: path,
@@ -433,27 +344,6 @@ export async function onRequest(context) {
   }), { status: 404, headers });
 }
 
-// ============================================
-// Profile defaults
-// ============================================
-// Applied at read/render time — the DB keeps storing whatever the user
-// actually set (including empty string), so clearing a field in the
-// profile editor just falls back to these defaults rather than being
-// "stuck" on them.
-//
-// avatar_url is treated exactly like bio: if the stored value is
-// missing/blank, fall back to the default. That's it — no network probe.
-//
-// We used to re-fetch the URL on every single profile read to confirm it
-// still resolved to a real image, and swap in the default if it didn't.
-// In practice that check couldn't reliably tell "genuinely dead link"
-// apart from "host doesn't like server-side/bot-like requests," "host is
-// slow," or "host blocks HEAD/GET without a browser-like session." That
-// ambiguity meant perfectly valid, working avatar URLs kept getting
-// silently overwritten with the default pfp. A dead link is better
-// handled the normal web way: the <img> just fails to render client-side,
-// which the user can see and fix, instead of the server guessing wrong
-// and hiding the problem (or the valid image) from them.
 const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
 const DEFAULT_BIO = "i'm an anonymous private bitch and consequently refuse to provide a simple description";
 
@@ -469,9 +359,6 @@ async function withProfileDefaults(profile) {
   };
 }
 
-// ============================================
-// Helper function
-// ============================================
 async function getSessionUser(request, env) {
   try {
     const cookie = request.headers.get('Cookie') || '';
