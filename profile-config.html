@@ -124,7 +124,7 @@
       margin-right: -3px;
     }
     .nav-logo .word .highlight { color: var(--pulse); }
-    .nav-logo:hover .word { color: var(--ink); }
+    .nav-logo:hover .word { color: var(--pulse); }
     .nav-links {
       display: flex;
       align-items: center;
@@ -692,7 +692,7 @@
         </span>
         <span class="side-link-arrow">→</span>
       </a>
-      <a href="/profile-config" class="side-link current locked" data-gate="auth" aria-disabled="true">
+      <a href="/profile-config" class="side-link locked" data-gate="auth" aria-disabled="true">
         <span class="side-link-main">
           <span class="side-link-title">Profile Configuration</span>
           <span class="side-link-sub">active account session required</span>
@@ -990,6 +990,17 @@
         if (this.classList.contains('locked')) e.preventDefault();
       });
     });
+
+    function activateCurrentSideLink() {
+      const link = document.querySelector('.side-link[href="' + window.location.pathname + '"]');
+      if (!link || link.classList.contains('current')) return;
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          link.classList.add('current');
+        }, 220);
+      });
+    }
+    activateCurrentSideLink();
 
     window.addEventListener('storage', function(e) {
       if (e.key === AUTH_CACHE_KEY) {
