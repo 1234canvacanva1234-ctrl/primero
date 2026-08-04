@@ -559,20 +559,18 @@
       position: relative;
       flex-shrink: 0;
     }
-    .author-avatar-ring {
-      position: absolute;
-      inset: -5px;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, var(--pulse), var(--pulse-soft), var(--steel), var(--pulse));
-      animation: ring-rotate 9s linear infinite, ring-pulse 4.5s ease-in-out infinite;
-    }
+    /* Same rounded-square frame + constant hot-pink outline/glow as the
+       profile-config preview (there: 160px / 26px radius / 2px border),
+       scaled down proportionally for this 60px signup preview. */
     .author-avatar,
     .author-avatar-fallback {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      border-radius: 50%;
+      border-radius: 10px;
+      border: 2px solid var(--pulse);
+      box-shadow: 0 0 0 2px rgba(255, 59, 124, 0.12), 0 4px 10px rgba(255, 59, 124, 0.2);
       z-index: 1;
     }
     .author-avatar {
@@ -588,19 +586,6 @@
       font-size: 18px;
       color: var(--dim);
       background: rgba(11, 17, 20, 0.75);
-    }
-    @keyframes ring-rotate {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes ring-pulse {
-      0%, 100% {
-        opacity: 0.55;
-        box-shadow: 0 0 12px rgba(255, 59, 124, 0.2);
-      }
-      50% {
-        opacity: 1;
-        box-shadow: 0 0 18px rgba(107, 142, 155, 0.35);
-      }
     }
 
     /* Modernized primary action button — rounded, lifted hover with a
