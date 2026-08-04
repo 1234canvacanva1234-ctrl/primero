@@ -345,22 +345,6 @@
     .side-link.locked:hover { border-color: transparent; transform: none; }
     .side-link.locked .side-link-arrow { color: var(--dim); }
 
-    @keyframes sideLinkArrive {
-      0%   { box-shadow: 0 0 0 rgba(255, 59, 124, 0); }
-      35%  { box-shadow: 0 0 22px rgba(255, 59, 124, 0.3); }
-      100% { box-shadow: 0 0 0 rgba(255, 59, 124, 0); }
-    }
-    @keyframes sideLinkSweep {
-      0%   { transform: translateX(-100%); }
-      55%  { transform: translateX(0); }
-      100% { transform: translateX(120%); }
-    }
-    .side-link.just-arrived {
-      animation: sideLinkArrive 900ms ease;
-    }
-    .side-link.just-arrived::before {
-      animation: sideLinkSweep 900ms ease;
-    }
     .side-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
     .side-foot-sig {
       font-family: 'Fira Code', monospace;
@@ -1029,19 +1013,6 @@
     document.querySelectorAll('.locked').forEach(function(el) {
       el.addEventListener('click', function(e) {
         if (this.classList.contains('locked')) e.preventDefault();
-      });
-    });
-
-    document.querySelectorAll('.nav-link').forEach(function(navEl) {
-      if (navEl.classList.contains('locked') || navEl.classList.contains('current')) return;
-      navEl.addEventListener('click', function(e) {
-        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-        const href = navEl.getAttribute('href');
-        const targetLink = document.querySelector('.side-link[href="' + href + '"]');
-        if (!targetLink || targetLink.classList.contains('locked')) return;
-        e.preventDefault();
-        targetLink.classList.add('just-arrived');
-        setTimeout(() => { window.location.href = href; }, 360);
       });
     });
 
