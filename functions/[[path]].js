@@ -225,29 +225,22 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ error: 'Description is too long (max 1000 characters)' }), { status: 400, headers });
       }
 
-      // NOTE: format-valid isn't the same as *actually an image*. A link
-      // that's well-formed (http/https, passes the regex above) can still
-      // 404, redirect to a dead page, or resolve to something that isn't
-      // an image at all. Previously that kind of broken-but-present link
-      // just got stored as-is and only the *empty* case fell back to the
-      // default pfp at read time. Now we actively probe the URL here and,
-      // if it doesn't come back as a real image, store the default pfp
-      // directly in the DB instead of the broken link.
-      if (avatar_url) {
-        const isImage = await isImageUrlReachable(avatar_url);
-        if (!isImage) {
-          avatar_url = DEFAULT_AVATAR_URL;
-        }
-      }
+      // NOTE: we intentionally do NOT probe the URL over the network here
+      // anymore. A live fetch() from the Worker is an unreliable signal —
+      // hosts that block bot-like requests, are slow to respond, or sit
+      // behind auth/CORS all look "unreachable" even when the link is
+      // completely valid and works fine in a real browser. That was
+      // silently overwriting good avatar URLs with the default pfp.
+      // Format validation (http/https, length) already happened above.
+      // The only thing that falls back to the default now is an actually
+      // empty field — same rule bio already uses. A broken-but-present
+      // link is left as-is and will simply fail to load client-side,
+      // which is a far safer failure mode than the server guessing wrong.
 
       await env.DB.prepare(
         'UPDATE users SET avatar_url = ?, bio = ? WHERE username = ?'
       ).bind(avatar_url, bio, user.username).run();
 
-      // NOTE: response reflects defaults too, in case the user just cleared
-      // their avatar/bio back to empty. avatar_url has already been resolved
-      // above (either the real, reachable image, or DEFAULT_AVATAR_URL), so
-      // we don't re-run the network probe here — just apply the bio default.
       return new Response(JSON.stringify({
         success: true,
         avatar_url: avatar_url || DEFAULT_AVATAR_URL,
@@ -448,100 +441,32 @@ export async function onRequest(context) {
 // profile editor just falls back to these defaults rather than being
 // "stuck" on them.
 //
-// avatar_url gets an extra pass here: it's not enough for the field to
-// be non-empty, it also has to actually resolve to an image right now.
-// A link that was fine when saved can go dead later (deleted upload,
-// expired CDN, etc.), and previously that state only ever got fixed if
-// the user happened to re-save through the profile editor — every other
-// page reading the same profile (nav avatars, bylines, etc.) kept
-// serving the dead link until then. Now every read re-checks it, so the
-// fallback pfp shows up consistently everywhere, not just after a save.
+// avatar_url is treated exactly like bio: if the stored value is
+// missing/blank, fall back to the default. That's it — no network probe.
+//
+// We used to re-fetch the URL on every single profile read to confirm it
+// still resolved to a real image, and swap in the default if it didn't.
+// In practice that check couldn't reliably tell "genuinely dead link"
+// apart from "host doesn't like server-side/bot-like requests," "host is
+// slow," or "host blocks HEAD/GET without a browser-like session." That
+// ambiguity meant perfectly valid, working avatar URLs kept getting
+// silently overwritten with the default pfp. A dead link is better
+// handled the normal web way: the <img> just fails to render client-side,
+// which the user can see and fix, instead of the server guessing wrong
+// and hiding the problem (or the valid image) from them.
 const DEFAULT_AVATAR_URL = 'https://i.imgur.com/baiP4yN.png';
 const DEFAULT_BIO = "i'm an anonymous private bitch and consequently refuse to provide a simple description";
 
 async function withProfileDefaults(profile) {
   if (!profile) return profile;
 
-  let avatar_url = profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url.trim() : '';
-  if (avatar_url && avatar_url !== DEFAULT_AVATAR_URL) {
-    const reachable = await isImageUrlReachable(avatar_url);
-    if (!reachable) avatar_url = '';
-  }
+  const avatar_url = profile.avatar_url && profile.avatar_url.trim() ? profile.avatar_url.trim() : '';
 
   return {
     ...profile,
     avatar_url: avatar_url || DEFAULT_AVATAR_URL,
     bio: profile.bio && profile.bio.trim() ? profile.bio : DEFAULT_BIO
   };
-}
-
-// ============================================
-// Avatar URL reachability / image-type probe
-// ============================================
-// Format-valid (http/https, well-formed) is not the same as "actually an
-// image." This does a real network check: HEAD first (cheap), and only
-// falls back to GET if the host doesn't answer HEAD usefully (some CDNs
-// return 403/405 on HEAD, or omit Content-Type on it). Anything that
-// errors, times out, comes back non-2xx, or isn't an image/* content type
-// is treated as invalid so the caller can substitute the default pfp.
-//
-// FIX: previously this fetch() call sent no User-Agent / Accept headers,
-// which made it look like a bare bot request. Several image hosts (Imgur,
-// Discord CDN, various CDNs) respond to that kind of request with a 403
-// or a response missing Content-Type — even for a perfectly valid,
-// publicly-loadable image URL. That caused genuinely good avatar links to
-// get misclassified as "unreachable" and silently swapped for the default
-// pfp. Adding a normal-looking User-Agent/Accept, a longer timeout, and a
-// narrow extension-based leniency for ok-but-headerless responses fixes
-// that false-negative without loosening the check for actually-bad URLs.
-async function isImageUrlReachable(imageUrl) {
-  const TIMEOUT_MS = 8000;
-
-  const commonHeaders = {
-    'User-Agent': 'Mozilla/5.0 (compatible; ArticlespaceImageCheck/1.0; +https://articlespace.example)',
-    'Accept': 'image/*,*/*;q=0.8'
-  };
-
-  async function attempt(method) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    try {
-      const res = await fetch(imageUrl, {
-        method,
-        redirect: 'follow',
-        headers: commonHeaders,
-        signal: controller.signal
-      });
-      clearTimeout(timer);
-      return res;
-    } catch (err) {
-      clearTimeout(timer);
-      return null;
-    }
-  }
-
-  const contentTypeIsImage = (r) => (r.headers.get('content-type') || '').toLowerCase().startsWith('image/');
-  const hasImageExtension = (u) => /\.(jpe?g|png|gif|webp|bmp|svg|avif)(\?.*)?$/i.test(u);
-
-  // Try HEAD first (cheap), fall back to GET if HEAD is blocked/unhelpful
-  let res = await attempt('HEAD');
-  if (!res || !res.ok || !res.headers.get('content-type')) {
-    res = await attempt('GET');
-  }
-
-  if (!res) return false; // both requests genuinely failed (DNS, timeout, refused, etc.)
-
-  if (res.ok && contentTypeIsImage(res)) return true;
-
-  // Leniency: some hosts respond ok but strip/omit content-type on
-  // proxied or cached responses. If the response was otherwise
-  // successful and the URL clearly points at an image file, accept it
-  // rather than punishing a valid link for a host's header quirks.
-  if (res.ok && !res.headers.get('content-type') && hasImageExtension(imageUrl)) {
-    return true;
-  }
-
-  return false;
 }
 
 // ============================================
